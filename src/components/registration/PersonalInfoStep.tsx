@@ -2,18 +2,17 @@ import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  getProvinces, 
-  getDistrictsByProvince, 
+import {
+  getProvinces,
+  getDistrictsByProvince,
   getSubdistrictsByDistrict,
-  getPostalCodeBySubdistrict 
+  getPostalCodeBySubdistrict
 } from '@/lib/thai-address-data';
 
 interface PersonalInfoData {
   nickname: string;
   firstName: string;
   lastName: string;
-  email: string;
   address: string;
   province: string;
   district: string;
@@ -34,27 +33,27 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
   const subdistricts = useMemo(() => getSubdistrictsByDistrict(data.province, data.district), [data.province, data.district]);
 
   const handleProvinceChange = (value: string) => {
-    onChange({ 
-      province: value, 
-      district: '', 
-      subdistrict: '', 
-      postalCode: '' 
+    onChange({
+      province: value,
+      district: '',
+      subdistrict: '',
+      postalCode: ''
     });
   };
 
   const handleDistrictChange = (value: string) => {
-    onChange({ 
-      district: value, 
-      subdistrict: '', 
-      postalCode: '' 
+    onChange({
+      district: value,
+      subdistrict: '',
+      postalCode: ''
     });
   };
 
   const handleSubdistrictChange = (value: string) => {
     const postalCode = getPostalCodeBySubdistrict(data.province, data.district, value);
-    onChange({ 
-      subdistrict: value, 
-      postalCode 
+    onChange({
+      subdistrict: value,
+      postalCode
     });
   };
   return (
@@ -100,17 +99,6 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
           </div>
         </div>
 
-        {/* Email */}
-        <div className="space-y-2">
-          <Label htmlFor="email">อีเมล</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="example@email.com"
-            value={data.email}
-            onChange={(e) => onChange({ email: e.target.value })}
-          />
-        </div>
 
         {/* Address */}
         <div className="space-y-2">
@@ -143,8 +131,8 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
         {/* District */}
         <div className="space-y-2">
           <Label htmlFor="district">อำเภอ/เขต</Label>
-          <Select 
-            value={data.district} 
+          <Select
+            value={data.district}
             onValueChange={handleDistrictChange}
             disabled={!data.province}
           >
@@ -164,8 +152,8 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
         {/* Subdistrict */}
         <div className="space-y-2">
           <Label htmlFor="subdistrict">ตำบล/แขวง</Label>
-          <Select 
-            value={data.subdistrict} 
+          <Select
+            value={data.subdistrict}
             onValueChange={handleSubdistrictChange}
             disabled={!data.district}
           >
@@ -185,8 +173,8 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
         {/* Postal Code */}
         <div className="space-y-2">
           <Label htmlFor="postalCode">รหัสไปรษณีย์</Label>
-          <Select 
-            value={data.postalCode} 
+          <Select
+            value={data.postalCode}
             onValueChange={(value) => onChange({ postalCode: value })}
             disabled={!data.subdistrict}
           >

@@ -18,7 +18,6 @@ interface PersonalInfoData {
   nickname: string;
   firstName: string;
   lastName: string;
-  email: string;
   address: string;
   province: string;
   district: string;
@@ -32,7 +31,6 @@ const initialPersonalInfo: PersonalInfoData = {
   nickname: '',
   firstName: '',
   lastName: '',
-  email: '',
   address: '',
   province: '',
   district: '',
@@ -183,7 +181,7 @@ export default function Register() {
           nickname: personalInfo.nickname || null,
           first_name: personalInfo.firstName,
           last_name: personalInfo.lastName,
-          email: personalInfo.email || null,
+          email: user.email,
           address: personalInfo.address || null,
           province: personalInfo.province || null,
           district: personalInfo.district || null,
