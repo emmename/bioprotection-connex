@@ -51,6 +51,20 @@ export default function Content() {
   const initialTab = searchParams.get('type') || 'all';
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  // Sync activeTab with URL search params
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type && type !== activeTab) {
+      setActiveTab(type);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [searchParams]);
+
+  // Scroll to top when activeTab changes manually
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   // Layout & Pagination State
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [currentPage, setCurrentPage] = useState(1);
