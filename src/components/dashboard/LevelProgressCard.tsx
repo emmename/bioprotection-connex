@@ -63,7 +63,7 @@ export function LevelProgressCard({ currentTier, nextTier, currentPoints, member
     <Card className="overflow-visible mt-6">
       <div className="gradient-primary p-5 text-white relative rounded-xl">
         {/* Mascot */}
-        <div className="absolute -top-12 right-0 w-28 h-28 opacity-100 filter drop-shadow-lg">
+        <div className="absolute -top-20 -right-2 w-28 h-28 opacity-100 filter drop-shadow-lg">
           <img src={mascotChicken} alt="Mascot" className="w-full h-full object-contain" />
         </div>
 
