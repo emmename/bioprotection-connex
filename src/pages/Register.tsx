@@ -85,7 +85,7 @@ export default function Register() {
   const [showResultDialog, setShowResultDialog] = useState(false);
   const [registrationResult, setRegistrationResult] = useState<{ approved: boolean; memberId?: string }>({ approved: false });
 
-  const { user, profile, isLoading, signOut } = useAuth();
+  const { user, profile, isLoading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -253,7 +253,8 @@ export default function Register() {
     }
   };
 
-  const handleDialogClose = () => {
+  const handleDialogClose = async () => {
+    await refreshProfile();
     setShowResultDialog(false);
     navigate('/');
   };
