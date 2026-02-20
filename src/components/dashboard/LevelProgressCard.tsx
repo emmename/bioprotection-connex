@@ -60,10 +60,10 @@ export function LevelProgressCard({ currentTier, nextTier, currentPoints, member
   const isMaxTier = !nextTier;
 
   return (
-    <Card className="overflow-hidden">
-      <div className="gradient-primary p-5 text-white relative">
+    <Card className="overflow-visible mt-6">
+      <div className="gradient-primary p-5 text-white relative rounded-xl">
         {/* Mascot */}
-        <div className="absolute top-4 right-2 w-24 h-24 opacity-90">
+        <div className="absolute -top-12 right-0 w-28 h-28 opacity-100 filter drop-shadow-lg">
           <img src={mascotChicken} alt="Mascot" className="w-full h-full object-contain" />
         </div>
 
