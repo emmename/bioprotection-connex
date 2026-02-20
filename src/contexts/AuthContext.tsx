@@ -81,22 +81,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         if (!isMounted) return;
 
+        console.log('[AuthContext] onAuthStateChange event:', event);
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Use setTimeout to avoid deadlock, but await the profile fetch
-          setTimeout(async () => {
-            if (isMounted) {
-              await fetchProfile(session.user.id);
-              setIsLoading(false);
-            }
-          }, 0);
+          await fetchProfile(session.user.id);
         } else {
           setProfile(null);
           setIsAdmin(false);
-          setIsLoading(false);
         }
+        setIsLoading(false);
       }
     );
 
