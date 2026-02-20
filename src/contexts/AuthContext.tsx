@@ -97,39 +97,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Effect 1: Auth state listener - ONLY sets user/session state
   useEffect(() => {
     let isMounted = true;
 
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!isMounted) return;
-
+        console.log('[AuthContext] onAuthStateChange:', event);
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
+        if (!session?.user) {
           setProfile(null);
           setIsAdmin(false);
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!isMounted) return;
-
       setSession(session);
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+      if (!session?.user) {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initSession();
@@ -139,6 +134,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Effect 2: Fetch profile AFTER user state is set (separate from auth listener)
+  useEffect(() => {
+    if (user) {
+      console.log('[AuthContext] User detected, fetching profile for:', user.id);
+      fetchProfile(user.id).then(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [user]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
