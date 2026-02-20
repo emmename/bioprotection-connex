@@ -143,7 +143,7 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(email, password);
+    const { error, data } = await signUp(email, password);
     setIsLoading(false);
 
     if (error) {
@@ -153,8 +153,23 @@ export default function Auth() {
         toast.error('สมัครสมาชิกไม่สำเร็จ: ' + error.message);
       }
     } else {
-      toast.success('สมัครสมาชิกสำเร็จ! กำลังไปหน้าลงทะเบียน...');
-      navigate('/register');
+      // Check if email confirmation is required
+      // When email confirmation is ON, data.session will be null
+      console.log('[Auth] signUp result - session:', data?.session ? 'exists' : 'null', 'user:', data?.user?.id);
+      if (data?.session) {
+        // Auto-confirmed: session exists, navigate to registration form
+        toast.success('สมัครสมาชิกสำเร็จ! กำลังไปหน้าลงทะเบียน...');
+        navigate('/register');
+      } else if (data?.user && !data?.session) {
+        // Email confirmation required
+        toast.success('สมัครสมาชิกสำเร็จ! กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ', {
+          duration: 8000,
+        });
+      } else {
+        // Fallback: navigate anyway
+        toast.success('สมัครสมาชิกสำเร็จ! กำลังไปหน้าลงทะเบียน...');
+        navigate('/register');
+      }
     }
   };
 

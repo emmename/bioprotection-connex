@@ -26,7 +26,7 @@ interface AuthContextType {
   isApproved: boolean;
   isRejected: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null; data: unknown }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null; data: { user: User | null; session: Session | null } | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -78,8 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         if (!isMounted) return;
 
-        if (!isMounted) return;
-
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -129,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectUrl,
       },
     });
-    return { data, error };
+    return { data: data ? { user: data.user, session: data.session } : null, error };
   };
 
   const resetPassword = async (email: string) => {
