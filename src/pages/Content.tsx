@@ -261,11 +261,11 @@ export default function Content() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted rounded-lg flex no-scrollbar">
-            <TabsTrigger value="all" className="flex-1 min-w-fit px-3">ทั้งหมด</TabsTrigger>
-            <TabsTrigger value="article" className="flex-1 min-w-fit px-3">บทความ</TabsTrigger>
-            <TabsTrigger value="video" className="flex-1 min-w-fit px-3">วิดีโอ</TabsTrigger>
-            <TabsTrigger value="quiz" className="flex-1 min-w-fit px-3">แบบทดสอบ</TabsTrigger>
-            <TabsTrigger value="survey" className="flex-1 min-w-fit px-3">แบบสำรวจ</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">ทั้งหมด</TabsTrigger>
+            <TabsTrigger value="article" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">บทความ</TabsTrigger>
+            <TabsTrigger value="video" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">วิดีโอ</TabsTrigger>
+            <TabsTrigger value="quiz" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">แบบทดสอบ</TabsTrigger>
+            <TabsTrigger value="survey" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">แบบสำรวจ</TabsTrigger>
           </TabsList>
         </Tabs>
 
