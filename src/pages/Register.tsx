@@ -254,9 +254,11 @@ export default function Register() {
   };
 
   const handleDialogClose = async () => {
-    await refreshProfile();
-    setShowResultDialog(false);
-    navigate('/');
+    setIsSubmitting(true); // Show loading state while redirecting
+    // Wait for DB propagation and ensure session is fresh
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Force hard reload to clear any stale auth state
+    window.location.href = '/';
   };
 
   if (isLoading) {
