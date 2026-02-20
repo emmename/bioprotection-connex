@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string): Promise<void> => {
     try {
-      console.log('[AuthContext] fetchProfile called for userId:', userId);
       const [profileResult, roleResult] = await Promise.all([
         supabase
           .from('profiles')
@@ -58,12 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle()
       ]);
 
-      console.log('[AuthContext] profileResult:', profileResult);
-      console.log('[AuthContext] roleResult:', roleResult);
       setProfile(profileResult.data);
       setIsAdmin(!!roleResult.data);
     } catch (error) {
-      console.error('[AuthContext] Error fetching profile:', error);
+      console.error('Error fetching profile:', error);
     }
   };
 
@@ -81,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         if (!isMounted) return;
 
-        console.log('[AuthContext] onAuthStateChange event:', event);
+        if (!isMounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -98,14 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // THEN check for existing session
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('[AuthContext] initSession - session:', session ? 'exists' : 'null');
       if (!isMounted) return;
 
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        console.log('[AuthContext] initSession - fetching profile for:', session.user.id);
         await fetchProfile(session.user.id);
       }
       setIsLoading(false);

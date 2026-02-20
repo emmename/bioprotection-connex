@@ -82,11 +82,11 @@ export function useMemberSubType(profile: ProfileInput | null | undefined) {
                 }
                 else if (memberType === 'livestock_shop') {
                     // For shops, we might just keep the generic name or fetch shop name if needed, 
-                    // but usually "ร้านค้าสินค้าปศุสัตว์" is sufficient as the "type".
+                    // but usually "ร้านค้าปศุสัตว์" is sufficient as the "type".
                     // If user wants specific, maybe specific shop name? 
                     // The request says "sub-choice of member type". Shop doesn't have sub-choices in the enum.
                     // So we default to generic label.
-                    label = 'ร้านค้าสินค้าปศุสัตว์';
+                    label = 'ร้านค้าปศุสัตว์';
                 }
                 else if (memberType === 'government') {
                     label = 'รับราชการ';
