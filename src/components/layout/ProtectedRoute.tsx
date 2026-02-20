@@ -17,6 +17,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             navigate('/auth');
         } else if (!isLoading && user && !profile) {
             // User is logged in but has no profile row -> force registration
+            // Double check to ensure we don't redirect if we're already on an allowed path (though ProtectedRoute shouldn't wrap Register)
             navigate('/register', { replace: true });
         }
     }, [user, profile, isLoading, navigate]);
