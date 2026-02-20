@@ -1,0 +1,7 @@
+project_id = "irntguqcbpecqyicqura"
+
+[functions.import-members]
+verify_jwt = false
+
+[functions.cleanup-orphan-users]
+verify_jwt = false
