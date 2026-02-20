@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string): Promise<void> => {
     try {
+      console.log('[AuthContext] fetchProfile called for userId:', userId);
       const [profileResult, roleResult] = await Promise.all([
         supabase
           .from('profiles')
@@ -57,10 +58,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle()
       ]);
 
+      console.log('[AuthContext] fetchProfile result:', {
+        profileData: profileResult.data ? 'found' : 'null',
+        profileError: profileResult.error?.message || 'none',
+        profileStatus: profileResult.status,
+      });
+
+      // If profile not found, retry once after a short delay
+      if (!profileResult.data && !profileResult.error) {
+        console.log('[AuthContext] Profile not found, retrying in 1s...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const retryResult = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+        console.log('[AuthContext] Retry result:', {
+          data: retryResult.data ? 'found' : 'null',
+          error: retryResult.error?.message || 'none',
+        });
+        if (retryResult.data) {
+          setProfile(retryResult.data);
+          setIsAdmin(!!roleResult.data);
+          return;
+        }
+      }
+
       setProfile(profileResult.data);
       setIsAdmin(!!roleResult.data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('[AuthContext] Error fetching profile:', error);
     }
   };
 

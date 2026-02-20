@@ -254,11 +254,19 @@ export default function Register() {
   };
 
   const handleDialogClose = async () => {
-    setIsSubmitting(true); // Show loading state while redirecting
-    // Wait for DB propagation and ensure session is fresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Force hard reload to clear any stale auth state
-    window.location.href = '/';
+    setIsSubmitting(true);
+    try {
+      // Wait for DB propagation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Refresh profile in AuthContext
+      await refreshProfile();
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    } catch (e) {
+      console.error('[Register] handleDialogClose error:', e);
+      // Fallback: hard reload
+      window.location.href = '/';
+    }
   };
 
   if (isLoading) {
