@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -297,7 +297,7 @@ export default function Settings() {
             className="w-full"
             onClick={async () => {
               try {
-                await supabase.auth.signOut();
+                await signOut();
                 navigate('/auth');
                 toast({
                   title: "ออกจากระบบแล้ว",
