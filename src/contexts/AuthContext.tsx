@@ -97,9 +97,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Effect 1: Auth state listener - ONLY sets user/session state
+  // Auth state listener + session init
   useEffect(() => {
     let isMounted = true;
+
+    const handleProfileLoad = (userId: string) => {
+      // Defer fetchProfile to let Supabase client sync auth headers
+      setTimeout(async () => {
+        if (!isMounted) return;
+        await fetchProfile(userId);
+        if (isMounted) setIsLoading(false);
+      }, 0);
+    };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -108,7 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] onAuthStateChange:', event);
         setSession(session);
         setUser(session?.user ?? null);
-        if (!session?.user) {
+
+        if (session?.user) {
+          handleProfileLoad(session.user.id);
+        } else {
           setProfile(null);
           setIsAdmin(false);
           setIsLoading(false);
@@ -122,7 +134,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      if (!session?.user) {
+
+      if (session?.user) {
+        handleProfileLoad(session.user.id);
+      } else {
         setIsLoading(false);
       }
     };
@@ -134,16 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
-
-  // Effect 2: Fetch profile AFTER user state is set (separate from auth listener)
-  useEffect(() => {
-    if (user) {
-      console.log('[AuthContext] User detected, fetching profile for:', user.id);
-      fetchProfile(user.id).then(() => {
-        setIsLoading(false);
-      });
-    }
-  }, [user]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
