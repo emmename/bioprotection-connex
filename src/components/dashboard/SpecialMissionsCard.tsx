@@ -48,11 +48,7 @@ export function SpecialMissionsCard() {
 
                         // Determine action based on mission type (simple logic for now)
                         const handleAction = () => {
-                            if (mission.mission_type === 'scan_qr' || mission.qr_code) {
-                                navigate('/missions/scan');
-                            } else {
-                                navigate(`/missions/${mission.id}`);
-                            }
+                            navigate('/coming-soon');
                         };
 
                         return (

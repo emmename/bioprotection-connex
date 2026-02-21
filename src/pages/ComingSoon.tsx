@@ -13,7 +13,7 @@ export default function ComingSoon() {
                 </div>
 
                 <h1 className="text-2xl font-bold text-foreground">
-                    ขออภัย หน้านี้ยังไม่เปิดให้บริการ
+                    ขออภัยในความไม่สะดวก หน้านี้ยังไม่เปิดให้บริการ
                 </h1>
 
                 <p className="text-muted-foreground text-sm leading-relaxed">
