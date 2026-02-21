@@ -72,19 +72,19 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Avatar & Welcome Text */}
-          <div className="flex items-center gap-3">
-            <div>
-              <Avatar className="w-[72px] h-[72px] border-2 border-primary/20">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="shrink-0">
+              <Avatar className="w-12 h-12 sm:w-[72px] sm:h-[72px] border-2 border-primary/20">
                 <AvatarImage src={bioprotectionLogo} />
                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
                   <img src={bioprotectionLogo} alt="Bioprotection Connex" className="w-full h-full object-cover" />
                 </AvatarFallback>
               </Avatar>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Welcome Back</p>
-              <p className="text-lg font-bold flex items-center gap-1.5">
-                ยินดีต้อนรับ <span>👋</span>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Welcome Back</p>
+              <p className="text-sm sm:text-lg font-bold flex items-center gap-1.5 whitespace-nowrap">
+                ยินดีต้อนรับ <span className="text-base sm:text-xl">👋</span>
               </p>
             </div>
           </div>

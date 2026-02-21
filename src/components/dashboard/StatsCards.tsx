@@ -42,8 +42,10 @@ function StatCard({ iconSrc, value, label, iconBgColor = 'bg-primary/10', classN
       <div className={`w-10 h-10 ${iconBgColor} rounded-full flex items-center justify-center shrink-0 z-10`}>
         <img src={iconSrc} alt={label as string} className="w-6 h-6 object-contain" />
       </div>
-      <div className="w-full overflow-hidden z-10 flex flex-col items-center">
-        <p className="text-xl font-bold truncate tracking-tight">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+      <div className="w-full overflow-hidden z-10 flex flex-col items-center min-w-0">
+        <p className={`font-bold tracking-tight w-full text-center ${typeof value === 'string' && value.length > 8 ? 'text-xs sm:text-sm truncate px-1' : 'text-lg sm:text-xl truncate'}`}>
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </p>
         <div className="text-[10px] text-muted-foreground leading-tight font-medium text-center">
           {label}
         </div>

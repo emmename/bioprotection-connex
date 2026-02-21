@@ -18,6 +18,7 @@ import Content from "./pages/Content";
 import ContentDetail from "./pages/ContentDetail";
 import Missions from "./pages/Missions";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 import Terms from "./pages/Terms";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -34,6 +35,7 @@ import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import AdminMissions from "./pages/admin/AdminMissions";
 import AppLayout from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
+        <ScrollToTop />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -61,6 +64,7 @@ const App = () => (
             <Route path="/content/:id" element={<ProtectedRoute><AppLayout><ContentDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/missions" element={<ProtectedRoute><AppLayout><Missions /></AppLayout></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
+            <Route path="/coming-soon" element={<ProtectedRoute><AppLayout><ComingSoon /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
             <Route path="/admin/members" element={<AdminLayout><AdminMembers /></AdminLayout>} />

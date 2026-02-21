@@ -138,10 +138,12 @@
 
   html {
     font-family: 'Prompt', sans-serif;
+    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+    overscroll-behavior-y: none;
   }
 }
 

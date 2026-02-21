@@ -43,7 +43,7 @@ const quickActions: QuickAction[] = [
   },
   {
     label: 'สแกน QR',
-    href: '/missions/scan',
+    href: '/coming-soon',
     imageSrc: scanButtonImg,
   },
   {
@@ -76,7 +76,7 @@ export function QuickActionsCard() {
               to={action.href}
               className="group flex flex-col items-center"
             >
-              <div className="w-20 h-20 mb-2 group-hover:scale-110 transition-transform overflow-hidden rounded-2xl">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mb-2 group-hover:scale-110 transition-transform overflow-hidden rounded-2xl flex-shrink-0">
                 <img
                   src={action.imageSrc}
                   alt={action.label}

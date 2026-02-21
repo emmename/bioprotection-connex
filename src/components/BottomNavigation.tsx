@@ -29,8 +29,8 @@ const navItems: NavItem[] = [
   {
     iconSrc: gameIcon,
     label: 'เล่นเกม',
-    href: '/games',
-    matchPaths: ['/games']
+    href: '/coming-soon',
+    matchPaths: ['/coming-soon']
   },
   {
     iconSrc: rewardIcon,
