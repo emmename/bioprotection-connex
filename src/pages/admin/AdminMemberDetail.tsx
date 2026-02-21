@@ -10,13 +10,14 @@ import { InlineEditField } from '@/components/admin/InlineEditField';
 import { InlineEditSelect } from '@/components/admin/InlineEditSelect';
 import { PointsCurrencyManager } from '@/components/admin/PointsCurrencyManager';
 import { DeleteMemberDialog } from '@/components/admin/DeleteMemberDialog';
+import { useTierSettings } from '@/hooks/useGamification';
 import { toast } from '@/hooks/use-toast';
-import { 
-  ArrowLeft, 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  ArrowLeft,
+  User,
+  Phone,
+  Mail,
+  MapPin,
   Briefcase,
   Award,
   Coins,
@@ -130,13 +131,6 @@ const memberTypeLabels: Record<string, string> = {
   other: 'อื่นๆ',
 };
 
-const tierLabels: Record<string, string> = {
-  bronze: 'Bronze',
-  silver: 'Silver',
-  gold: 'Gold',
-  platinum: 'Platinum',
-};
-
 const tierColors: Record<string, string> = {
   bronze: 'bg-amber-600',
   silver: 'bg-gray-400',
@@ -162,13 +156,6 @@ const vetTypeLabels: Record<string, string> = {
   hospital_clinic: 'โรงพยาบาล/คลินิก',
 };
 
-const tierOptions = [
-  { value: 'bronze', label: 'Bronze' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
-];
-
 const statusOptions = [
   { value: 'pending', label: 'รอการอนุมัติ' },
   { value: 'approved', label: 'อนุมัติแล้ว' },
@@ -184,6 +171,10 @@ export default function AdminMemberDetail() {
   const [coinsHistory, setCoinsHistory] = useState<CoinsTransaction[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { tiers: tierSettings } = useTierSettings();
+  const dynamicTiers = (tierSettings || []).map(t => ({ value: t.tier, label: t.display_name || t.tier }));
+  const dynamicTierLabels = (tierSettings || []).reduce((acc, t) => ({ ...acc, [t.tier]: t.display_name || t.tier }), {} as Record<string, string>);
 
   useEffect(() => {
     if (id) {
@@ -204,7 +195,7 @@ export default function AdminMemberDetail() {
       setProfile(profileData);
 
       const occupationDetails: OccupationDetails = {};
-      
+
       if (profileData.member_type === 'farm') {
         const { data } = await supabase
           .from('farm_details')
@@ -241,7 +232,7 @@ export default function AdminMemberDetail() {
           .maybeSingle();
         if (data) occupationDetails.government_details = data;
       }
-      
+
       setOccupation(occupationDetails);
 
       const { data: pointsData } = await supabase
@@ -276,7 +267,7 @@ export default function AdminMemberDetail() {
 
   const updateProfileField = async (field: string, value: string) => {
     if (!profile) return;
-    
+
     const { error } = await supabase
       .from('profiles')
       .update({ [field]: value || null })
@@ -380,22 +371,22 @@ export default function AdminMemberDetail() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">
-                <InlineEditField 
-                  value={profile.first_name} 
+                <InlineEditField
+                  value={profile.first_name}
                   onSave={(v) => updateProfileField('first_name', v)}
                   className="inline-flex"
                 />
                 {' '}
-                <InlineEditField 
-                  value={profile.last_name} 
+                <InlineEditField
+                  value={profile.last_name}
                   onSave={(v) => updateProfileField('last_name', v)}
                   className="inline-flex"
                 />
               </h1>
               {profile.nickname && (
                 <span className="text-muted-foreground">
-                  (<InlineEditField 
-                    value={profile.nickname || ''} 
+                  (<InlineEditField
+                    value={profile.nickname || ''}
                     onSave={(v) => updateProfileField('nickname', v)}
                     placeholder="ชื่อเล่น"
                     className="inline-flex"
@@ -409,9 +400,9 @@ export default function AdminMemberDetail() {
               )}
               <InlineEditSelect
                 value={profile.tier}
-                options={tierOptions}
+                options={dynamicTiers.length > 0 ? dynamicTiers : [{ value: profile.tier, label: profile.tier }]}
                 onSave={(v) => updateProfileField('tier', v)}
-                displayValue={tierLabels[profile.tier]}
+                displayValue={dynamicTierLabels[profile.tier] || profile.tier}
               />
               <InlineEditSelect
                 value={profile.approval_status}
@@ -504,11 +495,11 @@ export default function AdminMemberDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="personal">ข้อมูลส่วนตัว</TabsTrigger>
-          <TabsTrigger value="occupation">ข้อมูลอาชีพ</TabsTrigger>
-          <TabsTrigger value="transactions">ประวัติคะแนน</TabsTrigger>
-          <TabsTrigger value="receipts">ใบเสร็จ</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 p-1 bg-muted rounded-lg">
+          <TabsTrigger value="personal" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ข้อมูลส่วนตัว</TabsTrigger>
+          <TabsTrigger value="occupation" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ข้อมูลอาชีพ</TabsTrigger>
+          <TabsTrigger value="transactions" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ประวัติคะแนน</TabsTrigger>
+          <TabsTrigger value="receipts" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ใบเสร็จ</TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal" className="space-y-4">
@@ -524,8 +515,8 @@ export default function AdminMemberDetail() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  <InlineEditField 
-                    value={profile.phone || ''} 
+                  <InlineEditField
+                    value={profile.phone || ''}
                     onSave={(v) => updateProfileField('phone', v)}
                     placeholder="-"
                     type="tel"
@@ -533,8 +524,8 @@ export default function AdminMemberDetail() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  <InlineEditField 
-                    value={profile.email || ''} 
+                  <InlineEditField
+                    value={profile.email || ''}
                     onSave={(v) => updateProfileField('email', v)}
                     placeholder="-"
                     type="email"
@@ -542,8 +533,8 @@ export default function AdminMemberDetail() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground text-sm flex-shrink-0">LINE ID:</span>
-                  <InlineEditField 
-                    value={profile.line_id || ''} 
+                  <InlineEditField
+                    value={profile.line_id || ''}
                     onSave={(v) => updateProfileField('line_id', v)}
                     placeholder="-"
                   />
@@ -562,8 +553,8 @@ export default function AdminMemberDetail() {
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">ที่อยู่</p>
-                  <InlineEditField 
-                    value={profile.address || ''} 
+                  <InlineEditField
+                    value={profile.address || ''}
                     onSave={(v) => updateProfileField('address', v)}
                     placeholder="-"
                   />
@@ -571,16 +562,16 @@ export default function AdminMemberDetail() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">ตำบล/แขวง</p>
-                    <InlineEditField 
-                      value={profile.subdistrict || ''} 
+                    <InlineEditField
+                      value={profile.subdistrict || ''}
                       onSave={(v) => updateProfileField('subdistrict', v)}
                       placeholder="-"
                     />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">อำเภอ/เขต</p>
-                    <InlineEditField 
-                      value={profile.district || ''} 
+                    <InlineEditField
+                      value={profile.district || ''}
                       onSave={(v) => updateProfileField('district', v)}
                       placeholder="-"
                     />
@@ -589,16 +580,16 @@ export default function AdminMemberDetail() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">จังหวัด</p>
-                    <InlineEditField 
-                      value={profile.province || ''} 
+                    <InlineEditField
+                      value={profile.province || ''}
                       onSave={(v) => updateProfileField('province', v)}
                       placeholder="-"
                     />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">รหัสไปรษณีย์</p>
-                    <InlineEditField 
-                      value={profile.postal_code || ''} 
+                    <InlineEditField
+                      value={profile.postal_code || ''}
                       onSave={(v) => updateProfileField('postal_code', v)}
                       placeholder="-"
                     />
@@ -678,31 +669,31 @@ export default function AdminMemberDetail() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">ชื่อฟาร์ม</p>
-                      <InlineEditField 
-                        value={occupation.farm_details.farm_name} 
+                      <InlineEditField
+                        value={occupation.farm_details.farm_name}
                         onSave={(v) => updateOccupationField('farm_details', occupation.farm_details!.id, 'farm_name', v)}
                       />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">ตำแหน่ง</p>
-                      <InlineEditField 
-                        value={occupation.farm_details.position || ''} 
+                      <InlineEditField
+                        value={occupation.farm_details.position || ''}
                         onSave={(v) => updateOccupationField('farm_details', occupation.farm_details!.id, 'position', v)}
                         placeholder="-"
                       />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">จำนวนสัตว์</p>
-                      <InlineEditField 
-                        value={occupation.farm_details.animal_count || ''} 
+                      <InlineEditField
+                        value={occupation.farm_details.animal_count || ''}
                         onSave={(v) => updateOccupationField('farm_details', occupation.farm_details!.id, 'animal_count', v)}
                         placeholder="-"
                       />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">จำนวนโรงเรือน</p>
-                      <InlineEditField 
-                        value={occupation.farm_details.building_count || ''} 
+                      <InlineEditField
+                        value={occupation.farm_details.building_count || ''}
                         onSave={(v) => updateOccupationField('farm_details', occupation.farm_details!.id, 'building_count', v)}
                         placeholder="-"
                       />
@@ -731,8 +722,8 @@ export default function AdminMemberDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">ชื่อบริษัท</p>
-                    <InlineEditField 
-                      value={occupation.company_details.company_name} 
+                    <InlineEditField
+                      value={occupation.company_details.company_name}
                       onSave={(v) => updateOccupationField('company_details', occupation.company_details!.id, 'company_name', v)}
                     />
                   </div>
@@ -742,8 +733,8 @@ export default function AdminMemberDetail() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">ตำแหน่ง</p>
-                    <InlineEditField 
-                      value={occupation.company_details.position || ''} 
+                    <InlineEditField
+                      value={occupation.company_details.position || ''}
                       onSave={(v) => updateOccupationField('company_details', occupation.company_details!.id, 'position', v)}
                       placeholder="-"
                     />
@@ -759,8 +750,8 @@ export default function AdminMemberDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">ชื่อหน่วยงาน</p>
-                    <InlineEditField 
-                      value={occupation.vet_details.organization_name} 
+                    <InlineEditField
+                      value={occupation.vet_details.organization_name}
                       onSave={(v) => updateOccupationField('vet_details', occupation.vet_details!.id, 'organization_name', v)}
                     />
                   </div>
@@ -774,8 +765,8 @@ export default function AdminMemberDetail() {
               {occupation.shop_details && (
                 <div>
                   <p className="text-sm text-muted-foreground">ชื่อร้าน</p>
-                  <InlineEditField 
-                    value={occupation.shop_details.shop_name} 
+                  <InlineEditField
+                    value={occupation.shop_details.shop_name}
                     onSave={(v) => updateOccupationField('shop_details', occupation.shop_details!.id, 'shop_name', v)}
                   />
                 </div>
@@ -784,8 +775,8 @@ export default function AdminMemberDetail() {
               {occupation.government_details && (
                 <div>
                   <p className="text-sm text-muted-foreground">ชื่อหน่วยงาน</p>
-                  <InlineEditField 
-                    value={occupation.government_details.organization_name} 
+                  <InlineEditField
+                    value={occupation.government_details.organization_name}
                     onSave={(v) => updateOccupationField('government_details', occupation.government_details!.id, 'organization_name', v)}
                   />
                 </div>
@@ -893,15 +884,15 @@ export default function AdminMemberDetail() {
                     <div key={receipt.id} className="border rounded-lg overflow-hidden">
                       <div className="aspect-video bg-muted flex items-center justify-center relative">
                         {receipt.image_url ? (
-                          <img 
-                            src={receipt.image_url} 
-                            alt="Receipt" 
+                          <img
+                            src={receipt.image_url}
+                            alt="Receipt"
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <Image className="w-8 h-8 text-muted-foreground" />
                         )}
-                        <Badge 
+                        <Badge
                           className="absolute top-2 right-2"
                           variant={receipt.status === 'approved' ? 'default' : receipt.status === 'pending' ? 'secondary' : 'destructive'}
                         >

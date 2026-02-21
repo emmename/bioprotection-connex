@@ -36,7 +36,7 @@ const memberTypeLabels: Record<string, string> = {
   farm: 'ฟาร์มเลี้ยงสัตว์',
   company_employee: 'พนักงานบริษัท',
   veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านค้าปศุสัตว์',
+  livestock_shop: 'ร้านค้าสินค้าปศุสัตว์',
   government: 'รับราชการ',
   other: 'อื่นๆ',
 };

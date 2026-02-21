@@ -106,7 +106,7 @@ export function OccupationStep({ data, onChange }: OccupationStepProps) {
         {memberTypeOptions.map((option) => {
           const Icon = option.icon;
           const isSelected = data.memberType === option.value;
-          
+
           return (
             <Card
               key={option.value}
@@ -156,13 +156,17 @@ export function OccupationStep({ data, onChange }: OccupationStepProps) {
               <p className="text-xs text-muted-foreground">(เลือกได้มากกว่าหนึ่งคำตอบ)</p>
               <div className="grid grid-cols-2 gap-2">
                 {animalTypeOptions.map((type) => (
-                  <div key={type} className="flex items-center space-x-2">
+                  <div
+                    key={type}
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => handleCheckboxChange('animalTypes', type, !data.animalTypes?.includes(type))}
+                  >
                     <Checkbox
                       id={`animal-${type}`}
                       checked={data.animalTypes?.includes(type)}
                       onCheckedChange={(checked) => handleCheckboxChange('animalTypes', type, !!checked)}
                     />
-                    <Label htmlFor={`animal-${type}`} className="text-sm">{type}</Label>
+                    <Label htmlFor={`animal-${type}`} className="text-sm cursor-pointer flex-1">{type}</Label>
                   </div>
                 ))}
               </div>
@@ -211,13 +215,17 @@ export function OccupationStep({ data, onChange }: OccupationStepProps) {
               <p className="text-xs text-muted-foreground">(เลือกได้มากกว่า 1 ชนิด)</p>
               <div className="grid grid-cols-2 gap-2">
                 {pestProblemOptions.map((pest) => (
-                  <div key={pest} className="flex items-center space-x-2">
+                  <div
+                    key={pest}
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => handleCheckboxChange('pestProblems', pest, !data.pestProblems?.includes(pest))}
+                  >
                     <Checkbox
                       id={`pest-${pest}`}
                       checked={data.pestProblems?.includes(pest)}
                       onCheckedChange={(checked) => handleCheckboxChange('pestProblems', pest, !!checked)}
                     />
-                    <Label htmlFor={`pest-${pest}`} className="text-sm">{pest}</Label>
+                    <Label htmlFor={`pest-${pest}`} className="text-sm cursor-pointer flex-1">{pest}</Label>
                   </div>
                 ))}
               </div>
@@ -238,13 +246,17 @@ export function OccupationStep({ data, onChange }: OccupationStepProps) {
               <p className="text-xs text-muted-foreground">(เลือกได้มากกว่า 1 ชนิด)</p>
               <div className="space-y-2">
                 {flyControlOptions.map((method) => (
-                  <div key={method} className="flex items-center space-x-2">
+                  <div
+                    key={method}
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => handleCheckboxChange('flyControlMethods', method, !data.flyControlMethods?.includes(method))}
+                  >
                     <Checkbox
                       id={`fly-${method}`}
                       checked={data.flyControlMethods?.includes(method)}
                       onCheckedChange={(checked) => handleCheckboxChange('flyControlMethods', method, !!checked)}
                     />
-                    <Label htmlFor={`fly-${method}`} className="text-sm">{method}</Label>
+                    <Label htmlFor={`fly-${method}`} className="text-sm cursor-pointer flex-1">{method}</Label>
                   </div>
                 ))}
               </div>
@@ -338,13 +350,19 @@ export function OccupationStep({ data, onChange }: OccupationStepProps) {
             <div className="space-y-2">
               <Label>ประเภทสัตวแพทย์ <span className="text-destructive">*</span></Label>
               <RadioGroup value={data.vetType} onValueChange={(value) => onChange({ vetType: value })}>
-                <div className="flex items-center space-x-2">
+                <div
+                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => onChange({ vetType: 'livestock' })}
+                >
                   <RadioGroupItem value="livestock" id="vet-livestock" />
-                  <Label htmlFor="vet-livestock">สัตวแพทย์ประจำปศุสัตว์</Label>
+                  <Label htmlFor="vet-livestock" className="cursor-pointer flex-1">สัตวแพทย์ประจำปศุสัตว์</Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div
+                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => onChange({ vetType: 'hospital_clinic' })}
+                >
                   <RadioGroupItem value="hospital_clinic" id="vet-clinic" />
-                  <Label htmlFor="vet-clinic">สัตวแพทย์ประจำโรงพยาบาลสัตว์/คลินิก</Label>
+                  <Label htmlFor="vet-clinic" className="cursor-pointer flex-1">สัตวแพทย์ประจำโรงพยาบาลสัตว์/คลินิก</Label>
                 </div>
               </RadioGroup>
             </div>

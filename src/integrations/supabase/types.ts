@@ -892,6 +892,8 @@ export type Database = {
           name: string
           points_cost: number
           stock_quantity: number
+          target_member_types: Database["public"]["Enums"]["member_type"][] | null
+          requirements: Json | null
           target_tiers: Database["public"]["Enums"]["tier_level"][] | null
           tier_points_cost: Json | null
           updated_at: string
@@ -907,6 +909,8 @@ export type Database = {
           name: string
           points_cost: number
           stock_quantity?: number
+          target_member_types?: Database["public"]["Enums"]["member_type"][] | null
+          requirements?: Json | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           tier_points_cost?: Json | null
           updated_at?: string
@@ -1001,6 +1005,7 @@ export type Database = {
       tier_settings: {
         Row: {
           benefits: string[] | null
+          color: string | null
           created_at: string
           display_name: string
           id: string
@@ -1011,6 +1016,7 @@ export type Database = {
         }
         Insert: {
           benefits?: string[] | null
+          color?: string | null
           created_at?: string
           display_name: string
           id?: string
@@ -1021,6 +1027,7 @@ export type Database = {
         }
         Update: {
           benefits?: string[] | null
+          color?: string | null
           created_at?: string
           display_name?: string
           id?: string

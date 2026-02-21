@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useMemberSubType } from '@/hooks/useMemberSubType';
 
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { cn } from '@/lib/utils';
@@ -67,7 +68,7 @@ export default function Rewards() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = viewMode === 'grid' ? 6 : 5;
 
-
+  const { subTypeValue: userSubType } = useMemberSubType(profile as { id: string; member_type: "farm" | "company_employee" | "veterinarian" | "livestock_shop" | "government" | "other" } | null | undefined);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -122,9 +123,47 @@ export default function Rewards() {
       return;
     }
 
-    setRewards(data || []);
+    if (!profile) {
+      setRewards(data || []);
+      setIsLoading(false);
+      return;
+    }
+
+    // Filter rewards based on user's member type and sub type
+    const userMemberType = profile.member_type;
+
+    const filteredData = (data || []).filter(reward => {
+      // If reward has no specific member types, everyone can see
+      if (!reward.target_member_types || reward.target_member_types.length === 0) {
+        return true;
+      }
+
+      // Check if user's member type is in the target list
+      if (!reward.target_member_types.includes(userMemberType as "farm" | "company_employee" | "veterinarian" | "livestock_shop" | "government" | "other")) {
+        return false;
+      }
+
+      // If user's member type is allowed, check sub-types
+      const requirements = reward.requirements as any;
+      const targetSubTypes = requirements?.targeting?.sub_types?.[userMemberType];
+
+      // If no specific sub-types specified for this member type, allow
+      if (!targetSubTypes || targetSubTypes.length === 0) {
+        return true;
+      }
+
+      // If user has a sub-type and it's in the target list, allow
+      if (userSubType && targetSubTypes.includes(userSubType)) {
+        return true;
+      }
+
+      // User has no sub-type or it's not in the list
+      return false;
+    });
+
+    setRewards(filteredData);
     setIsLoading(false);
-  }, [toast, selectedCategory]);
+  }, [toast, selectedCategory, profile, userSubType]);
 
   const { containerRef, isRefreshing, pullDistance } = usePullToRefresh({
     onRefresh: fetchRewards,
@@ -136,6 +175,7 @@ export default function Rewards() {
     const pointsCost = getRewardPointsCost(reward, userTier);
     if ((profile.total_points ?? 0) < pointsCost) return false;
     if (reward.stock_quantity <= 0) return false;
+    // Note: Tier filtering is still applied here, but we also applied member_type and sub_type filtering before rendering
     if (reward.target_tiers && reward.target_tiers.length > 0) {
       if (!reward.target_tiers.includes(userTier)) return false;
     }

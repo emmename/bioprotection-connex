@@ -34,7 +34,7 @@ export function useTierSettings() {
     fetchTiers();
   }, []);
 
-  return { tiers, isLoading, refetch: fetchTiers };
+  return { tiers: tiers || [], isLoading, refetch: fetchTiers };
 }
 
 export function usePoints() {

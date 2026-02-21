@@ -20,6 +20,7 @@ import { QuizEditor, QuizQuestion } from '@/components/admin/QuizEditor';
 import { SurveyEditor, SurveyQuestion } from '@/components/admin/SurveyEditor';
 import { ContentPreview } from '@/components/admin/ContentPreview';
 import { ThumbnailUploader } from '@/components/admin/ThumbnailUploader';
+import { useTierSettings } from '@/hooks/useGamification';
 
 interface Content {
   id: string;
@@ -46,18 +47,11 @@ interface Content {
 type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
 type MemberType = 'farm' | 'company_employee' | 'veterinarian' | 'livestock_shop';
 
-const TIER_OPTIONS: { value: TierLevel; label: string }[] = [
-  { value: 'bronze', label: 'Bronze' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
-];
-
 const MEMBER_TYPE_OPTIONS: { value: MemberType; label: string }[] = [
   { value: 'farm', label: 'ฟาร์มเลี้ยงสัตว์' },
   { value: 'company_employee', label: 'พนักงานบริษัท' },
   { value: 'veterinarian', label: 'สัตวแพทย์' },
-  { value: 'livestock_shop', label: 'ร้านขายอาหารสัตว์' },
+  { value: 'livestock_shop', label: 'ร้านขายสินค้าปศุสัตว์' },
 ];
 
 const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
@@ -129,6 +123,9 @@ export default function AdminContent() {
   const [isBulkEditTiersOpen, setIsBulkEditTiersOpen] = useState(false);
   const [bulkPointsValue, setBulkPointsValue] = useState<number>(10);
   const [bulkTiersValue, setBulkTiersValue] = useState<TierLevel[]>([]);
+
+  const { tiers: tierSettings } = useTierSettings();
+  const dynamicTiers = (tierSettings || []).map(t => ({ value: t.tier as TierLevel, label: t.display_name || t.tier }));
 
   useEffect(() => {
     fetchContents();
@@ -517,7 +514,7 @@ export default function AdminContent() {
           <div className="space-y-3">
             <h4 className="font-medium leading-none text-sm">แก้ไขสิทธิ์การเข้าถึง</h4>
             <div className="space-y-2">
-              {TIER_OPTIONS.map((tier) => {
+              {dynamicTiers.map((tier) => {
                 const isSelected = currentTiers.includes(tier.value);
                 return (
                   <div key={tier.value} className="flex items-center space-x-2">
@@ -935,7 +932,7 @@ export default function AdminContent() {
                   <div className="space-y-3 pt-2 border-t">
                     <Label className="text-base">ระดับสมาชิก (Tier)</Label>
                     <div className="flex flex-wrap gap-2">
-                      {TIER_OPTIONS.map(tier => (
+                      {dynamicTiers.map(tier => (
                         <div key={tier.value} className="flex items-center space-x-2 border p-2 rounded bg-background">
                           <Checkbox
                             id={`tier-${tier.value}`}
@@ -1072,7 +1069,12 @@ export default function AdminContent() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className={
+                            content.content_type === 'article' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
+                              content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
+                                  content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : ''
+                          }>
                             {contentTypeLabels[content.content_type]?.label || content.content_type}
                           </Badge>
                         </TableCell>
@@ -1080,12 +1082,31 @@ export default function AdminContent() {
                           <div className="flex flex-col gap-1 max-w-[200px]">
                             {/* Member Types */}
                             {content.target_member_types && content.target_member_types.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {content.target_member_types.map((type) => (
-                                  <Badge key={type} variant="secondary" className="text-[10px] px-1 h-fit">
-                                    {MEMBER_TYPE_OPTIONS.find(t => t.value === type)?.label || type}
-                                  </Badge>
-                                ))}
+                              <div className="flex flex-col gap-1.5 w-full">
+                                {content.target_member_types.map((type) => {
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  const parsedReqs = content.requirements as any;
+                                  const subTypes = parsedReqs?.targeting?.sub_types?.[type] || [];
+
+                                  return (
+                                    <div key={type} className="border border-border/50 rounded p-1.5 bg-background">
+                                      <div className="text-[11px] font-medium text-foreground leading-none">
+                                        {MEMBER_TYPE_OPTIONS.find(t => t.value === type)?.label || type}
+                                      </div>
+                                      <div className="mt-1.5 flex flex-wrap gap-1">
+                                        {subTypes.length > 0 ? (
+                                          subTypes.map((sub: string) => (
+                                            <Badge key={sub} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal bg-secondary/60 text-secondary-foreground leading-none flex items-center">
+                                              {MEMBER_SUB_TYPES[type]?.find(s => s.value === sub)?.label || sub}
+                                            </Badge>
+                                          ))
+                                        ) : (
+                                          <span className="text-[10px] text-muted-foreground leading-none">ทุกประเภทย่อย</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             ) : (
                               <span className="text-xs text-muted-foreground">ทุกประเภท</span>
@@ -1093,11 +1114,22 @@ export default function AdminContent() {
                             {/* Tiers */}
                             {content.target_tiers && content.target_tiers.length > 0 ? (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {content.target_tiers.map((tier) => (
-                                  <Badge key={tier} variant="outline" className={`text-[10px] px-1 h-fit border-${tier === 'platinum' ? 'slate-400' : tier === 'gold' ? 'yellow-400' : tier === 'silver' ? 'gray-400' : 'orange-400'}`}>
-                                    {tier}
-                                  </Badge>
-                                ))}
+                                {content.target_tiers.map((tier) => {
+                                  const matchedTier = tierSettings?.find(t => t.tier === tier);
+                                  const displayName = matchedTier?.display_name || tier;
+                                  const customColor = matchedTier?.color;
+                                  const badgeClass = customColor ? '' : (tier === 'platinum' ? 'bg-purple-600 text-white' : tier === 'gold' ? 'bg-yellow-500 text-white' : tier === 'silver' ? 'bg-gray-400 text-white' : 'bg-amber-700 text-white');
+
+                                  return (
+                                    <Badge
+                                      key={tier}
+                                      className={`text-[10px] px-1 h-fit border-0 capitalize ${badgeClass}`}
+                                      style={customColor ? { backgroundColor: customColor, color: '#fff' } : undefined}
+                                    >
+                                      {displayName}
+                                    </Badge>
+                                  );
+                                })}
                               </div>
                             ) : (
                               <span className="text-xs text-muted-foreground">ทุกระดับ</span>
@@ -1253,7 +1285,7 @@ export default function AdminContent() {
             <div className="space-y-3">
               <Label>สิทธิ์การเข้าถึงตาม Tier (เลือกใหม่เพื่อเขียนทับ)</Label>
               <div className="flex flex-wrap gap-4">
-                {TIER_OPTIONS.map((tier) => (
+                {dynamicTiers.map((tier) => (
                   <div key={tier.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`bulk-tier-${tier.value}`}

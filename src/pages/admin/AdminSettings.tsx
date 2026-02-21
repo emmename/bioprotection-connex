@@ -20,6 +20,7 @@ interface TierSetting {
   min_points: number;
   max_points: number | null;
   benefits: string[] | null;
+  color: string | null;
 }
 
 
@@ -124,6 +125,7 @@ const AdminSettings = () => {
             min_points: tier.min_points,
             max_points: tier.max_points,
             benefits: tier.benefits,
+            color: tier.color,
           })
           .eq("id", tier.id);
 
@@ -218,21 +220,21 @@ const AdminSettings = () => {
       </div>
 
       <Tabs defaultValue="tiers" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="tiers" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-4 p-1 bg-muted rounded-lg">
+          <TabsTrigger value="tiers" className="flex items-center gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">
             <Trophy className="h-4 w-4" />
             <span className="hidden sm:inline">Tier</span>
           </TabsTrigger>
 
-          <TabsTrigger value="checkins" className="flex items-center gap-2">
+          <TabsTrigger value="checkins" className="flex items-center gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Check-in</span>
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
+          <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
+          <TabsTrigger value="system" className="flex items-center gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">System</span>
           </TabsTrigger>
@@ -252,9 +254,23 @@ const AdminSettings = () => {
               <div className="grid gap-6">
                 {tierSettings.map((tier) => (
                   <div key={tier.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full ${tierColors[tier.tier]}`} />
-                      <h3 className="font-semibold text-lg">{tierLabels[tier.tier]}</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-4 h-4 rounded-full ${!tier.color ? tierColors[tier.tier] : ''}`}
+                          style={tier.color ? { backgroundColor: tier.color } : {}}
+                        />
+                        <h3 className="font-semibold text-lg">{tier.display_name || tierLabels[tier.tier]}</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label>สี (Color)</Label>
+                        <Input
+                          type="color"
+                          value={tier.color || "#000000"}
+                          onChange={(e) => handleTierChange(tier.id, "color", e.target.value)}
+                          className="w-12 h-8 p-1 cursor-pointer"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

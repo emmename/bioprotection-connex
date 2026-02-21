@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, Target, Users, MapPin, QrCode, Search, GripVertic
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { MissionCompletionsDialog } from '@/components/admin/MissionCompletionsDialog';
+import { useTierSettings } from '@/hooks/useGamification';
 
 interface Mission {
   id: string;
@@ -76,13 +77,6 @@ const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
   ],
 };
 
-const TIERS = [
-  { value: 'bronze', label: 'Bronze' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
-];
-
 interface RewardOverride {
   type: 'member_type' | 'tier';
   value: string;
@@ -118,6 +112,9 @@ export default function AdminMissions() {
 
   // Reward Overrides State
   const [rewardOverrides, setRewardOverrides] = useState<RewardOverride[]>([]);
+
+  const { tiers: tierSettings } = useTierSettings();
+  const dynamicTiers = (tierSettings || []).map(t => ({ value: t.tier, label: t.display_name || t.tier }));
 
   useEffect(() => {
     fetchMissions();
@@ -486,7 +483,7 @@ export default function AdminMissions() {
                 <div className="space-y-2 mt-4">
                   <Label>ระดับสมาชิก (Tier) ที่เข้าร่วมได้</Label>
                   <div className="flex flex-wrap gap-2">
-                    {TIERS.map(tier => (
+                    {dynamicTiers.map(tier => (
                       <div key={tier.value} className="flex items-center space-x-2 border p-2 rounded bg-background">
                         <Checkbox
                           id={`tier-${tier.value}`}
@@ -542,7 +539,7 @@ export default function AdminMissions() {
                               <SelectContent>
                                 {override.type === 'member_type'
                                   ? MEMBER_TYPES.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)
-                                  : TIERS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)
+                                  : dynamicTiers.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)
                                 }
                               </SelectContent>
                             </Select>
@@ -654,16 +651,64 @@ export default function AdminMissions() {
                             <p className="text-xs text-muted-foreground line-clamp-1">{mission.description}</p>
                           )}
                           {mission.requirements?.targeting?.member_types && mission.requirements.targeting.member_types.length > 0 && (
-                            <div className="flex gap-1 mt-1 flex-wrap">
-                              {mission.requirements.targeting.member_types.map((t: string) => (
-                                <Badge key={t} variant="secondary" className="text-[10px] px-1 h-4">{MEMBER_TYPES.find(m => m.value === t)?.label || t}</Badge>
-                              ))}
+                            <div className="flex flex-col gap-1.5 mt-2 w-full">
+                              {mission.requirements.targeting.member_types.map((type: string) => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const parsedReqs = mission.requirements as any;
+                                const subTypes = parsedReqs?.targeting?.sub_types?.[type] || [];
+
+                                return (
+                                  <div key={type} className="border border-border/50 rounded p-1.5 bg-background">
+                                    <div className="text-[11px] font-medium text-foreground leading-none">
+                                      {MEMBER_TYPES.find(t => t.value === type)?.label || type}
+                                    </div>
+                                    <div className="mt-1.5 flex flex-wrap gap-1">
+                                      {subTypes.length > 0 ? (
+                                        subTypes.map((sub: string) => (
+                                          <Badge key={sub} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal bg-secondary/60 text-secondary-foreground leading-none flex items-center">
+                                            {MEMBER_SUB_TYPES[type]?.find(s => s.value === sub)?.label || sub}
+                                          </Badge>
+                                        ))
+                                      ) : (
+                                        <span className="text-[10px] text-muted-foreground leading-none">ทุกประเภทย่อย</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {/* Tiers */}
+                          {mission.requirements?.targeting?.tiers && mission.requirements.targeting.tiers.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {mission.requirements.targeting.tiers.map((tier: string) => {
+                                const matchedTier = tierSettings?.find(t => t.tier === tier);
+                                const displayName = matchedTier?.display_name || tier;
+                                const customColor = matchedTier?.color;
+                                const badgeClass = customColor ? '' : (tier === 'platinum' ? 'bg-purple-600 text-white' : tier === 'gold' ? 'bg-yellow-500 text-white' : tier === 'silver' ? 'bg-gray-400 text-white' : 'bg-amber-700 text-white');
+
+                                return (
+                                  <Badge
+                                    key={tier}
+                                    className={`text-[9px] px-1 py-0 h-4 capitalize border-0 ${badgeClass}`}
+                                    style={customColor ? { backgroundColor: customColor, color: '#fff' } : undefined}
+                                  >
+                                    {displayName}
+                                  </Badge>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{getMissionTypeLabel(mission.mission_type)}</Badge>
+                        <Badge variant="outline" className={
+                          mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' :
+                            mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                              mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' : ''
+                        }>
+                          {getMissionTypeLabel(mission.mission_type)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">

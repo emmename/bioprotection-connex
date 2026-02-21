@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import QuizPlayer from '@/components/content/QuizPlayer';
 import SurveyPlayer from '@/components/content/SurveyPlayer';
+import ReactPlayer from 'react-player';
 import {
   Dialog,
   DialogContent,
@@ -442,13 +443,16 @@ export default function ContentDetail() {
         {/* Video Player with tracking */}
         {content.content_type === 'video' && content.video_url && (
           <div className="space-y-2 mb-6">
-            <div className="relative aspect-video bg-muted rounded-xl overflow-hidden">
-              <video
-                src={content.video_url}
-                className="w-full h-full"
-                controls
+            <div className="relative aspect-video bg-muted rounded-xl overflow-hidden flex items-center justify-center">
+              <ReactPlayer
+                src={content.video_url?.trim()}
+                className="absolute top-0 left-0"
+                width="100%"
+                height="100%"
+                controls={true}
                 onTimeUpdate={(e) => {
                   const video = e.currentTarget;
+                  if (!video.duration) return;
                   const percentWatched = (video.currentTime / video.duration) * 100;
                   setVideoProgress(Math.round(percentWatched));
                   if (percentWatched >= 90 && !videoWatched) {

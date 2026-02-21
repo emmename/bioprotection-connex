@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -16,7 +17,8 @@ import { cn } from "@/lib/utils";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { RewardImageLightbox } from "@/components/rewards/RewardImageLightbox";
 import { RewardCategoryManager } from "@/components/admin/RewardCategoryManager";
-import type { Database } from "@/integrations/supabase/types";
+import { useTierSettings } from "@/hooks/useGamification";
+import type { Database, Json } from "@/integrations/supabase/types";
 type TierLevel = Database["public"]["Enums"]["tier_level"];
 interface TierPointsCost {
   bronze: number;
@@ -33,6 +35,8 @@ interface Reward {
   points_cost: number;
   tier_points_cost: TierPointsCost | null;
   stock_quantity: number;
+  target_member_types: Database["public"]["Enums"]["member_type"][] | null;
+  requirements: Json | null;
   target_tiers: TierLevel[] | null;
   is_active: boolean;
   created_at: string;
@@ -50,6 +54,35 @@ const defaultTierPointsCost: TierPointsCost = {
   gold: 0,
   platinum: 0
 };
+
+type MemberType = Database["public"]["Enums"]["member_type"];
+
+const MEMBER_TYPE_OPTIONS: { value: MemberType; label: string }[] = [
+  { value: 'farm', label: 'ฟาร์มเลี้ยงสัตว์' },
+  { value: 'company_employee', label: 'พนักงานบริษัท' },
+  { value: 'veterinarian', label: 'สัตวแพทย์' },
+  { value: 'livestock_shop', label: 'ร้านขายสินค้าปศุสัตว์' },
+];
+
+const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
+  farm: [
+    { value: 'owner', label: 'เจ้าของกิจการ' },
+    { value: 'farm_manager', label: 'ผู้จัดการฟาร์ม' },
+    { value: 'animal_husbandry', label: 'สัตวบาล' },
+    { value: 'admin', label: 'ธุรการ' },
+    { value: 'other', label: 'อื่นๆ' },
+  ],
+  company_employee: [
+    { value: 'animal_production', label: 'ผลิตสัตว์/ส่งออกหรือแปรรูปเนื้อสัตว์' },
+    { value: 'animal_feed', label: 'ผลิตอาหารสัตว์' },
+    { value: 'veterinary_distribution', label: 'จัดจำหน่ายเวชภัณฑ์สัตว์' },
+    { value: 'elanco', label: 'พนักงานอีแลนโค (Elanco)' },
+    { value: 'other', label: 'อื่นๆ' },
+  ],
+  veterinarian: [
+    { value: 'livestock', label: 'สัตวแพทย์ประจำปศุสัตว์' },
+  ],
+};
 export default function AdminRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,19 +99,25 @@ export default function AdminRewards() {
       ...defaultTierPointsCost
     },
     stock_quantity: 0,
+    target_member_types: [] as MemberType[],
     target_tiers: [] as TierLevel[],
     is_active: true,
     category: "general"
   });
+  const [targetSubTypes, setTargetSubTypes] = useState<Record<string, string[]>>({});
   const [categoryOptions, setCategoryOptions] = useState<RewardCategory[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const { tiers: tierSettings } = useTierSettings();
   const tiers: TierLevel[] = ["bronze", "silver", "gold", "platinum"];
-  const tierLabels: Record<TierLevel, string> = {
+  const tierLabels: Record<TierLevel, string> = tierSettings.reduce((acc, t) => ({
+    ...acc,
+    [t.tier]: t.display_name || t.tier
+  }), {
     bronze: "Bronze",
     silver: "Silver",
     gold: "Gold",
     platinum: "Platinum"
-  };
+  } as Record<TierLevel, string>);
   useEffect(() => {
     fetchRewards();
     fetchCategories();
@@ -123,10 +162,12 @@ export default function AdminRewards() {
         ...defaultTierPointsCost
       },
       stock_quantity: 0,
+      target_member_types: [] as MemberType[],
       target_tiers: [] as TierLevel[],
       is_active: true,
       category: "general"
     });
+    setTargetSubTypes({});
     setEditingReward(null);
   };
   const openEditDialog = (reward: Reward) => {
@@ -142,10 +183,19 @@ export default function AdminRewards() {
         platinum: reward.points_cost
       },
       stock_quantity: reward.stock_quantity,
+      target_member_types: reward.target_member_types || [],
       target_tiers: reward.target_tiers || [],
       is_active: reward.is_active,
       category: reward.category || "general"
     });
+
+    const parsedRequirements = reward.requirements as any;
+    if (parsedRequirements?.targeting?.sub_types) {
+      setTargetSubTypes(parsedRequirements.targeting.sub_types);
+    } else {
+      setTargetSubTypes({});
+    }
+
     setIsDialogOpen(true);
   };
   const handleImagesChange = (newImages: string[]) => {
@@ -175,7 +225,15 @@ export default function AdminRewards() {
       // Use bronze as default
       tier_points_cost: formData.tier_points_cost,
       stock_quantity: formData.stock_quantity,
+      target_member_types: formData.target_member_types.length > 0 ? formData.target_member_types : null,
       target_tiers: formData.target_tiers.length > 0 ? formData.target_tiers : null,
+      requirements: {
+        targeting: {
+          member_types: formData.target_member_types,
+          sub_types: targetSubTypes,
+          tiers: formData.target_tiers
+        }
+      },
       is_active: formData.is_active,
       category: formData.category
     };
@@ -353,13 +411,100 @@ export default function AdminRewards() {
                   }))} />
                 </div>
 
-                {/* Target Tiers */}
-                <div className="space-y-3">
-                  <Label>Tier ที่สามารถแลกได้ (ว่างไว้ = ทุก Tier)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {tiers.map(tier => <Badge key={tier} variant={formData.target_tiers.includes(tier) ? "default" : "outline"} className={`cursor-pointer ${formData.target_tiers.includes(tier) ? getTierBadgeColor(tier) : ''}`} onClick={() => handleTierToggle(tier)}>
-                      {tierLabels[tier]}
-                    </Badge>)}
+                {/* Target Tiers and Member Types Group */}
+                <div className="space-y-4 border p-4 rounded-lg bg-secondary/10">
+                  <h3 className="font-semibold flex items-center gap-2">สิทธิ์การเข้าถึง (ว่าง = ทุกคน)</h3>
+
+                  <div className="space-y-3">
+                    <Label className="text-base">ประเภทสมาชิก</Label>
+                    <div className="space-y-2">
+                      {MEMBER_TYPE_OPTIONS.map(type => {
+                        const subTypes = MEMBER_SUB_TYPES[type.value];
+                        const isChecked = formData.target_member_types.includes(type.value);
+
+                        return (
+                          <div key={type.value}>
+                            <div className="flex items-center space-x-2 border p-2 rounded bg-background">
+                              <Checkbox
+                                id={`member-${type.value}`}
+                                checked={isChecked}
+                                onCheckedChange={() => {
+                                  let newTypes: string[];
+                                  if (isChecked) {
+                                    newTypes = formData.target_member_types.filter(t => t !== type.value);
+                                    setTargetSubTypes(prev => {
+                                      const next = { ...prev };
+                                      delete next[type.value];
+                                      return next;
+                                    });
+                                  } else {
+                                    newTypes = [...formData.target_member_types, type.value];
+                                  }
+                                  setFormData(prev => ({ ...prev, target_member_types: newTypes as MemberType[] }));
+                                }}
+                              />
+                              <label htmlFor={`member-${type.value}`} className="text-sm font-medium leading-none cursor-pointer flex-1">
+                                {type.label}
+                              </label>
+                              {subTypes && <span className="text-xs text-muted-foreground mr-2">({subTypes.length} ประเภทย่อย)</span>}
+                            </div>
+
+                            {isChecked && subTypes && (
+                              <div className="ml-6 mt-1 mb-2 pl-3 border-l-2 border-primary/30 space-y-1">
+                                <p className="text-xs text-muted-foreground mb-1">เลือกประเภทย่อย (ว่าง = ทุกประเภทย่อย)</p>
+                                {subTypes.map(sub => (
+                                  <div key={sub.value} className="flex items-center space-x-2 p-1.5 rounded bg-background/50">
+                                    <Checkbox
+                                      id={`sub-${type.value}-${sub.value}`}
+                                      checked={(targetSubTypes[type.value] || []).includes(sub.value)}
+                                      onCheckedChange={() => {
+                                        setTargetSubTypes(prev => {
+                                          const current = prev[type.value] || [];
+                                          const updated = current.includes(sub.value)
+                                            ? current.filter(v => v !== sub.value)
+                                            : [...current, sub.value];
+                                          return { ...prev, [type.value]: updated };
+                                        });
+                                      }}
+                                    />
+                                    <label htmlFor={`sub-${type.value}-${sub.value}`} className="text-xs font-medium leading-none cursor-pointer">
+                                      {sub.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2 border-t">
+                    <Label className="text-base">ระดับสมาชิก (Tier)</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {tiers.map(tier => {
+                        const matchedTier = tierSettings?.find(t => t.tier === tier);
+                        const displayName = matchedTier?.display_name || tierLabels[tier] || tier;
+                        const customColor = matchedTier?.color;
+                        const isSelected = formData.target_tiers.includes(tier);
+
+                        const activeStyle = (isSelected && customColor) ? { backgroundColor: customColor, color: '#fff', borderColor: customColor } : undefined;
+                        const badgeClass = (isSelected && !customColor) ? getTierBadgeColor(tier) : '';
+
+                        return (
+                          <Badge
+                            key={tier}
+                            variant={isSelected ? "default" : "outline"}
+                            className={`cursor-pointer capitalize ${badgeClass}`}
+                            style={activeStyle}
+                            onClick={() => handleTierToggle(tier)}
+                          >
+                            {displayName}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -411,7 +556,7 @@ export default function AdminRewards() {
                 <TableHead className="min-w-[100px]">หมวดหมู่</TableHead>
                 <TableHead className="min-w-[120px]">คะแนน</TableHead>
                 <TableHead className="w-20">สต๊อก</TableHead>
-                <TableHead className="min-w-[100px]">Tier</TableHead>
+                <TableHead className="min-w-[100px]">กลุ่มเป้าหมาย</TableHead>
                 <TableHead className="w-20">สถานะ</TableHead>
                 <TableHead className="w-24 text-right">จัดการ</TableHead>
               </TableRow>
@@ -450,7 +595,17 @@ export default function AdminRewards() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                    <Badge variant="outline" className={`flex items-center gap-1 w-fit ${['bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                      'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
+                      'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100',
+                      'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100',
+                      'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100',
+                      'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100',
+                      'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+                      'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'][
+                      (reward.category ? reward.category.charCodeAt(0) + (reward.category.charCodeAt(reward.category.length - 1) || 0) : 0) % 8
+                    ]
+                      }`}>
                       <Tag className="w-3 h-3" />
                       {categoryOptions.find(c => c.slug === reward.category)?.name || reward.category || 'ทั่วไป'}
                     </Badge>
@@ -471,11 +626,61 @@ export default function AdminRewards() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {reward.target_tiers && reward.target_tiers.length > 0 ? <div className="flex flex-wrap gap-1">
-                      {reward.target_tiers.map(tier => <Badge key={tier} className={getTierBadgeColor(tier)}>
-                        {tierLabels[tier]}
-                      </Badge>)}
-                    </div> : <Badge variant="outline">ทุก Tier</Badge>}
+                    <div className="flex flex-col gap-1 max-w-[200px]">
+                      {/* Member Types */}
+                      {reward.target_member_types && reward.target_member_types.length > 0 ? (
+                        <div className="flex flex-col gap-1.5 w-full">
+                          {reward.target_member_types.map((type) => {
+                            const parsedReqs = reward.requirements as any;
+                            const subTypes = parsedReqs?.targeting?.sub_types?.[type] || [];
+
+                            return (
+                              <div key={type} className="border border-border/50 rounded p-1.5 bg-background">
+                                <div className="text-[11px] font-medium text-foreground leading-none">
+                                  {MEMBER_TYPE_OPTIONS.find(t => t.value === type)?.label || type}
+                                </div>
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {subTypes.length > 0 ? (
+                                    subTypes.map((sub: string) => (
+                                      <Badge key={sub} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal bg-secondary/60 text-secondary-foreground leading-none flex items-center">
+                                        {MEMBER_SUB_TYPES[type]?.find(s => s.value === sub)?.label || sub}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground leading-none">ทุกประเภทย่อย</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">ทุกประเภท</span>
+                      )}
+                      {/* Tiers */}
+                      {reward.target_tiers && reward.target_tiers.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {reward.target_tiers.map(tier => {
+                            const matchedTier = tierSettings?.find(t => t.tier === tier);
+                            const displayName = matchedTier?.display_name || tierLabels[tier] || tier;
+                            const customColor = matchedTier?.color;
+                            const badgeClass = customColor ? '' : getTierBadgeColor(tier);
+
+                            return (
+                              <Badge
+                                key={tier}
+                                className={`text-[10px] px-1 h-fit ${badgeClass}`}
+                                style={customColor ? { backgroundColor: customColor, color: '#fff', borderColor: customColor } : undefined}
+                              >
+                                {displayName}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">ทุกระดับ</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Switch checked={reward.is_active} onCheckedChange={() => toggleActive(reward)} />

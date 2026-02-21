@@ -102,7 +102,7 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
 
         {/* Address */}
         <div className="space-y-2">
-          <Label htmlFor="address">ที่อยู่ (บ้านเลขที่, ซอย, ถนน)</Label>
+          <Label htmlFor="address">ที่อยู่ (บ้านเลขที่, ซอย, ถนน) <span className="text-destructive">*</span></Label>
           <Input
             id="address"
             placeholder="บ้านเลขที่, ซอย, ถนน"
@@ -113,7 +113,7 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
 
         {/* Province */}
         <div className="space-y-2">
-          <Label htmlFor="province">จังหวัด</Label>
+          <Label htmlFor="province">จังหวัด <span className="text-destructive">*</span></Label>
           <Select value={data.province} onValueChange={handleProvinceChange}>
             <SelectTrigger>
               <SelectValue placeholder="เลือกจังหวัด" />
@@ -130,7 +130,7 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
 
         {/* District */}
         <div className="space-y-2">
-          <Label htmlFor="district">อำเภอ/เขต</Label>
+          <Label htmlFor="district">อำเภอ/เขต <span className="text-destructive">*</span></Label>
           <Select
             value={data.district}
             onValueChange={handleDistrictChange}
@@ -151,7 +151,7 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
 
         {/* Subdistrict */}
         <div className="space-y-2">
-          <Label htmlFor="subdistrict">ตำบล/แขวง</Label>
+          <Label htmlFor="subdistrict">ตำบล/แขวง <span className="text-destructive">*</span></Label>
           <Select
             value={data.subdistrict}
             onValueChange={handleSubdistrictChange}
@@ -172,7 +172,7 @@ export function PersonalInfoStep({ data, onChange }: PersonalInfoStepProps) {
 
         {/* Postal Code */}
         <div className="space-y-2">
-          <Label htmlFor="postalCode">รหัสไปรษณีย์</Label>
+          <Label htmlFor="postalCode">รหัสไปรษณีย์ <span className="text-destructive">*</span></Label>
           <Select
             value={data.postalCode}
             onValueChange={(value) => onChange({ postalCode: value })}

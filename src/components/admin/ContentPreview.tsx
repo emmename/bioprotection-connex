@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookOpen, Video, FileQuestion, ClipboardList, Star, CheckCircle } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import ReactPlayer from 'react-player';
 import { QuizQuestion } from './QuizEditor';
 import { SurveyQuestion } from './SurveyEditor';
 
@@ -125,12 +126,13 @@ export function ContentPreview({
               <Card>
                 <CardContent className="p-6">
                   {videoUrl ? (
-                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                      <iframe
-                        src={videoUrl}
-                        title="Video Preview"
-                        className="w-full h-full"
-                        allowFullScreen
+                    <div className="aspect-video bg-muted rounded-lg overflow-hidden flex items-center justify-center relative">
+                      <ReactPlayer
+                        url={videoUrl}
+                        className="absolute top-0 left-0"
+                        width="100%"
+                        height="100%"
+                        controls={true}
                       />
                     </div>
                   ) : (
@@ -167,13 +169,13 @@ export function ContentPreview({
                             <div
                               key={optIndex}
                               className={`flex items-center gap-2 p-2 rounded-md ${optIndex === question.correctAnswer
-                                  ? 'bg-accent/20 border border-accent/50'
-                                  : 'bg-muted/50'
+                                ? 'bg-accent/20 border border-accent/50'
+                                : 'bg-muted/50'
                                 }`}
                             >
                               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${optIndex === question.correctAnswer
-                                  ? 'bg-accent text-accent-foreground'
-                                  : 'bg-muted-foreground/20'
+                                ? 'bg-accent text-accent-foreground'
+                                : 'bg-muted-foreground/20'
                                 }`}>
                                 {String.fromCharCode(65 + optIndex)}
                               </div>

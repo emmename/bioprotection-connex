@@ -112,7 +112,7 @@ export function DailyMissionsSection({
                 : 'bg-slate-100 hover:bg-slate-200'
                 }`}
             >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${mission.isCompleted ? 'bg-green-100' : 'bg-white'
+              <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${mission.isCompleted ? 'bg-green-100' : 'bg-white'
                 }`}>
                 <img src={mission.icon} alt={mission.title} className="w-full h-full object-cover" />
               </div>

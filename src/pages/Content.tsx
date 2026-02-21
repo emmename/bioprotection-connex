@@ -275,11 +275,11 @@ export default function Content() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted rounded-lg flex no-scrollbar">
-            <TabsTrigger value="all" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">ทั้งหมด</TabsTrigger>
-            <TabsTrigger value="article" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">บทความ</TabsTrigger>
-            <TabsTrigger value="video" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">วิดีโอ</TabsTrigger>
-            <TabsTrigger value="quiz" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">แบบทดสอบ</TabsTrigger>
-            <TabsTrigger value="survey" className="flex-1 min-w-fit px-3 data-[state=active]:bg-[#165fcc] data-[state=active]:text-white">แบบสำรวจ</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ทั้งหมด</TabsTrigger>
+            <TabsTrigger value="article" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">บทความ</TabsTrigger>
+            <TabsTrigger value="video" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">วิดีโอ</TabsTrigger>
+            <TabsTrigger value="quiz" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">แบบทดสอบ</TabsTrigger>
+            <TabsTrigger value="survey" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">แบบสำรวจ</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -303,25 +303,28 @@ export default function Content() {
                 // List View (Horizontal Card)
                 return (
                   <Link key={content.id} to={`/content/${content.id}`}>
-                    <Card className="card-hover overflow-hidden h-full flex flex-row">
+                    <Card className="card-hover overflow-hidden h-full flex flex-row border shadow-sm hover:shadow-md transition-all duration-300 rounded-xl group bg-card">
                       {/* Thumbnail (Left) */}
-                      <div className="relative w-[150px] sm:w-[240px] shrink-0 aspect-video bg-muted border-r self-start">
+                      <div className="relative w-[150px] sm:w-[240px] shrink-0 aspect-video bg-muted border-r self-start overflow-hidden">
                         {content.thumbnail_url ? (
                           <img
                             src={content.thumbnail_url}
                             alt={content.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
+                          <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50 transition-transform duration-500 group-hover:scale-105">
                             {getContentIcon(content.content_type)}
                           </div>
                         )}
 
+                        {/* Immersive overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 z-10 pointer-events-none" />
+
                         {/* Completed Check (Small) */}
                         {completed && (
-                          <div className="absolute top-1 right-1">
-                            <div className="bg-accent text-accent-foreground rounded-full p-0.5">
+                          <div className="absolute top-2 right-2 z-20">
+                            <div className="bg-accent text-accent-foreground rounded-full p-1 shadow-sm">
                               <CheckCircle className="w-3 h-3" />
                             </div>
                           </div>
@@ -331,7 +334,11 @@ export default function Content() {
                       <CardContent className="p-3 flex-1 flex flex-col justify-between min-w-0">
                         <div>
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <Badge variant="secondary" className="text-xs px-2 h-6 bg-muted">
+                            <Badge variant="outline" className={`text-xs px-2 h-6 ${content.content_type === 'article' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
+                                content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                  content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
+                                    content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : ''
+                              }`}>
                               {getContentTypeLabel(content.content_type)}
                             </Badge>
                             {content.published_at && (
@@ -364,25 +371,28 @@ export default function Content() {
                 // Grid View (Vertical Card - Existing Style)
                 return (
                   <Link key={content.id} to={`/content/${content.id}`}>
-                    <Card className="card-hover overflow-hidden h-full flex flex-col">
+                    <Card className="card-hover overflow-hidden h-full flex flex-col border shadow-sm hover:shadow-md transition-all duration-300 rounded-xl group bg-card">
                       {/* Thumbnail */}
-                      <div className="relative aspect-video bg-muted shrink-0">
+                      <div className="relative aspect-video bg-muted shrink-0 overflow-hidden">
                         {content.thumbnail_url ? (
                           <img
                             src={content.thumbnail_url}
                             alt={content.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
+                          <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50 transition-transform duration-500 group-hover:scale-105">
                             {getContentIcon(content.content_type)}
                           </div>
                         )}
 
+                        {/* Immersive overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 z-10 pointer-events-none" />
+
                         {/* Completed Badge */}
                         {completed && (
-                          <div className="absolute top-2 right-2">
-                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 h-5">
+                          <div className="absolute top-2 right-2 z-20">
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-2 py-0.5 h-6 shadow-sm border-none">
                               <CheckCircle className="w-3 h-3 mr-1" />
                               เสร็จแล้ว
                             </Badge>
@@ -390,10 +400,14 @@ export default function Content() {
                         )}
 
                         {/* Content Type Badge */}
-                        <div className="absolute bottom-2 left-2">
-                          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] px-1.5 h-5">
+                        <div className="absolute bottom-2 left-2 z-20">
+                          <Badge variant="outline" className={`backdrop-blur-md text-[10px] px-2 py-0.5 h-6 opacity-90 hover:opacity-100 ${content.content_type === 'article' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200' :
+                                content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' : ''
+                            }`}>
                             {getContentIcon(content.content_type)}
-                            <span className="ml-1">{getContentTypeLabel(content.content_type)}</span>
+                            <span className="ml-1.5 font-medium">{getContentTypeLabel(content.content_type)}</span>
                           </Badge>
                         </div>
                       </div>

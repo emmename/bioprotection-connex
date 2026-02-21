@@ -110,6 +110,10 @@ export default function Register() {
           toast.error('กรุณากรอกชื่อ นามสกุล และเบอร์โทรศัพท์');
           return false;
         }
+        if (!personalInfo.address || !personalInfo.province || !personalInfo.district || !personalInfo.subdistrict || !personalInfo.postalCode) {
+          toast.error('กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน');
+          return false;
+        }
         return true;
       case 2:
         if (!occupation.memberType) {

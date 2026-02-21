@@ -11,6 +11,7 @@ interface TierSetting {
   min_points: number;
   max_points: number | null;
   benefits: string[] | null;
+  color?: string | null;
 }
 
 interface LevelProgressCardProps {
@@ -27,7 +28,7 @@ const memberTypeNames: Record<string, string> = {
   farm: 'ฟาร์มเลี้ยงสัตว์',
   company_employee: 'พนักงานบริษัท',
   veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านค้าปศุสัตว์',
+  livestock_shop: 'ร้านค้าสินค้าปศุสัตว์',
   government: 'หน่วยงานราชการ',
   other: 'อื่นๆ',
 };
@@ -60,16 +61,20 @@ export function LevelProgressCard({ currentTier, nextTier, currentPoints, member
   const isMaxTier = !nextTier;
 
   return (
-    <Card className="overflow-visible mt-6">
+    <Card className="overflow-visible mt-1">
       <div className="gradient-primary p-5 text-white relative rounded-xl">
         {/* Mascot */}
-        <div className="absolute -top-20 -right-2 w-28 h-28 opacity-100 filter drop-shadow-lg">
+        <div className="absolute -top-7 right-2 w-28 h-28 opacity-100 filter drop-shadow-lg pointer-events-none z-10">
           <img src={mascotChicken} alt="Mascot" className="w-full h-full object-contain" />
         </div>
 
         {/* Badge & Tier Name */}
         <div className="flex items-center gap-3 mb-4">
-          <Link to="/profile" className={`w-[58px] h-[58px] ${tierColor} rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/30`}>
+          <Link
+            to="/profile"
+            className={`w-[58px] h-[58px] ${!currentTier?.color ? tierColor : ''} rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/30`}
+            style={currentTier?.color ? { backgroundColor: currentTier.color } : {}}
+          >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             ) : (
@@ -77,10 +82,14 @@ export function LevelProgressCard({ currentTier, nextTier, currentPoints, member
             )}
           </Link>
           <div>
-            <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 mb-1">
+            <Badge
+              variant="secondary"
+              className={`text-white hover:opacity-90 mb-1 ${!currentTier?.color ? tierColor : ''}`}
+              style={currentTier?.color ? { backgroundColor: currentTier.color } : {}}
+            >
               {displayTierName.toUpperCase()}
             </Badge>
-            <p className="text-xl font-bold">{memberName}</p>
+            <p className="text-2xl font-bold tracking-tight">{memberName}</p>
             <p className="text-xs text-white/70">{occupationLabel}</p>
           </div>
         </div>

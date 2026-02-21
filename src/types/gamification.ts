@@ -4,6 +4,7 @@ export interface TierSettings {
     min_points: number;
     max_points: number | null;
     benefits: string[];
+    color?: string | null;
 }
 
 export interface PointsTransaction {
