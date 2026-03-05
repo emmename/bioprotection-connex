@@ -229,10 +229,15 @@ export default function Rewards() {
       await refreshProfile();
       await fetchRewards();
 
-      /* toast({
-        title: 'แลกของรางวัลสำเร็จ',
-        description: `คุณได้แลก ${selectedReward.name} เรียบร้อยแล้ว`,
-      }); */
+      // Add notification for successful redemption
+      await supabase.from('notifications').insert({
+        profile_id: profile.id,
+        title: 'แลกของรางวัลสำเร็จ 🎉',
+        message: `คุณได้ทำรายการแลก ${selectedReward.name} ใช้ไป ${pointsCost.toLocaleString()} คะแนน`,
+        type: 'success',
+        link: '/rewards',
+        is_read: false
+      });
 
       setRedeemedRewardName(selectedReward.name);
       setShowSuccessModal(true); // Open success modal

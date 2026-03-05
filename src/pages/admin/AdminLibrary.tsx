@@ -312,6 +312,50 @@ export default function AdminLibrary() {
         }
     };
 
+    const notifyUsersOfNewLibraryItem = async (itemPayload: any) => {
+        try {
+            // Fetch relevant profiles
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: profiles, error: profileError } = await (supabase as any)
+                .from('profiles')
+                .select('id, member_type, tier')
+                .eq('is_approved', true);
+
+            if (profileError || !profiles) return;
+
+            let targetProfiles = profiles;
+
+            if (itemPayload.target_member_types && itemPayload.target_member_types.length > 0) {
+                targetProfiles = targetProfiles.filter(p => itemPayload.target_member_types.includes(p.member_type));
+            }
+
+            if (itemPayload.target_tiers && itemPayload.target_tiers.length > 0) {
+                targetProfiles = targetProfiles.filter(p => itemPayload.target_tiers.includes(p.tier));
+            }
+
+            if (targetProfiles.length === 0) return;
+
+            const notifications = targetProfiles.map(p => ({
+                profile_id: p.id,
+                title: 'คลังความรู้ใหม่ 🎉',
+                message: `เนื้อหาใหม่: ${itemPayload.title} เข้าไปอ่านเพื่ออัปเดตความรู้ของคุณได้เลย!`,
+                type: 'info',
+                link: `/library?category=${itemPayload.category_id || ''}`,
+                is_read: false
+            }));
+
+            // Chunk in case of many profiles
+            const chunkSize = 500;
+            for (let i = 0; i < notifications.length; i += chunkSize) {
+                const chunk = notifications.slice(i, i + chunkSize);
+                await supabase.from('notifications').insert(chunk);
+            }
+            console.log(`Sent notifications to ${targetProfiles.length} users.`);
+        } catch (error) {
+            console.error('Error sending notifications:', error);
+        }
+    };
+
     const handleSaveItem = async () => {
         if (!itemForm.title.trim()) {
             toast.error('กรุณากรอกชื่อเนื้อหา');
@@ -355,12 +399,21 @@ export default function AdminLibrary() {
                     .eq('id', editingItem.id);
                 if (error) throw error;
                 toast.success('อัปเดตเนื้อหาเรียบร้อย');
+
+                // Notify if newly published
+                if (payload.is_published && !editingItem.is_published) {
+                    notifyUsersOfNewLibraryItem(payload);
+                }
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { error } = await (supabase as any).from('library_items')
                     .insert({ ...payload, sort_order: items.length });
                 if (error) throw error;
                 toast.success('สร้างเนื้อหาเรียบร้อย');
+
+                if (payload.is_published) {
+                    notifyUsersOfNewLibraryItem(payload);
+                }
             }
             setIsItemDialogOpen(false);
             resetItemForm();
@@ -389,12 +442,19 @@ export default function AdminLibrary() {
 
     const togglePublish = async (item: LibraryItem) => {
         try {
+            const willPublish = !item.is_published;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase as any).from('library_items')
-                .update({ is_published: !item.is_published })
+                .update({ is_published: willPublish })
                 .eq('id', item.id);
             if (error) throw error;
             toast.success(item.is_published ? 'ยกเลิกการเผยแพร่แล้ว' : 'เผยแพร่แล้ว');
+
+            // Notify if newly published
+            if (willPublish) {
+                notifyUsersOfNewLibraryItem(item);
+            }
+
             fetchItems();
         } catch (error) {
             console.error('Error toggling publish:', error);

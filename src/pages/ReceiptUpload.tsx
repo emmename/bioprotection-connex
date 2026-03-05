@@ -114,6 +114,16 @@ export default function ReceiptUpload() {
 
       if (insertError) throw insertError;
 
+      // Add notification for receipt upload
+      await supabase.from('notifications').insert({
+        profile_id: profile.id,
+        title: 'อัปโหลดใบเสร็จสำเร็จ 📄',
+        message: 'ระบบได้รับใบเสร็จของคุณแล้ว กรุณารอตรวจสอบความถูกต้องภายใน 24 ชม.',
+        type: 'info',
+        link: '/receipt-upload',
+        is_read: false
+      });
+
       /* toast({
         title: 'อัปโหลดสำเร็จ',
         description: 'ใบเสร็จของคุณอยู่ระหว่างการตรวจสอบ',
