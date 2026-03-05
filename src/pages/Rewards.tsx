@@ -17,6 +17,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +58,7 @@ export default function Rewards() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const [shippingAddress, setShippingAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -205,7 +207,7 @@ export default function Rewards() {
         p_reward_id: selectedReward.id,
         p_points_cost: pointsCost,
         p_shipping_address: shippingAddress.trim(),
-        p_notes: notes.trim() || null,
+        p_notes: [phoneNumber.trim() ? `เบอร์โทร: ${phoneNumber.trim()}` : '', notes.trim()].filter(Boolean).join('\n') || null,
       });
 
       if (error) {
@@ -237,6 +239,7 @@ export default function Rewards() {
 
       setSelectedReward(null);
       setShippingAddress('');
+      setPhoneNumber('');
       setNotes('');
     } catch (error) {
       toast({
@@ -253,7 +256,7 @@ export default function Rewards() {
     if (user) {
       const { data: fullProfile } = await supabase
         .from('profiles')
-        .select('address, subdistrict, district, province, postal_code')
+        .select('address, subdistrict, district, province, postal_code, phone')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -266,6 +269,7 @@ export default function Rewards() {
           fullProfile.postal_code,
         ].filter(Boolean);
         setShippingAddress(addressParts.join(' '));
+        setPhoneNumber(fullProfile.phone || '');
       }
     }
     setSelectedReward(reward);
@@ -603,6 +607,18 @@ export default function Rewards() {
                 onChange={(e) => setShippingAddress(e.target.value)}
                 placeholder="กรอกที่อยู่สำหรับจัดส่งของรางวัล"
                 rows={3}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="phone-number">เบอร์โทรศัพท์</Label>
+              <Input
+                id="phone-number"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="กรอกเบอร์โทรศัพท์สำหรับติดต่อ"
                 className="mt-1"
               />
             </div>
