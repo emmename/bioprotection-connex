@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import articleButtonImg from '@/assets/buttons/article_chick03_256.png';
 import vdoButtonImg from '@/assets/buttons/vdo_mumu01_256.png';
 import quizButtonImg from '@/assets/buttons/quiz_chick02_256.png';
-import surveyButtonImg from '@/assets/buttons/quiz_pig01_256.png';
+import libraryButtonImg from '@/assets/buttons/library_pig01_256.png';
 import uploadButtonImg from '@/assets/buttons/receipt_mumu01_256.png';
 import scanButtonImg from '@/assets/buttons/scan_chick01_256.png';
 import rewardButtonImg from '@/assets/buttons/reward_mumu01_256.png';
@@ -32,9 +32,9 @@ const quickActions: QuickAction[] = [
     imageSrc: quizButtonImg,
   },
   {
-    label: 'แบบสำรวจ',
-    href: '/content?type=survey',
-    imageSrc: surveyButtonImg,
+    label: 'คลังความรู้',
+    href: '/library',
+    imageSrc: libraryButtonImg,
   },
   {
     label: 'อัปโหลดใบเสร็จ',

@@ -55,6 +55,8 @@ export interface Mission {
             value: string;
             points: number;
         }>;
+        content_id?: string;
+        [key: string]: unknown;
     } | null;
     start_date: string | null;
     end_date: string | null;

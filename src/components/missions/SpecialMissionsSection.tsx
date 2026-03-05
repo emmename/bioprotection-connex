@@ -1,4 +1,5 @@
-import { MapPin, QrCode, Star, Check, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, QrCode, Star, Check, Clock, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,10 @@ interface Mission {
   coins_reward: number;
   start_date: string | null;
   end_date: string | null;
+  requirements?: {
+    content_id?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface SpecialMissionsSectionProps {
@@ -24,6 +29,7 @@ function getMissionIcon(type: string) {
   switch (type) {
     case 'qr_scan': return QrCode;
     case 'location_visit': return MapPin;
+    case 'survey': return ClipboardList;
     default: return Star;
   }
 }
@@ -32,11 +38,13 @@ function getMissionTypeLabel(type: string) {
   switch (type) {
     case 'qr_scan': return 'สแกน QR';
     case 'location_visit': return 'เยี่ยมชมสถานที่';
+    case 'survey': return 'ทำแบบสำรวจ';
     default: return 'ภารกิจพิเศษ';
   }
 }
 
 export function SpecialMissionsSection({ missions, completedMissionIds, isLoading }: SpecialMissionsSectionProps) {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <Card>
@@ -92,11 +100,16 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
             <div
               key={mission.id}
               className={`p-4 rounded-xl border transition-colors ${isCompleted
-                  ? 'bg-green-50 border-green-200'
-                  : isExpired
-                    ? 'bg-muted/30 border-border opacity-60'
-                    : 'bg-card border-border hover:border-primary/30'
-                }`}
+                ? 'bg-green-50 border-green-200'
+                : isExpired
+                  ? 'bg-muted/30 border-border opacity-60'
+                  : 'bg-card border-border hover:border-primary/30'
+                } ${mission.mission_type === 'survey' && !isCompleted && !isExpired ? 'cursor-pointer' : ''}`}
+              onClick={() => {
+                if (mission.mission_type === 'survey' && !isCompleted && !isExpired && mission.requirements?.content_id) {
+                  navigate(`/content/${mission.requirements.content_id}`);
+                }
+              }}
             >
               <div className="flex items-start gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${isCompleted ? 'bg-green-100' : 'bg-primary/10'

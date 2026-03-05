@@ -19,6 +19,7 @@ import ContentDetail from "./pages/ContentDetail";
 import Missions from "./pages/Missions";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
+import Library from "./pages/Library";
 import Terms from "./pages/Terms";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -33,6 +34,7 @@ import AdminRewards from "./pages/admin/AdminRewards";
 import AdminMemberDetail from "./pages/admin/AdminMemberDetail";
 import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import AdminMissions from "./pages/admin/AdminMissions";
+import AdminLibrary from "./pages/admin/AdminLibrary";
 import AppLayout from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
@@ -65,6 +67,7 @@ const App = () => (
             <Route path="/missions" element={<ProtectedRoute><AppLayout><Missions /></AppLayout></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
             <Route path="/coming-soon" element={<ProtectedRoute><AppLayout><ComingSoon /></AppLayout></ProtectedRoute>} />
+            <Route path="/library" element={<ProtectedRoute><AppLayout><Library /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
             <Route path="/admin/members" element={<AdminLayout><AdminMembers /></AdminLayout>} />
@@ -74,6 +77,7 @@ const App = () => (
             <Route path="/admin/rewards" element={<AdminLayout><AdminRewards /></AdminLayout>} />
             <Route path="/admin/redemptions" element={<AdminLayout><AdminRedemptions /></AdminLayout>} />
             <Route path="/admin/missions" element={<AdminLayout><AdminMissions /></AdminLayout>} />
+            <Route path="/admin/library" element={<AdminLayout><AdminLibrary /></AdminLayout>} />
             <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

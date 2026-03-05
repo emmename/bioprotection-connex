@@ -12,11 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Target, Users, MapPin, QrCode, Search, GripVertical, X, PlusCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Target, Users, MapPin, QrCode, Search, GripVertical, X, PlusCircle, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { MissionCompletionsDialog } from '@/components/admin/MissionCompletionsDialog';
 import { useTierSettings } from '@/hooks/useGamification';
+import { SurveyEditor, SurveyQuestion } from '@/components/admin/SurveyEditor';
 
 interface Mission {
   id: string;
@@ -46,6 +47,7 @@ interface Mission {
 const MISSION_TYPES = [
   { value: 'qr_scan', label: 'สแกน QR Code', icon: QrCode },
   { value: 'location_visit', label: 'เยี่ยมชมสถานที่', icon: MapPin },
+  { value: 'survey', label: 'ทำแบบสำรวจ', icon: ClipboardList },
   { value: 'special', label: 'ภารกิจพิเศษ', icon: Target },
 ];
 
@@ -113,6 +115,9 @@ export default function AdminMissions() {
   // Reward Overrides State
   const [rewardOverrides, setRewardOverrides] = useState<RewardOverride[]>([]);
 
+  // Survey State
+  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
+
   const { tiers: tierSettings } = useTierSettings();
   const dynamicTiers = (tierSettings || []).map(t => ({ value: t.tier, label: t.display_name || t.tier }));
 
@@ -175,10 +180,11 @@ export default function AdminMissions() {
     setTargetSubTypes({});
     setTargetTiers([]);
     setRewardOverrides([]);
+    setSurveyQuestions([]);
     setEditingMission(null);
   };
 
-  const openEditDialog = (mission: Mission) => {
+  const openEditDialog = async (mission: Mission) => {
     setEditingMission(mission);
     setFormData({
       title: mission.title,
@@ -206,6 +212,35 @@ export default function AdminMissions() {
       setRewardOverrides([]);
     }
 
+    // Load survey questions if survey type
+    if (mission.mission_type === 'survey') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contentId = (mission.requirements as any)?.content_id;
+      if (contentId) {
+        const { data } = await supabase
+          .from('survey_questions')
+          .select('*')
+          .eq('content_id', contentId)
+          .order('order_index');
+
+        if (data) {
+          setSurveyQuestions(data.map(q => ({
+            id: q.id,
+            question: q.question,
+            questionType: q.question_type as SurveyQuestion['questionType'],
+            options: (q.options as string[]) || [],
+            isRequired: q.is_required,
+          })));
+        } else {
+          setSurveyQuestions([]);
+        }
+      } else {
+        setSurveyQuestions([]);
+      }
+    } else {
+      setSurveyQuestions([]);
+    }
+
     setIsDialogOpen(true);
   };
 
@@ -216,7 +251,27 @@ export default function AdminMissions() {
       return;
     }
 
-    const requirements = {
+    // Validate survey questions
+    if (formData.mission_type === 'survey') {
+      if (surveyQuestions.length === 0) {
+        toast.error('กรุณาเพิ่มคำถามแบบสำรวจอย่างน้อย 1 ข้อ');
+        return;
+      }
+      for (const q of surveyQuestions) {
+        if (!q.question.trim()) {
+          toast.error('กรุณากรอกคำถามให้ครบ');
+          return;
+        }
+        if ((q.questionType === 'single_choice' || q.questionType === 'multiple_choice') &&
+          q.options.some(o => !o.trim())) {
+          toast.error('กรุณากรอกตัวเลือกให้ครบ');
+          return;
+        }
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const requirements: any = {
       targeting: {
         member_types: targetMemberTypes,
         sub_types: targetSubTypes,
@@ -225,22 +280,90 @@ export default function AdminMissions() {
       reward_overrides: rewardOverrides
     };
 
-    const payload = {
-      title: formData.title.trim(),
-      description: formData.description.trim() || null,
-      mission_type: formData.mission_type,
-      points_reward: formData.points_reward,
-      coins_reward: formData.coins_reward,
-      is_active: formData.is_active,
-      start_date: formData.start_date || null,
-      end_date: formData.end_date || null,
-      qr_code: formData.qr_code.trim() || null,
-      location: formData.location.trim() || null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      requirements: requirements as any
-    };
-
     try {
+      // Handle survey content creation/update
+      let surveyContentId: string | null = null;
+      if (formData.mission_type === 'survey') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existingContentId = editingMission?.requirements ? (editingMission.requirements as any).content_id : null;
+
+        const contentData = {
+          title: formData.title.trim(),
+          description: formData.description.trim() || null,
+          content_type: 'survey' as const,
+          points_reward: formData.points_reward,
+          is_published: formData.is_active,
+          published_at: formData.is_active ? new Date().toISOString() : null,
+          target_tiers: targetTiers.length > 0 ? targetTiers : null,
+          target_member_types: targetMemberTypes.length > 0 ? targetMemberTypes : null,
+          requirements: {
+            targeting: {
+              member_types: targetMemberTypes,
+              sub_types: targetSubTypes,
+              tiers: targetTiers
+            },
+            is_mission_survey: true
+          }
+        };
+
+        if (existingContentId) {
+          // Update existing content
+          const { error: contentError } = await supabase
+            .from('content')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update(contentData as any)
+            .eq('id', existingContentId);
+          if (contentError) throw contentError;
+          surveyContentId = existingContentId;
+
+          // Delete old questions
+          await supabase.from('survey_questions').delete().eq('content_id', existingContentId);
+        } else {
+          // Create new content
+          const { data: newContent, error: contentError } = await supabase
+            .from('content')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .insert(contentData as any)
+            .select('id')
+            .single();
+          if (contentError) throw contentError;
+          surveyContentId = newContent.id;
+        }
+
+        // Insert survey questions
+        if (surveyQuestions.length > 0 && surveyContentId) {
+          const surveyData = surveyQuestions.map((q, index) => ({
+            content_id: surveyContentId!,
+            question: q.question,
+            question_type: q.questionType,
+            options: (q.questionType === 'single_choice' || q.questionType === 'multiple_choice') ? q.options : null,
+            is_required: q.isRequired,
+            order_index: index,
+          }));
+
+          const { error: surveyError } = await supabase
+            .from('survey_questions')
+            .insert(surveyData);
+          if (surveyError) throw surveyError;
+        }
+
+        requirements.content_id = surveyContentId;
+      }
+
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim() || null,
+        mission_type: formData.mission_type,
+        points_reward: formData.points_reward,
+        coins_reward: formData.coins_reward,
+        is_active: formData.is_active,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        qr_code: formData.qr_code.trim() || null,
+        location: formData.location.trim() || null,
+        requirements: requirements
+      };
+
       if (editingMission) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase.from('missions') as any).update(payload).eq('id', editingMission.id);
@@ -265,6 +388,17 @@ export default function AdminMissions() {
   const handleDelete = async (id: string) => {
     if (!confirm('ยืนยันการลบภารกิจนี้?')) return;
     try {
+      // If survey mission, also delete linked content
+      const mission = missions.find(m => m.id === id);
+      if (mission?.mission_type === 'survey') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contentId = (mission.requirements as any)?.content_id;
+        if (contentId) {
+          await supabase.from('survey_questions').delete().eq('content_id', contentId);
+          await supabase.from('content').delete().eq('id', contentId);
+        }
+      }
+
       const { error } = await supabase.from('missions').delete().eq('id', id);
       if (error) throw error;
       toast.success('ลบภารกิจเรียบร้อย');
@@ -326,7 +460,7 @@ export default function AdminMissions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">จัดการภารกิจพิเศษ</h1>
-          <p className="text-muted-foreground">สร้างและจัดการภารกิจสแกน QR, เยี่ยมชมสถานที่ และภารกิจพิเศษ</p>
+          <p className="text-muted-foreground">สร้างและจัดการภารกิจสแกน QR, เยี่ยมชมสถานที่, ทำแบบสำรวจ และภารกิจพิเศษ</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -386,6 +520,17 @@ export default function AdminMissions() {
                       <Input value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))} placeholder="ชื่อหรือพิกัดสถานที่" />
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Survey Editor */}
+              {formData.mission_type === 'survey' && (
+                <div className="space-y-4 border p-4 rounded-lg bg-secondary/10">
+                  <h3 className="font-semibold flex items-center gap-2"><ClipboardList className="w-4 h-4" /> คำถามแบบสำรวจ</h3>
+                  <SurveyEditor
+                    questions={surveyQuestions}
+                    onChange={setSurveyQuestions}
+                  />
                 </div>
               )}
 
@@ -705,7 +850,8 @@ export default function AdminMissions() {
                         <Badge variant="outline" className={
                           mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' :
                             mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
-                              mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' : ''
+                              mission.mission_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' :
+                                mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' : ''
                         }>
                           {getMissionTypeLabel(mission.mission_type)}
                         </Badge>

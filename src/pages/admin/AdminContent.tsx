@@ -742,7 +742,7 @@ export default function AdminContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">จัดการเนื้อหา</h1>
-          <p className="text-muted-foreground">สร้างและจัดการบทความ, วิดีโอ, แบบทดสอบ และแบบสำรวจ</p>
+          <p className="text-muted-foreground">สร้างและจัดการบทความ, วิดีโอ และแบบทดสอบ</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -782,7 +782,10 @@ export default function AdminContent() {
                         <SelectItem value="article">บทความ</SelectItem>
                         <SelectItem value="video">วิดีโอ</SelectItem>
                         <SelectItem value="quiz">แบบทดสอบ</SelectItem>
-                        <SelectItem value="survey">แบบสำรวจ</SelectItem>
+                        {/* แบบสำรวจย้ายไปจัดการในหน้าภารกิจพิเศษแล้ว - แสดงเฉพาะตอนแก้ไข survey เดิม */}
+                        {editingContent?.content_type === 'survey' && (
+                          <SelectItem value="survey">แบบสำรวจ</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

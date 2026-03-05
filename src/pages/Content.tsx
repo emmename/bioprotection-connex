@@ -112,6 +112,11 @@ export default function Content() {
           }
         }
 
+        // Hide surveys that are linked to missions (is_mission_survey flag)
+        const isMissionSurvey = content.content_type === 'survey' &&
+          (content.requirements as any)?.is_mission_survey === true;
+        if (isMissionSurvey) return false;
+
         return tierAllowed && memberTypeAllowed && subTypeAllowed;
       });
 
@@ -279,7 +284,6 @@ export default function Content() {
             <TabsTrigger value="article" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">บทความ</TabsTrigger>
             <TabsTrigger value="video" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">วิดีโอ</TabsTrigger>
             <TabsTrigger value="quiz" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">แบบทดสอบ</TabsTrigger>
-            <TabsTrigger value="survey" className="flex-1 min-w-fit px-3 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">แบบสำรวจ</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -335,9 +339,9 @@ export default function Content() {
                         <div>
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <Badge variant="outline" className={`text-xs px-2 h-6 ${content.content_type === 'article' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' :
-                                content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                                  content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
-                                    content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : ''
+                              content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                                content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' :
+                                  content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : ''
                               }`}>
                               {getContentTypeLabel(content.content_type)}
                             </Badge>
@@ -402,9 +406,9 @@ export default function Content() {
                         {/* Content Type Badge */}
                         <div className="absolute bottom-2 left-2 z-20">
                           <Badge variant="outline" className={`backdrop-blur-md text-[10px] px-2 py-0.5 h-6 opacity-90 hover:opacity-100 ${content.content_type === 'article' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200' :
-                                content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200' :
-                                  content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' : ''
+                            content.content_type === 'video' ? 'bg-red-50 text-red-700 border-red-200' :
+                              content.content_type === 'quiz' ? 'bg-green-50 text-green-700 border-green-200' :
+                                content.content_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' : ''
                             }`}>
                             {getContentIcon(content.content_type)}
                             <span className="ml-1.5 font-medium">{getContentTypeLabel(content.content_type)}</span>
