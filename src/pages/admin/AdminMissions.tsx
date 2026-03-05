@@ -332,14 +332,60 @@ export default function AdminMissions() {
 
         // Insert survey questions
         if (surveyQuestions.length > 0 && surveyContentId) {
-          const surveyData = surveyQuestions.map((q, index) => ({
-            content_id: surveyContentId!,
-            question: q.question,
-            question_type: q.questionType,
-            options: (q.questionType === 'single_choice' || q.questionType === 'multiple_choice') ? q.options : null,
-            is_required: q.isRequired,
-            order_index: index,
-          }));
+          const surveyData = surveyQuestions.map((q, index) => {
+            let optionsJson: any = null;
+
+            switch (q.questionType) {
+              case 'single_choice':
+              case 'multiple_choice':
+                optionsJson = { choices: q.options };
+                if (q.isScreening && q.questionType === 'single_choice') {
+                  optionsJson.screeningCorrectAnswer = q.options.indexOf(q.screeningLogic?.option || '');
+                }
+                break;
+              case 'rating':
+                optionsJson = { max: q.maxRating || 5 };
+                break;
+              case 'slider':
+                optionsJson = {
+                  min: q.sliderMin || 0,
+                  max: q.sliderMax || 100,
+                  step: q.sliderStep || 1,
+                  minLabel: q.sliderMinLabel || '',
+                  maxLabel: q.sliderMaxLabel || '',
+                };
+                break;
+              case 'matrix':
+                optionsJson = {
+                  rows: (q.matrixRows || []).filter(Boolean),
+                  columns: (q.matrixColumns || []).filter(Boolean),
+                };
+                break;
+              case 'ranking':
+                optionsJson = { items: q.options.filter(Boolean) };
+                break;
+              case 'likert':
+                const scale = q.likertScale || 5;
+                const labels = Array(scale).fill('');
+                labels[0] = q.likertLabels?.left || '';
+                labels[scale - 1] = q.likertLabels?.right || '';
+                optionsJson = { labels };
+                break;
+              case 'text':
+              default:
+                optionsJson = null;
+                break;
+            }
+
+            return {
+              content_id: surveyContentId!,
+              question: q.question,
+              question_type: q.questionType,
+              options: optionsJson,
+              is_required: q.isRequired,
+              order_index: index,
+            };
+          });
 
           const { error: surveyError } = await supabase
             .from('survey_questions')
@@ -410,7 +456,21 @@ export default function AdminMissions() {
   };
 
   const toggleActive = async (mission: Mission) => {
-    const { error } = await supabase.from('missions').update({ is_active: !mission.is_active }).eq('id', mission.id);
+    const newStatus = !mission.is_active;
+    const { error } = await supabase.from('missions').update({ is_active: newStatus }).eq('id', mission.id);
+
+    // Sync related content published state for surveys
+    if (!error && mission.mission_type === 'survey') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contentId = (mission.requirements as any)?.content_id;
+      if (contentId) {
+        await supabase.from('content').update({
+          is_published: newStatus,
+          published_at: newStatus ? new Date().toISOString() : null
+        }).eq('id', contentId);
+      }
+    }
+
     if (error) {
       toast.error('ไม่สามารถอัปเดตสถานะได้');
     } else {

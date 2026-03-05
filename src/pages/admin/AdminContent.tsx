@@ -270,14 +270,60 @@ export default function AdminContent() {
 
       // Insert survey questions
       if (formData.content_type === 'survey' && surveyQuestions.length > 0) {
-        const surveyData = surveyQuestions.map((q, index) => ({
-          content_id: contentId,
-          question: q.question,
-          question_type: q.questionType,
-          options: (q.questionType === 'single_choice' || q.questionType === 'multiple_choice') ? q.options : null,
-          is_required: q.isRequired,
-          order_index: index,
-        }));
+        const surveyData = surveyQuestions.map((q, index) => {
+          let optionsJson: any = null;
+
+          switch (q.questionType) {
+            case 'single_choice':
+            case 'multiple_choice':
+              optionsJson = { choices: q.options };
+              if (q.isScreening && q.questionType === 'single_choice') {
+                optionsJson.screeningCorrectAnswer = q.options.indexOf(q.screeningLogic?.option || '');
+              }
+              break;
+            case 'rating':
+              optionsJson = { max: q.maxRating || 5 };
+              break;
+            case 'slider':
+              optionsJson = {
+                min: q.sliderMin || 0,
+                max: q.sliderMax || 100,
+                step: q.sliderStep || 1,
+                minLabel: q.sliderMinLabel || '',
+                maxLabel: q.sliderMaxLabel || '',
+              };
+              break;
+            case 'matrix':
+              optionsJson = {
+                rows: (q.matrixRows || []).filter(Boolean),
+                columns: (q.matrixColumns || []).filter(Boolean),
+              };
+              break;
+            case 'ranking':
+              optionsJson = { items: q.options.filter(Boolean) };
+              break;
+            case 'likert':
+              const scale = q.likertScale || 5;
+              const labels = Array(scale).fill('');
+              labels[0] = q.likertLabels?.left || '';
+              labels[scale - 1] = q.likertLabels?.right || '';
+              optionsJson = { labels };
+              break;
+            case 'text':
+            default:
+              optionsJson = null;
+              break;
+          }
+
+          return {
+            content_id: contentId,
+            question: q.question,
+            question_type: q.questionType,
+            options: optionsJson,
+            is_required: q.isRequired,
+            order_index: index,
+          };
+        });
 
         const { error: surveyError } = await supabase
           .from('survey_questions')

@@ -48,6 +48,19 @@ export function SpecialMissionsCard() {
 
                         // Determine action based on mission type (simple logic for now)
                         const handleAction = () => {
+                            if (mission.mission_type === 'survey') {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const req = mission.requirements as any;
+                                if (req && req.content_id) {
+                                    navigate(`/content/${req.content_id}`);
+                                    return;
+                                } else {
+                                    // Give an informative error
+                                    console.error('Survey mission missing content_id in requirements', mission);
+                                    window.alert('ไม่พบข้อมูลแบบสำรวจ กรุณาแจ้งผู้ดูแลระบบให้เข้าไปกดบันทึกภารกิจนี้ใหม่อีกครั้ง');
+                                    return;
+                                }
+                            }
                             navigate('/coming-soon');
                         };
 
@@ -67,9 +80,21 @@ export function SpecialMissionsCard() {
                                             <MapPin className={`w-5 h-5 ${isCompleted ? 'text-slate-500' : 'text-amber-600'}`} />
                                         )}
                                     </div>
-                                    <Badge variant={isCompleted ? "secondary" : "default"} className={isCompleted ? "" : "bg-amber-500 hover:bg-amber-600"}>
-                                        +{mission.display_points} คะแนน
-                                    </Badge>
+                                    <div className="flex gap-1.5 flex-col items-end">
+                                        <Badge variant="outline" className={`text-[10px] ${mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                                                mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                    mission.mission_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                        mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                                            'bg-primary/10 text-primary border-primary/20'
+                                            }`}>
+                                            {mission.mission_type === 'survey' ? 'ทำแบบสำรวจ' :
+                                                mission.mission_type === 'location_visit' ? 'เยี่ยมชมสถานที่' :
+                                                    mission.mission_type === 'qr_scan' ? 'สแกน QR' : 'ภารกิจพิเศษ'}
+                                        </Badge>
+                                        <Badge variant={isCompleted ? "secondary" : "default"} className={isCompleted ? "" : "bg-amber-500 hover:bg-amber-600"}>
+                                            +{mission.display_points} คะแนน
+                                        </Badge>
+                                    </div>
                                 </div>
 
                                 <h3 className={`font-semibold mb-1 line-clamp-1 ${isCompleted ? 'text-slate-600' : 'text-amber-950'}`}>

@@ -131,7 +131,12 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                     <p className="text-xs text-muted-foreground mb-2">{mission.description}</p>
                   )}
                   <div className="flex flex-wrap gap-1.5">
-                    <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
+                    <Badge variant="outline" className={`text-[10px] ${mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                        mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          mission.mission_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                            mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              'bg-primary/10 text-primary border-primary/20'
+                      }`}>
                       {getMissionTypeLabel(mission.mission_type)}
                     </Badge>
                     {mission.points_reward > 0 && (

@@ -51,7 +51,11 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
 
   const getOptions = (options: Json): QuestionOptions => {
-    if (typeof options === 'object' && options !== null && !Array.isArray(options)) {
+    // Handle the legacy scenario where options was stored as an array directly
+    if (Array.isArray(options)) {
+      return { choices: options as string[] };
+    }
+    if (typeof options === 'object' && options !== null) {
       return options as QuestionOptions;
     }
     return {};
@@ -97,6 +101,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
   const renderQuestion = () => {
     switch (currentQuestion.question_type) {
       case 'single':
+      case 'single_choice':
       case 'screening':
         return (
           <RadioGroup
@@ -122,7 +127,8 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
           </RadioGroup>
         );
 
-      case 'multiple': {
+      case 'multiple':
+      case 'multiple_choice': {
         const multiResponse = (currentResponse as number[]) || [];
         return (
           <div className="space-y-3">

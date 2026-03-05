@@ -28,6 +28,7 @@ interface ContentData {
   thumbnail_url: string | null;
   video_url: string | null;
   published_at: string | null;
+  requirements?: Json | null;
 }
 
 interface ContentProgress {
@@ -86,6 +87,11 @@ export default function ContentDetail() {
         .maybeSingle();
 
       if (error || !contentData) {
+        toast({
+          title: 'ไม่พบเนื้อหา',
+          description: 'เนื้อหานี้อาจถูกปิดการใช้งานหรือไม่มีอยู่จริง',
+          variant: 'destructive',
+        });
         navigate('/content');
         return;
       }
@@ -203,7 +209,7 @@ export default function ContentDetail() {
           console.error('Failed to add points:', pointsError);
           // Don't throw here, just log. The content progress is already saved.
           toast({
-            variant: 'secondary',
+            variant: 'default',
             title: 'บันทึกสำเร็จ',
             description: 'บันทึกการอ่านแล้ว (แต่อาจมีปัญหาการเพิ่มคะแนน)',
           });
@@ -407,7 +413,15 @@ export default function ContentDetail() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/content')}>
+            <Button variant="ghost" size="icon" onClick={() => {
+              const isMissionSurvey = content.content_type === 'survey' &&
+                (content.requirements as any)?.is_mission_survey === true;
+              if (isMissionSurvey) {
+                navigate('/missions');
+              } else {
+                navigate('/content');
+              }
+            }}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1 min-w-0">
@@ -631,7 +645,14 @@ export default function ContentDetail() {
                   อย่าลืมกลับมาเรียนรู้เพิ่มเติมในวันพรุ่งนี้นะครับ
                 </p>
               </div>
-              <Button onClick={() => setShowSuccessModal(false)} className="w-full mt-4">
+              <Button onClick={() => {
+                setShowSuccessModal(false);
+                const isMissionSurvey = content.content_type === 'survey' &&
+                  (content.requirements as any)?.is_mission_survey === true;
+                if (isMissionSurvey) {
+                  navigate('/missions');
+                }
+              }} className="w-full mt-4">
                 ตกลง
               </Button>
             </div>

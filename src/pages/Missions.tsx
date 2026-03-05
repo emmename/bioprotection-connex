@@ -33,7 +33,7 @@ export default function Missions() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <PageHeader title="ภารกิจทั้งหมด" />
+      <PageHeader title="ภารกิจทั้งหมด" onBack={() => navigate('/dashboard')} />
 
       {/* Daily Progress Summary */}
       <div className="bg-primary text-primary-foreground px-4 pb-6 pt-2">
