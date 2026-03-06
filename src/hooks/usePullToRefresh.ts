@@ -12,20 +12,28 @@ export function usePullToRefresh({ onRefresh, threshold = 80 }: UsePullToRefresh
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (containerRef.current?.scrollTop === 0) {
+    // Check if we are at the top of the page. Support both window and container scroll.
+    const isAtTop = window.scrollY === 0 || (containerRef.current && containerRef.current.scrollTop === 0);
+    if (isAtTop) {
       startY.current = e.touches[0].clientY;
     }
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (startY.current === 0 || isRefreshing) return;
-    
+
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
-    
-    if (diff > 0 && containerRef.current?.scrollTop === 0) {
-      e.preventDefault();
-      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+
+    if (diff > 0) {
+      const isAtTop = window.scrollY === 0 || (containerRef.current && containerRef.current.scrollTop === 0);
+      if (isAtTop) {
+        // Only prevent default if we are actually pulling to refresh
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+      }
     }
   }, [isRefreshing, threshold]);
 
@@ -44,16 +52,18 @@ export function usePullToRefresh({ onRefresh, threshold = 80 }: UsePullToRefresh
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    // We attach events to window/document to ensure we catch touch events anywhere
+    // if the container is not taking up the full viewport height.
+    const listeningElement = container || document.body;
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    listeningElement.addEventListener('touchstart', handleTouchStart as any, { passive: true });
+    listeningElement.addEventListener('touchmove', handleTouchMove as any, { passive: false });
+    listeningElement.addEventListener('touchend', handleTouchEnd as any, { passive: true });
 
     return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
+      listeningElement.removeEventListener('touchstart', handleTouchStart as any);
+      listeningElement.removeEventListener('touchmove', handleTouchMove as any);
+      listeningElement.removeEventListener('touchend', handleTouchEnd as any);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
