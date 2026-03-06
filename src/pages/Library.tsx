@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Image as ImageIcon, FileText, Video, FolderOpen, Download, ExternalLink, ChevronRight, X, ChevronLeft, LayoutGrid, List } from 'lucide-react';
+import { ArrowLeft, BookOpen, Image as ImageIcon, FileText, Video, FolderOpen, Download, ExternalLink, ChevronRight, X, ChevronLeft, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,9 +55,21 @@ export default function Library() {
     const [items, setItems] = useState<LibraryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'grid' | 'cover'>('cover');
+    const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const selectedCategoryId = searchParams.get('category');
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [viewMode, selectedCategoryId, sortOrder]);
+
+    useEffect(() => {
+        if (currentPage > 1) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [currentPage]);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -138,9 +150,17 @@ export default function Library() {
         return true;
     });
 
-    const filteredItems = selectedCategoryId
+    const filteredItems = (selectedCategoryId
         ? visibleItems.filter(i => i.category_id === selectedCategoryId)
-        : visibleItems;
+        : visibleItems).sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+    const itemsPerPage = viewMode === 'list' ? 5 : viewMode === 'grid' ? 4 : 3;
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleSelectCategory = (catId: string) => {
         setSearchParams({ category: catId });
@@ -268,23 +288,42 @@ export default function Library() {
                     <div className="space-y-3">
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h2 className="text-sm font-semibold text-muted-foreground">{filteredItems.length} รายการ</h2>
-                            <div className="flex bg-muted/60 rounded-md p-1 items-center">
+                            <div className="flex items-center gap-2">
                                 <Button
-                                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                    variant="outline"
                                     size="sm"
-                                    className="h-7 px-2"
-                                    onClick={() => setViewMode('list')}
+                                    className="gap-2 h-8"
+                                    onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
                                 >
-                                    <List className="w-4 h-4" />
+                                    <ArrowUpDown className="w-3.5 h-3.5" />
+                                    <span className="text-xs">{sortOrder === 'newest' ? 'ล่าสุด' : 'เก่าสุด'}</span>
                                 </Button>
-                                <Button
-                                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                                    size="sm"
-                                    className="h-7 px-2"
-                                    onClick={() => setViewMode('grid')}
-                                >
-                                    <LayoutGrid className="w-4 h-4" />
-                                </Button>
+                                <div className="flex bg-muted/60 rounded-md p-1 items-center">
+                                    <Button
+                                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className="h-7 px-2"
+                                        onClick={() => setViewMode('list')}
+                                    >
+                                        <List className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className="h-7 px-2"
+                                        onClick={() => setViewMode('grid')}
+                                    >
+                                        <LayoutGrid className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant={viewMode === 'cover' ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className="h-7 px-2"
+                                        onClick={() => setViewMode('cover')}
+                                    >
+                                        <ImageIcon className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
@@ -297,16 +336,16 @@ export default function Library() {
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-3" : "space-y-3"}>
-                                {filteredItems.map(item => (
-                                    <Card
-                                        key={item.id}
-                                        className="cursor-pointer card-hover overflow-hidden group hover:shadow-md transition-all duration-300"
-                                        onClick={() => handleOpenItem(item)}
-                                    >
-                                        {viewMode === 'grid' ? (
-                                            <div className="flex flex-col h-full">
-                                                <div className="w-full aspect-video bg-muted overflow-hidden flex items-center justify-center relative">
+                            <>
+                                <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-3" : "space-y-3"}>
+                                    {paginatedItems.map(item => (
+                                        <Card
+                                            key={item.id}
+                                            className="cursor-pointer card-hover overflow-hidden group hover:shadow-md transition-all duration-300"
+                                            onClick={() => handleOpenItem(item)}
+                                        >
+                                            {viewMode === 'cover' ? (
+                                                <div className="w-full aspect-[2/1] bg-muted overflow-hidden flex items-center justify-center relative">
                                                     {item.thumbnail_url ? (
                                                         <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
@@ -319,53 +358,102 @@ export default function Library() {
                                                             {getItemTypeLabel(item.item_type)}
                                                         </Badge>
                                                     </div>
-                                                </div>
-                                                <div className="p-3 flex-1 flex flex-col min-w-0">
-                                                    <h3 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h3>
-                                                    {item.description && (
-                                                        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-2 flex-1">{item.description}</p>
-                                                    )}
-                                                    <div className="text-[10px] text-muted-foreground mt-auto pt-2 border-t flex justify-between items-center">
-                                                        <span>{new Date(item.created_at).toLocaleDateString('th-TH')}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-3 p-3">
-                                                {/* Thumbnail */}
-                                                <div className="w-[120px] aspect-video rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                                    {item.thumbnail_url ? (
-                                                        <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
-                                                            {getItemIcon(item.item_type)}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Content */}
-                                                <div className="flex-1 min-w-0 self-start pt-1">
-                                                    <div className="flex items-center justify-between gap-2 mb-1">
-                                                        <Badge variant="outline" className={`text-[10px] px-1.5 h-5 ${getItemTypeBadgeClass(item.item_type)}`}>
-                                                            {getItemTypeLabel(item.item_type)}
-                                                        </Badge>
-                                                        <span className="text-[10px] text-muted-foreground mr-1">
+                                                    <div className="absolute bottom-2 right-2">
+                                                        <Badge variant="outline" className={`text-[10px] px-1.5 h-5 shadow-sm bg-white/90 text-black font-semibold backdrop-blur-sm border-white/20`}>
                                                             {new Date(item.created_at).toLocaleDateString('th-TH')}
-                                                        </span>
+                                                        </Badge>
                                                     </div>
-                                                    <h3 className="font-medium text-sm line-clamp-1">{item.title}</h3>
-                                                    {item.description && (
-                                                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
-                                                    )}
                                                 </div>
+                                            ) : viewMode === 'grid' ? (
+                                                <div className="flex flex-col h-full">
+                                                    <div className="w-full aspect-video bg-muted overflow-hidden flex items-center justify-center relative">
+                                                        {item.thumbnail_url ? (
+                                                            <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
+                                                                {getItemIcon(item.item_type)}
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute top-2 right-2">
+                                                            <Badge variant="outline" className={`text-[10px] px-1.5 h-5 shadow-sm bg-white/90 backdrop-blur-sm border-white/20 ${getItemTypeBadgeClass(item.item_type).split(' ').find(c => c.startsWith('text-')) || ''}`}>
+                                                                {getItemTypeLabel(item.item_type)}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-3 flex-1 flex flex-col min-w-0">
+                                                        <h3 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h3>
+                                                        {item.description && (
+                                                            <p className="text-[11px] text-muted-foreground line-clamp-2 mb-2 flex-1">{item.description}</p>
+                                                        )}
+                                                        <div className="text-[10px] text-muted-foreground mt-auto pt-2 border-t flex justify-between items-center">
+                                                            <span>{new Date(item.created_at).toLocaleDateString('th-TH')}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-3 p-3">
+                                                    {/* Thumbnail */}
+                                                    <div className="w-[120px] aspect-video rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                                        {item.thumbnail_url ? (
+                                                            <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
+                                                                {getItemIcon(item.item_type)}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                                {/* Arrow */}
-                                                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 self-center" />
-                                            </div>
-                                        )}
-                                    </Card>
-                                ))}
-                            </div>
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0 self-start pt-1">
+                                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                                            <Badge variant="outline" className={`text-[10px] px-1.5 h-5 ${getItemTypeBadgeClass(item.item_type)}`}>
+                                                                {getItemTypeLabel(item.item_type)}
+                                                            </Badge>
+                                                            <span className="text-[10px] text-muted-foreground mr-1">
+                                                                {new Date(item.created_at).toLocaleDateString('th-TH')}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="font-medium text-sm line-clamp-1">{item.title}</h3>
+                                                        {item.description && (
+                                                            <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Arrow */}
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 self-center" />
+                                                </div>
+                                            )}
+                                        </Card>
+                                    ))}
+                                </div>
+
+                                {/* Pagination Controls */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-6 pb-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </Button>
+                                        <span className="text-xs text-muted-foreground w-16 text-center">
+                                            {currentPage} / {totalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
@@ -373,15 +461,15 @@ export default function Library() {
 
             {/* ===== Item Detail Dialog ===== */}
             <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-                <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-                    <DialogHeader className="p-6 pb-0">
+                <DialogContent className={selectedItem?.item_type === 'pdf' ? 'max-w-screen-md max-h-[100dvh] h-[100dvh] w-full p-0 flex flex-col rounded-none' : 'max-w-2xl max-h-[90vh] p-0'}>
+                    <DialogHeader className={selectedItem?.item_type === 'pdf' ? 'p-4 pb-2 border-b' : 'p-6 pb-0'}>
                         <DialogTitle className="pr-8">{selectedItem?.title}</DialogTitle>
                         {selectedItem?.description && (
                             <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
                         )}
                     </DialogHeader>
 
-                    <div className="px-6 pb-6 overflow-auto max-h-[calc(90vh-120px)]">
+                    <div className={selectedItem?.item_type === 'pdf' ? 'px-0 pb-0 overflow-hidden flex flex-col flex-1 relative' : 'px-6 pb-6 overflow-auto max-h-[calc(90vh-120px)]'}>
                         {selectedItem?.item_type === 'article' && selectedItem.content_body && (
                             <div
                                 className="prose prose-sm max-w-none mt-4"
@@ -414,7 +502,7 @@ export default function Library() {
                         )}
 
                         {selectedItem?.item_type === 'pdf' && selectedItem.file_url && (
-                            <div className="mt-4 relative" onContextMenu={(e) => e.preventDefault()}>
+                            <div className="flex-1 w-full relative h-full flex flex-col" onContextMenu={(e) => e.preventDefault()}>
                                 {/* Disable printing when PDF is open */}
                                 <style>{`
                                     @media print {
@@ -424,7 +512,8 @@ export default function Library() {
                                 <div className="absolute top-0 left-0 w-full h-12 bg-transparent z-10" title="ป้องกันการคลิกที่ขอบด้านบน" />
                                 <iframe
                                     src={`https://docs.google.com/gview?url=${encodeURIComponent(selectedItem.file_url)}&embedded=true`}
-                                    className="w-full h-[60vh] rounded-lg border bg-muted"
+                                    className="w-full h-full border-0 bg-muted flex-1 min-h-[500px]"
+                                    style={{ border: 'none' }}
                                     title={selectedItem.title}
                                 />
                             </div>

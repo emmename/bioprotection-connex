@@ -101,6 +101,12 @@ export default function Rewards() {
     setCurrentPage(1);
   }, [selectedCategory, viewMode]);
 
+  useEffect(() => {
+    if (currentPage > 1) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
   const fetchRewards = useCallback(async () => {
     setIsLoading(true);
     let query = supabase

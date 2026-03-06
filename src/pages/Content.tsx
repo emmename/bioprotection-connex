@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Video, FileQuestion, ClipboardList, Star, CheckCircle, LayoutList, LayoutGrid, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, BookOpen, Video, FileQuestion, ClipboardList, Star, CheckCircle, LayoutList, LayoutGrid, ChevronLeft, ChevronRight, ArrowUpDown, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,9 +66,9 @@ export default function Content() {
   }, [activeTab]);
 
   // Layout & Pagination State
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'cover'>('cover');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = viewMode === 'grid' ? 6 : 5;
+  const itemsPerPage = viewMode === 'list' ? 5 : viewMode === 'grid' ? 4 : 3;
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   const fetchData = useCallback(async () => {
@@ -150,6 +150,12 @@ export default function Content() {
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, sortOrder]);
+
+  useEffect(() => {
+    if (currentPage > 1) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
 
   const getContentIcon = (type: string) => {
     switch (type) {
@@ -270,6 +276,15 @@ export default function Content() {
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </Button>
+                <Button
+                  variant={viewMode === 'cover' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode('cover')}
+                  title="Cover View"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -371,6 +386,59 @@ export default function Content() {
                     </Card>
                   </Link>
                 );
+              } else if (viewMode === 'cover') {
+                // Cover View (Full Image Card)
+                return (
+                  <Link key={content.id} to={`/content/${content.id}`}>
+                    <Card className="card-hover overflow-hidden h-full flex flex-col border shadow-sm hover:shadow-md transition-all duration-300 rounded-xl group bg-card">
+                      <div className="relative w-full aspect-[2/1] bg-muted overflow-hidden">
+                        {content.thumbnail_url ? (
+                          <img
+                            loading="lazy"
+                            src={content.thumbnail_url}
+                            alt={content.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50 transition-transform duration-500 group-hover:scale-105">
+                            {getContentIcon(content.content_type)}
+                          </div>
+                        )}
+
+                        <div className="absolute top-2 right-2 flex gap-2 z-20">
+                          {completed && (
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-2 py-0.5 h-6 shadow-sm border-none">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              เสร็จแล้ว
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className={`backdrop-blur-md text-[10px] px-2 py-0.5 h-6 bg-white/90 shadow-sm border-white/20 ${content.content_type === 'article' ? 'text-blue-700' :
+                            content.content_type === 'video' ? 'text-red-700' :
+                              content.content_type === 'quiz' ? 'text-green-700' :
+                                content.content_type === 'survey' ? 'text-purple-700' : ''
+                            }`}>
+                            {getContentIcon(content.content_type)}
+                            <span className="ml-1.5 font-medium">{getContentTypeLabel(content.content_type)}</span>
+                          </Badge>
+                        </div>
+
+                        <div className="absolute top-2 left-2 z-20">
+                          <Badge variant="outline" className={`bg-white/90 text-black font-semibold backdrop-blur-md text-[10px] px-2 py-0.5 h-6 shadow-sm border-white/20`}>
+                            {content.points_reward} Points
+                          </Badge>
+                        </div>
+
+                        <div className="absolute bottom-2 right-2 z-20">
+                          {content.published_at && (
+                            <Badge variant="outline" className={`backdrop-blur-md text-[10px] px-1.5 h-5 shadow-sm bg-white/90 text-black font-semibold border-white/20`}>
+                              {new Date(content.published_at).toLocaleDateString('th-TH')}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                );
               } else {
                 // Grid View (Vertical Card - Existing Style)
                 return (
@@ -380,6 +448,7 @@ export default function Content() {
                       <div className="relative aspect-video bg-muted shrink-0 overflow-hidden">
                         {content.thumbnail_url ? (
                           <img
+                            loading="lazy"
                             src={content.thumbnail_url}
                             alt={content.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
