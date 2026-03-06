@@ -428,6 +428,7 @@ export default function Rewards() {
                         onClick={() => setPreviewImage(reward.images?.[0] || reward.image_url || '/placeholder.svg')}
                       >
                         <img
+                          loading="lazy"
                           src={reward.images?.[0] || reward.image_url || '/placeholder.svg'}
                           alt={reward.name}
                           className="w-full h-full object-cover"

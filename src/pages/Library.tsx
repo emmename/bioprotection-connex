@@ -233,7 +233,7 @@ export default function Library() {
                                         <CardContent className="h-full p-4 flex items-center justify-between relative z-10">
                                             <div className="group-hover:scale-110 transition-transform duration-500 h-full flex flex-1 items-center justify-center overflow-hidden">
                                                 {iconSrc ? (
-                                                    <img src={iconSrc} alt={cat.name} className="h-full max-w-full object-contain" />
+                                                    <img loading="lazy" src={iconSrc} alt={cat.name} className="h-full max-w-full object-contain" />
                                                 ) : (
                                                     <FolderOpen className="w-20 h-20 text-muted-foreground/50" />
                                                 )}
@@ -308,7 +308,7 @@ export default function Library() {
                                             <div className="flex flex-col h-full">
                                                 <div className="w-full aspect-video bg-muted overflow-hidden flex items-center justify-center relative">
                                                     {item.thumbnail_url ? (
-                                                        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                        <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
                                                             {getItemIcon(item.item_type)}
@@ -335,7 +335,7 @@ export default function Library() {
                                                 {/* Thumbnail */}
                                                 <div className="w-[120px] aspect-video rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
                                                     {item.thumbnail_url ? (
-                                                        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                                        <img loading="lazy" src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center gradient-primary opacity-50">
                                                             {getItemIcon(item.item_type)}
@@ -392,6 +392,7 @@ export default function Library() {
                         {selectedItem?.item_type === 'image' && selectedItem.file_url && (
                             <div className="mt-4">
                                 <img
+                                    loading="lazy"
                                     src={selectedItem.file_url}
                                     alt={selectedItem.title}
                                     className="w-full rounded-lg"
@@ -422,7 +423,7 @@ export default function Library() {
                                 `}</style>
                                 <div className="absolute top-0 left-0 w-full h-12 bg-transparent z-10" title="ป้องกันการคลิกที่ขอบด้านบน" />
                                 <iframe
-                                    src={`${selectedItem.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                                    src={`https://docs.google.com/gview?url=${encodeURIComponent(selectedItem.file_url)}&embedded=true`}
                                     className="w-full h-[60vh] rounded-lg border bg-muted"
                                     title={selectedItem.title}
                                 />
