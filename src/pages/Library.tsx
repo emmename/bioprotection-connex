@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { PageHeader } from '@/components/ui/PageHeader';
-import poultryIcon from '@/assets/New folder/poultry_library_256.png';
-import cattleIcon from '@/assets/New folder/cattle_library_256.png';
-import pigIcon from '@/assets/New folder/pig_library_256.png';
+import poultryIcon from '@/assets/New folder/poultry_library_364 x 180 px.png';
+import cattleIcon from '@/assets/New folder/cattle_library_364 x 180 px.png';
+import pigIcon from '@/assets/New folder/pig_library_364 x 180 px.png';
 
 interface LibraryCategory {
     id: string;
@@ -176,12 +176,16 @@ export default function Library() {
         const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (driveMatch) {
             return (
-                <iframe
-                    src={`https://drive.google.com/file/d/${driveMatch[1]}/preview`}
-                    className="w-full aspect-video rounded-lg"
-                    allowFullScreen
-                    allow="autoplay"
-                />
+                <div className="relative">
+                    <iframe
+                        src={`https://drive.google.com/file/d/${driveMatch[1]}/preview`}
+                        className="w-full aspect-video rounded-lg"
+                        allowFullScreen
+                        allow="autoplay"
+                    />
+                    {/* Invisible overlay to block the pop-out icon on the top right */}
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-transparent z-10" />
+                </div>
             );
         }
 
@@ -223,28 +227,18 @@ export default function Library() {
                                 return (
                                     <Card
                                         key={cat.id}
-                                        className="cursor-pointer card-hover border-none shadow-lg bg-gradient-to-br from-white to-secondary/40 transition-all duration-500 hover:shadow-2xl hover:scale-[1.03] overflow-hidden group relative min-h-[180px]"
+                                        className="cursor-pointer card-hover border-none shadow-lg bg-gradient-to-br from-white to-secondary/40 transition-all duration-500 hover:shadow-2xl hover:scale-[1.03] overflow-hidden group relative h-[170px]"
                                         onClick={() => handleSelectCategory(cat.id)}
                                     >
-                                        <CardContent className="h-[200px] p-4 flex items-center gap-6 relative z-10">
-                                            <div className="group-hover:scale-110 transition-transform duration-500 flex-shrink-0 w-44 h-44 flex items-center justify-center">
+                                        <CardContent className="h-full p-4 flex items-center justify-between relative z-10">
+                                            <div className="group-hover:scale-110 transition-transform duration-500 h-full flex flex-1 items-center justify-center overflow-hidden">
                                                 {iconSrc ? (
-                                                    <img src={iconSrc} alt={cat.name} className="w-full h-full object-contain" />
+                                                    <img src={iconSrc} alt={cat.name} className="h-full max-w-full object-contain" />
                                                 ) : (
-                                                    <FolderOpen className="w-24 h-24 text-muted-foreground/50" />
+                                                    <FolderOpen className="w-20 h-20 text-muted-foreground/50" />
                                                 )}
                                             </div>
-                                            <div className="flex-1 text-left min-w-0">
-                                                <div className="flex flex-col gap-3">
-                                                    <Badge variant="outline" className="w-fit text-base px-3 py-1 font-bold bg-primary text-primary-foreground border-none shadow-md">
-                                                        {itemCount} เนื้อหา
-                                                    </Badge>
-                                                    {cat.description && (
-                                                        <p className="text-lg text-muted-foreground line-clamp-3 leading-relaxed font-semibold">{cat.description}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm mr-4">
+                                            <div className="w-14 h-14 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-sm ml-4 border">
                                                 <ChevronRight className="w-8 h-8" />
                                             </div>
                                         </CardContent>
