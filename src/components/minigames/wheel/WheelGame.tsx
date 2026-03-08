@@ -7,6 +7,7 @@ import rewardImage from '@/assets/12.png';
 import loseImage from '@/assets/10.png';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Types
 type Reward = {
@@ -125,6 +126,7 @@ const SliceCoverImage = ({ imageUrl, index, total, radius }: { imageUrl: string,
 };
 
 export const WheelGame = () => {
+    const { refreshProfile } = useAuth();
     const [rewards, setRewards] = useState<Reward[]>([]);
     const [config, setConfig] = useState<any>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
@@ -318,53 +320,101 @@ export const WheelGame = () => {
         try {
             // Deduct coins if not free spin
             if (!isFreeSpin && cost > 0) {
-                const { error: deductError } = await supabase.rpc('deduct_coins', {
-                    p_profile_id: userProfile.id,
-                    p_amount: cost,
-                    p_source: 'game',
-                    p_description: 'เล่นเกมหมุนวงล้อ (Spin Wheel)'
+                // Update profile coins directly
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ total_coins: userProfile.total_coins - cost })
+                    .eq('id', userProfile.id);
+                if (updateError) {
+                    console.error('[Wheel] profile coins update failed:', updateError);
+                    throw updateError;
+                }
+
+                // Record the transaction
+                const { error: txError } = await (supabase as any).from('coins_transactions').insert({
+                    profile_id: userProfile.id,
+                    amount: -cost,
+                    transaction_type: 'spend',
+                    source: 'game',
+                    description: 'เล่นเกมหมุนวงล้อเสี่ยงโชค'
                 });
-                if (deductError) throw deductError;
+                if (txError) {
+                    console.error('[Wheel] coins_transaction insert failed:', txError);
+                    // Don't throw - profile already updated, just log
+                }
+
                 setUserProfile((prev: any) => prev ? { ...prev, total_coins: prev.total_coins - cost } : null);
             }
 
             // Record game session
             const wonRewardData = rewards[winningIndex];
-            await (supabase as any).from('game_sessions').insert({
+            const { error: sessionError } = await (supabase as any).from('game_sessions').insert({
                 profile_id: userProfile.id,
                 game_type: 'wheel',
                 coins_spent: (!isFreeSpin && cost > 0) ? cost : 0,
                 rewards_earned: { reward_id: wonRewardData.id, label: wonRewardData.label, type: wonRewardData.type, value: wonRewardData.value },
                 score: wonRewardData.value || 0
             });
+            if (sessionError) {
+                console.error('[Wheel] game_sessions insert failed:', sessionError);
+                throw sessionError;
+            }
 
             // Add won reward to transactions
             if (wonRewardData.type !== 'none' && wonRewardData.value > 0) {
+                // Fetch the latest profile to get current values
+                const { data: latestProfile } = await supabase
+                    .from('profiles')
+                    .select('total_points, total_coins')
+                    .eq('id', userProfile.id)
+                    .single();
+
                 if (wonRewardData.type === 'points') {
-                    const { error: pointsError } = await supabase.rpc('add_points', {
-                        p_profile_id: userProfile.id,
-                        p_amount: wonRewardData.value,
-                        p_source: 'game',
-                        p_description: `หมุนวงล้อ: ${wonRewardData.label}`
+                    const newTotal = (latestProfile?.total_points || 0) + wonRewardData.value;
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ total_points: newTotal })
+                        .eq('id', userProfile.id);
+                    if (updateError) {
+                        console.error('[Wheel] update points failed:', updateError);
+                        throw updateError;
+                    }
+
+                    // Record transaction
+                    await (supabase as any).from('points_transactions').insert({
+                        profile_id: userProfile.id,
+                        amount: wonRewardData.value,
+                        transaction_type: 'earn',
+                        source: 'game',
+                        description: `หมุนวงล้อ: ${wonRewardData.label}`
                     });
-                    if (pointsError) throw pointsError;
-                    setUserProfile((prev: any) => prev ? { ...prev, total_points: (prev.total_points || 0) + wonRewardData.value } : null);
+
                 } else if (wonRewardData.type === 'coins') {
-                    const { error: coinsError } = await supabase.rpc('add_coins', {
-                        p_profile_id: userProfile.id,
-                        p_amount: wonRewardData.value,
-                        p_source: 'game',
-                        p_description: `หมุนวงล้อ: ${wonRewardData.label}`
+                    const newTotal = (latestProfile?.total_coins || 0) + wonRewardData.value;
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ total_coins: newTotal })
+                        .eq('id', userProfile.id);
+                    if (updateError) {
+                        console.error('[Wheel] update coins failed:', updateError);
+                        throw updateError;
+                    }
+
+                    // Record transaction
+                    await (supabase as any).from('coins_transactions').insert({
+                        profile_id: userProfile.id,
+                        amount: wonRewardData.value,
+                        transaction_type: 'earn',
+                        source: 'game',
+                        description: `หมุนวงล้อ: ${wonRewardData.label}`
                     });
-                    if (coinsError) throw coinsError;
-                    setUserProfile((prev: any) => prev ? { ...prev, total_coins: (prev.total_coins || 0) + wonRewardData.value } : null);
                 }
             }
 
             setPlayedToday(prev => prev + 1);
-        } catch (error) {
-            console.error("Failed to record game session", error);
-            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+        } catch (error: any) {
+            console.error("[Wheel] Full error details:", JSON.stringify(error, null, 2));
+            toast.error(`เกิดข้อผิดพลาด: ${error?.message || error?.details || 'ไม่ทราบสาเหตุ'}`);
             setIsSpinning(false);
             return;
         }
@@ -421,18 +471,20 @@ export const WheelGame = () => {
         >
             {/* Content Container */}
             <div className="relative z-10 w-full h-full max-w-md flex flex-col items-center justify-between py-6">
-                <div className="w-full">
+                <div className="w-full pt-[140px] z-20 px-4">
                     {userProfile && (
-                        <div className="w-full flex justify-end px-4">
-                            <div className="bg-black/30 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg border border-white/20">
+                        <div className="w-full flex flex-col items-end gap-2">
+                            <div className="bg-black/30 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg border border-white/10 min-w-[120px] text-right">
+                                ⭐ {userProfile.total_points?.toLocaleString()} คะแนน
+                            </div>
+                            <div className="bg-black/30 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg border border-white/10 min-w-[120px] text-right">
                                 💰 {userProfile.total_coins?.toLocaleString()} เหรียญ
                             </div>
                         </div>
                     )}
-
                 </div>
 
-                <div className="relative w-full max-w-[400px] h-[380px] flex items-center justify-center mt-32">
+                <div className="relative w-full max-w-[400px] h-[380px] flex items-center justify-center mt-4 z-10">
                     {isLoading ? (
                         <div className="absolute inset-0 flex items-center justify-center z-20 bg-white/50 backdrop-blur-sm rounded-2xl">
                             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -592,7 +644,14 @@ export const WheelGame = () => {
                                         </p>
 
                                         <button
-                                            onClick={() => setResult(null)}
+                                            onClick={() => {
+                                                setResult(null);
+                                                refreshProfile();
+                                                // Sync local user profile explicitly 
+                                                supabase.from('profiles').select('*').eq('id', userProfile.id).single().then(({ data }) => {
+                                                    if (data) setUserProfile(data);
+                                                });
+                                            }}
                                             className={`w-full font-bold py-3 px-6 rounded-full shadow-lg transition-transform active:scale-95 text-white ${isWin ? 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500' : 'bg-gray-600 hover:bg-gray-500 border border-gray-400'}`}
                                         >
                                             {isWin ? 'รับรางวัล' : 'ตกลง'}
