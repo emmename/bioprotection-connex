@@ -35,9 +35,13 @@ import AdminMemberDetail from "./pages/admin/AdminMemberDetail";
 import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import AdminMissions from "./pages/admin/AdminMissions";
 import AdminLibrary from "./pages/admin/AdminLibrary";
+import AdminGames from "./pages/admin/AdminGames";
 import AppLayout from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import GameHub from "./pages/games/GameHub";
+import WheelGamePage from "./pages/games/WheelGamePage";
+import MemoryMatchGamePage from "./pages/games/MemoryMatchGamePage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +72,9 @@ const App = () => (
             <Route path="/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
             <Route path="/coming-soon" element={<ProtectedRoute><AppLayout><ComingSoon /></AppLayout></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><AppLayout><Library /></AppLayout></ProtectedRoute>} />
+            <Route path="/games" element={<ProtectedRoute><AppLayout><GameHub /></AppLayout></ProtectedRoute>} />
+            <Route path="/games/wheel" element={<WheelGamePage />} />
+            <Route path="/games/match" element={<MemoryMatchGamePage />} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
             <Route path="/admin/members" element={<AdminLayout><AdminMembers /></AdminLayout>} />
@@ -78,6 +85,7 @@ const App = () => (
             <Route path="/admin/redemptions" element={<AdminLayout><AdminRedemptions /></AdminLayout>} />
             <Route path="/admin/missions" element={<AdminLayout><AdminMissions /></AdminLayout>} />
             <Route path="/admin/library" element={<AdminLayout><AdminLibrary /></AdminLayout>} />
+            <Route path="/admin/games" element={<AdminLayout><AdminGames /></AdminLayout>} />
             <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

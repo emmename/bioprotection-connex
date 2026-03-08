@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,10 @@ const menuItems = [{
   icon: Target,
   label: 'จัดการภารกิจ',
   path: '/admin/missions'
+}, {
+  icon: Gamepad2,
+  label: 'ตั้งค่าเกม',
+  path: '/admin/games'
 }, {
   icon: Settings,
   label: 'ตั้งค่า',

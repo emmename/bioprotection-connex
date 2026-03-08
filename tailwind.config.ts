@@ -21,6 +21,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Prompt', 'sans-serif'],
+        mali: ['Mali', 'sans-serif'],
+        itim: ['Itim', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
