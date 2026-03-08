@@ -329,34 +329,35 @@ export const WheelGame = () => {
             }
 
             // Record game session
+            const wonRewardData = rewards[winningIndex];
             await (supabase as any).from('game_sessions').insert({
                 profile_id: userProfile.id,
                 game_type: 'wheel',
-                status: 'completed',
-                reward_id: rewards[winningIndex].id
+                coins_spent: (!isFreeSpin && cost > 0) ? cost : 0,
+                rewards_earned: { reward_id: wonRewardData.id, label: wonRewardData.label, type: wonRewardData.type, value: wonRewardData.value },
+                score: wonRewardData.value || 0
             });
 
-            // Add won reward to transactions and notifications
-            const wonReward = rewards[winningIndex];
-            if (wonReward.type !== 'none' && wonReward.value > 0) {
-                if (wonReward.type === 'points') {
+            // Add won reward to transactions
+            if (wonRewardData.type !== 'none' && wonRewardData.value > 0) {
+                if (wonRewardData.type === 'points') {
                     const { error: pointsError } = await supabase.rpc('add_points', {
                         p_profile_id: userProfile.id,
-                        p_amount: wonReward.value,
+                        p_amount: wonRewardData.value,
                         p_source: 'game',
-                        p_description: `หมุนวงล้อ: ${wonReward.label}`
+                        p_description: `หมุนวงล้อ: ${wonRewardData.label}`
                     });
                     if (pointsError) throw pointsError;
-                    setUserProfile((prev: any) => prev ? { ...prev, total_points: (prev.total_points || 0) + wonReward.value } : null);
-                } else if (wonReward.type === 'coins') {
+                    setUserProfile((prev: any) => prev ? { ...prev, total_points: (prev.total_points || 0) + wonRewardData.value } : null);
+                } else if (wonRewardData.type === 'coins') {
                     const { error: coinsError } = await supabase.rpc('add_coins', {
                         p_profile_id: userProfile.id,
-                        p_amount: wonReward.value,
+                        p_amount: wonRewardData.value,
                         p_source: 'game',
-                        p_description: `หมุนวงล้อ: ${wonReward.label}`
+                        p_description: `หมุนวงล้อ: ${wonRewardData.label}`
                     });
                     if (coinsError) throw coinsError;
-                    setUserProfile((prev: any) => prev ? { ...prev, total_coins: (prev.total_coins || 0) + wonReward.value } : null);
+                    setUserProfile((prev: any) => prev ? { ...prev, total_coins: (prev.total_coins || 0) + wonRewardData.value } : null);
                 }
             }
 
