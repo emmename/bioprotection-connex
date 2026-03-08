@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Gamepad2, Settings, Check, X } from "lucide-react";
+import { Pencil, Gamepad2, Settings, Check, X, UploadCloud } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminMatchGameSettings } from "@/components/admin/games/AdminMatchGameSettings";
 import { AdminMatchGameImages } from "@/components/admin/games/AdminMatchGameImages";
@@ -122,6 +122,36 @@ export default function AdminGames() {
             console.error(e);
             toast.error("เกิดข้อผิดพลาดในการบันทึก");
             fetchWheelData();
+        }
+    };
+
+    const handleRewardImageUpload = async (index: number, rewardId: string, file: File) => {
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `wheel-rewards/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('game-assets')
+                .upload(fileName, file);
+
+            if (uploadError) {
+                toast.error('อัปโหลดรูปไม่สำเร็จ');
+                console.error(uploadError);
+                return;
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('game-assets')
+                .getPublicUrl(fileName);
+
+            if (urlData?.publicUrl) {
+                handleRewardChange(index, 'image_url', urlData.publicUrl);
+                await handleRewardSave(rewardId, { image_url: urlData.publicUrl });
+                toast.success('อัปโหลดรูปสำเร็จ');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('เกิดข้อผิดพลาด');
         }
     };
 
@@ -288,6 +318,20 @@ export default function AdminGames() {
                                                                 onBlur={() => handleRewardSave(reward.id, { image_url: reward.image_url || null })}
                                                                 className="h-7 text-[10px] px-2 bg-transparent border-transparent hover:border-input focus:border-input"
                                                             />
+                                                            <label className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 cursor-pointer mt-0.5">
+                                                                <UploadCloud className="w-3 h-3" />
+                                                                <span>อัปโหลดรูป</span>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) handleRewardImageUpload(index, reward.id, file);
+                                                                        e.target.value = '';
+                                                                    }}
+                                                                />
+                                                            </label>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
