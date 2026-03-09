@@ -22,6 +22,9 @@ import ComingSoon from "./pages/ComingSoon";
 import Library from "./pages/Library";
 import Terms from "./pages/Terms";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Events from "./pages/Events";
+import EventTicket from "./pages/EventTicket";
+import EventScanner from "./pages/EventScanner";
 import AdminLayout from "./components/admin/AdminLayout";
 import History from "./pages/History";
 import AdminAuth from "./pages/admin/AdminAuth";
@@ -36,6 +39,10 @@ import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import AdminMissions from "./pages/admin/AdminMissions";
 import AdminLibrary from "./pages/admin/AdminLibrary";
 import AdminGames from "./pages/admin/AdminGames";
+import AdminRoles from "./pages/admin/AdminRoles";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminEventDetail from "./pages/admin/AdminEventDetail";
+import AdminScanner from "./pages/admin/AdminScanner";
 import AppLayout from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
@@ -75,6 +82,9 @@ const App = () => (
             <Route path="/games" element={<ProtectedRoute><AppLayout><GameHub /></AppLayout></ProtectedRoute>} />
             <Route path="/games/wheel" element={<WheelGamePage />} />
             <Route path="/games/match" element={<MemoryMatchGamePage />} />
+            <Route path="/events" element={<ProtectedRoute><AppLayout><Events /></AppLayout></ProtectedRoute>} />
+            <Route path="/events/:id/ticket" element={<ProtectedRoute><AppLayout><EventTicket /></AppLayout></ProtectedRoute>} />
+            <Route path="/events/scanner" element={<ProtectedRoute><AppLayout><EventScanner /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
             <Route path="/admin/members" element={<AdminLayout><AdminMembers /></AdminLayout>} />
@@ -87,6 +97,10 @@ const App = () => (
             <Route path="/admin/library" element={<AdminLayout><AdminLibrary /></AdminLayout>} />
             <Route path="/admin/games" element={<AdminLayout><AdminGames /></AdminLayout>} />
             <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
+            <Route path="/admin/roles" element={<AdminLayout><AdminRoles /></AdminLayout>} />
+            <Route path="/admin/events" element={<AdminLayout><AdminEvents /></AdminLayout>} />
+            <Route path="/admin/events/:id" element={<AdminLayout><AdminEventDetail /></AdminLayout>} />
+            <Route path="/admin/scanner" element={<AdminLayout><AdminScanner /></AdminLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

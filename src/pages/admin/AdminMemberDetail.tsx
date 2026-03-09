@@ -10,7 +10,9 @@ import { InlineEditField } from '@/components/admin/InlineEditField';
 import { InlineEditSelect } from '@/components/admin/InlineEditSelect';
 import { PointsCurrencyManager } from '@/components/admin/PointsCurrencyManager';
 import { DeleteMemberDialog } from '@/components/admin/DeleteMemberDialog';
+import { RoleAssignment } from '@/components/admin/RoleAssignment';
 import { useTierSettings } from '@/hooks/useGamification';
+import { usePermissions } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -173,6 +175,8 @@ export default function AdminMemberDetail() {
   const [isLoading, setIsLoading] = useState(true);
 
   const { tiers: tierSettings } = useTierSettings();
+  const { hasPermission } = usePermissions();
+  const canManageRoles = hasPermission('manage_roles');
   const dynamicTiers = (tierSettings || []).map(t => ({ value: t.tier, label: t.display_name || t.tier }));
   const dynamicTierLabels = (tierSettings || []).reduce((acc, t) => ({ ...acc, [t.tier]: t.display_name || t.tier }), {} as Record<string, string>);
 
@@ -495,11 +499,14 @@ export default function AdminMemberDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 p-1 bg-muted rounded-lg">
+        <TabsList className={`grid w-full p-1 bg-muted rounded-lg ${canManageRoles ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="personal" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ข้อมูลส่วนตัว</TabsTrigger>
           <TabsTrigger value="occupation" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ข้อมูลอาชีพ</TabsTrigger>
           <TabsTrigger value="transactions" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ประวัติคะแนน</TabsTrigger>
           <TabsTrigger value="receipts" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">ใบเสร็จ</TabsTrigger>
+          {canManageRoles && (
+            <TabsTrigger value="roles" className="data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0">สิทธิ์พนักงาน</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="personal" className="space-y-4">
@@ -928,6 +935,12 @@ export default function AdminMemberDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {canManageRoles && (
+          <TabsContent value="roles" className="space-y-4">
+            <RoleAssignment userId={profile.user_id} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

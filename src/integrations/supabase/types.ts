@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -119,7 +119,6 @@ export type Database = {
       }
       content: {
         Row: {
-          banner_url: string | null
           content_body: string | null
           content_type: Database["public"]["Enums"]["content_type"]
           created_at: string
@@ -128,9 +127,10 @@ export type Database = {
           is_published: boolean
           points_reward: number
           published_at: string | null
+          requirements: Json | null
           target_member_types:
-          | Database["public"]["Enums"]["member_type"][]
-          | null
+            | Database["public"]["Enums"]["member_type"][]
+            | null
           target_tiers: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url: string | null
           title: string
@@ -138,7 +138,6 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
-          banner_url?: string | null
           content_body?: string | null
           content_type: Database["public"]["Enums"]["content_type"]
           created_at?: string
@@ -147,9 +146,10 @@ export type Database = {
           is_published?: boolean
           points_reward?: number
           published_at?: string | null
+          requirements?: Json | null
           target_member_types?:
-          | Database["public"]["Enums"]["member_type"][]
-          | null
+            | Database["public"]["Enums"]["member_type"][]
+            | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url?: string | null
           title: string
@@ -157,7 +157,6 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
-          banner_url?: string | null
           content_body?: string | null
           content_type?: Database["public"]["Enums"]["content_type"]
           created_at?: string
@@ -166,9 +165,10 @@ export type Database = {
           is_published?: boolean
           points_reward?: number
           published_at?: string | null
+          requirements?: Json | null
           target_member_types?:
-          | Database["public"]["Enums"]["member_type"][]
-          | null
+            | Database["public"]["Enums"]["member_type"][]
+            | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url?: string | null
           title?: string
@@ -268,6 +268,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_registrations: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string | null
+          id: string
+          profile_id: string | null
+          status: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["event_registration_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean
+          location: string | null
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       farm_details: {
         Row: {
@@ -425,6 +503,158 @@ export type Database = {
           },
         ]
       }
+      library_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      library_items: {
+        Row: {
+          category_id: string
+          content_body: string | null
+          created_at: string | null
+          description: string | null
+          file_url: string | null
+          id: string
+          is_published: boolean | null
+          item_type: string
+          sort_order: number | null
+          target_member_types: string[] | null
+          target_tiers: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          content_body?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          item_type: string
+          sort_order?: number | null
+          target_member_types?: string[] | null
+          target_tiers?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          content_body?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          item_type?: string
+          sort_order?: number | null
+          target_member_types?: string[] | null
+          target_tiers?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "library_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_configs: {
+        Row: {
+          coins_cost: number
+          config_name: string
+          created_at: string
+          free_plays_per_day: number
+          id: string
+          is_active: boolean
+          levels_config: Json
+          reward_type: string
+          reward_value: number
+          updated_at: string
+        }
+        Insert: {
+          coins_cost?: number
+          config_name?: string
+          created_at?: string
+          free_plays_per_day?: number
+          id?: string
+          is_active?: boolean
+          levels_config?: Json
+          reward_type?: string
+          reward_value?: number
+          updated_at?: string
+        }
+        Update: {
+          coins_cost?: number
+          config_name?: string
+          created_at?: string
+          free_plays_per_day?: number
+          id?: string
+          is_active?: boolean
+          levels_config?: Json
+          reward_type?: string
+          reward_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      match_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_active: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       mission_completions: {
         Row: {
           coins_earned: number
@@ -565,6 +795,24 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+        }
+        Relationships: []
+      }
       points_transactions: {
         Row: {
           amount: number
@@ -619,14 +867,10 @@ export type Database = {
           interests: string[] | null
           known_products: string[] | null
           last_name: string
-          line_display_name: string | null
           line_id: string | null
-          line_picture_url: string | null
           line_user_id: string | null
           member_id: string | null
           member_type: Database["public"]["Enums"]["member_type"]
-          migrated_at: string | null
-          migration_source: string | null
           nickname: string | null
           phone: string | null
           postal_code: string | null
@@ -637,7 +881,7 @@ export type Database = {
           total_coins: number
           total_points: number
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           address?: string | null
@@ -651,14 +895,10 @@ export type Database = {
           interests?: string[] | null
           known_products?: string[] | null
           last_name: string
-          line_display_name?: string | null
           line_id?: string | null
-          line_picture_url?: string | null
           line_user_id?: string | null
           member_id?: string | null
           member_type: Database["public"]["Enums"]["member_type"]
-          migrated_at?: string | null
-          migration_source?: string | null
           nickname?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -669,7 +909,7 @@ export type Database = {
           total_coins?: number
           total_points?: number
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           address?: string | null
@@ -683,14 +923,10 @@ export type Database = {
           interests?: string[] | null
           known_products?: string[] | null
           last_name?: string
-          line_display_name?: string | null
           line_id?: string | null
-          line_picture_url?: string | null
           line_user_id?: string | null
           member_id?: string | null
           member_type?: Database["public"]["Enums"]["member_type"]
-          migrated_at?: string | null
-          migration_source?: string | null
           nickname?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -701,7 +937,7 @@ export type Database = {
           total_coins?: number
           total_points?: number
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -891,9 +1127,9 @@ export type Database = {
           is_active: boolean
           name: string
           points_cost: number
-          stock_quantity: number
-          target_member_types: Database["public"]["Enums"]["member_type"][] | null
           requirements: Json | null
+          stock_quantity: number
+          target_member_types: string[] | null
           target_tiers: Database["public"]["Enums"]["tier_level"][] | null
           tier_points_cost: Json | null
           updated_at: string
@@ -908,9 +1144,9 @@ export type Database = {
           is_active?: boolean
           name: string
           points_cost: number
-          stock_quantity?: number
-          target_member_types?: Database["public"]["Enums"]["member_type"][] | null
           requirements?: Json | null
+          stock_quantity?: number
+          target_member_types?: string[] | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           tier_points_cost?: Json | null
           updated_at?: string
@@ -925,10 +1161,66 @@ export type Database = {
           is_active?: boolean
           name?: string
           points_cost?: number
+          requirements?: Json | null
           stock_quantity?: number
+          target_member_types?: string[] | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           tier_points_cost?: Json | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -1002,6 +1294,30 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       tier_settings: {
         Row: {
           benefits: string[] | null
@@ -1037,6 +1353,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_custom_roles: {
+        Row: {
+          created_at: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_custom_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1091,6 +1433,92 @@ export type Database = {
           },
         ]
       }
+      wheel_configs: {
+        Row: {
+          coins_cost: number | null
+          config_name: string
+          created_at: string
+          free_spins_per_day: number | null
+          id: string
+          is_active: boolean
+          slot_count: number
+          updated_at: string
+        }
+        Insert: {
+          coins_cost?: number | null
+          config_name: string
+          created_at?: string
+          free_spins_per_day?: number | null
+          id?: string
+          is_active?: boolean
+          slot_count?: number
+          updated_at?: string
+        }
+        Update: {
+          coins_cost?: number | null
+          config_name?: string
+          created_at?: string
+          free_spins_per_day?: number | null
+          id?: string
+          is_active?: boolean
+          slot_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wheel_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          limit_quota: number | null
+          reward_color: string
+          reward_label: string
+          reward_type: string
+          reward_value: number
+          slot_index: number
+          updated_at: string
+          weight: number
+          wheel_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          limit_quota?: number | null
+          reward_color?: string
+          reward_label: string
+          reward_type: string
+          reward_value?: number
+          slot_index: number
+          updated_at?: string
+          weight?: number
+          wheel_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          limit_quota?: number | null
+          reward_color?: string
+          reward_label?: string
+          reward_type?: string
+          reward_value?: number
+          slot_index?: number
+          updated_at?: string
+          weight?: number
+          wheel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wheel_rewards_wheel_id_fkey"
+            columns: ["wheel_id"]
+            isOneToOne: false
+            referencedRelation: "wheel_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1132,8 +1560,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      earn_reward_from_game: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_game_type: string
+          p_profile_id: string
+          p_reward_type: string
+        }
+        Returns: undefined
+      }
+      exchange_coins_to_points: { Args: { p_amount: number }; Returns: Json }
       generate_member_id: { Args: never; Returns: string }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1142,42 +1585,52 @@ export type Database = {
         Returns: boolean
       }
       redeem_reward:
-      | {
+        | {
+            Args: {
+              p_points_cost: number
+              p_profile_id: string
+              p_reward_id: string
+              p_shipping_address: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_notes?: string
+              p_points_cost: number
+              p_profile_id: string
+              p_reward_id: string
+              p_shipping_address: string
+            }
+            Returns: Json
+          }
+      spend_coins_for_game: {
         Args: {
-          p_points_cost: number
+          p_amount: number
+          p_description?: string
+          p_game_type: string
           p_profile_id: string
-          p_reward_id: string
-          p_shipping_address: string
         }
-        Returns: Json
-      }
-      | {
-        Args: {
-          p_notes?: string
-          p_points_cost: number
-          p_profile_id: string
-          p_reward_id: string
-          p_shipping_address: string
-        }
-        Returns: Json
+        Returns: undefined
       }
     }
     Enums: {
       app_role: "admin" | "user"
       approval_status: "pending" | "approved" | "rejected"
       company_business:
-      | "animal_production"
-      | "animal_feed"
-      | "veterinary_distribution"
-      | "other"
+        | "animal_production"
+        | "animal_feed"
+        | "veterinary_distribution"
+        | "other"
       content_type: "article" | "video" | "quiz" | "survey"
+      event_registration_status: "registered" | "checked_in" | "cancelled"
       member_type:
-      | "farm"
-      | "company_employee"
-      | "veterinarian"
-      | "livestock_shop"
-      | "government"
-      | "other"
+        | "farm"
+        | "company_employee"
+        | "veterinarian"
+        | "livestock_shop"
+        | "government"
+        | "other"
       tier_level: "bronze" | "silver" | "gold" | "platinum"
       transaction_type: "earn" | "spend"
       vet_type: "livestock" | "hospital_clinic"
@@ -1194,116 +1647,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
@@ -1317,6 +1770,7 @@ export const Constants = {
         "other",
       ],
       content_type: ["article", "video", "quiz", "survey"],
+      event_registration_status: ["registered", "checked_in", "cancelled"],
       member_type: [
         "farm",
         "company_employee",

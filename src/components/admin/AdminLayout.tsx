@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen, Gamepad2 } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen, Gamepad2, Shield, Calendar, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,21 @@ const menuItems = [{
   icon: Users,
   label: 'จัดการสมาชิก',
   path: '/admin/members'
+}, {
+  icon: Shield,
+  label: 'จัดการสิทธิ์',
+  path: '/admin/roles',
+  requiredPermission: 'manage_roles'
+}, {
+  icon: Calendar,
+  label: 'จัดการกิจกรรม',
+  path: '/admin/events',
+  requiredPermission: 'manage_events'
+}, {
+  icon: QrCode,
+  label: 'สแกนเข้าร่วมงาน',
+  path: '/admin/scanner',
+  requiredPermission: 'scan_events'
 }, {
   icon: Receipt,
   label: 'อนุมัติใบเสร็จ',
@@ -57,6 +72,7 @@ export default function AdminLayout({
     profile,
     isAdmin,
     isLoading,
+    hasPermission,
     signOut
   } = useAuth();
   const location = useLocation();
@@ -94,6 +110,7 @@ export default function AdminLayout({
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1">
           {menuItems.map(item => {
+            if (item.requiredPermission && !hasPermission(item.requiredPermission)) return null;
             const isActive = location.pathname === item.path;
             return <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-colors", isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent text-slate-600 font-medium")}>
               <item.icon className="h-5 w-5" />

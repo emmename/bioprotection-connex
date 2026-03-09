@@ -42,8 +42,8 @@ const quickActions: QuickAction[] = [
     imageSrc: uploadButtonImg,
   },
   {
-    label: 'สแกน QR',
-    href: '/coming-soon',
+    label: 'กิจกรรม',
+    href: '/events',
     imageSrc: scanButtonImg,
   },
   {
