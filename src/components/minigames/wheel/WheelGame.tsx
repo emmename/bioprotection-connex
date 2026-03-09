@@ -426,7 +426,7 @@ export const WheelGame = () => {
         >
             {/* Content Container */}
             <div className="relative z-10 w-full h-full max-w-md flex flex-col items-center justify-between py-6">
-                <div className="w-full pt-[130px] z-20 px-4">
+                <div className="w-full pt-[160px] z-20 px-4">
                     {userProfile && (
                         <div className="w-full flex flex-col items-end gap-2.5">
                             <div className="bg-black/30 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg border border-white/10 min-w-[120px] text-right">
