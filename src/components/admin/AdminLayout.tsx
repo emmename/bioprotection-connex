@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen, Gamepad2, Shield, Calendar, QrCode } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, FileText, Settings, LogOut, Menu, X, Gift, ShoppingBag, Target, BookOpen, Gamepad2, Shield, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -26,11 +26,6 @@ const menuItems = [{
   label: 'จัดการกิจกรรม',
   path: '/admin/events',
   requiredPermission: 'manage_events'
-}, {
-  icon: QrCode,
-  label: 'สแกนเข้าร่วมงาน',
-  path: '/admin/scanner',
-  requiredPermission: 'scan_events'
 }, {
   icon: Receipt,
   label: 'อนุมัติใบเสร็จ',
