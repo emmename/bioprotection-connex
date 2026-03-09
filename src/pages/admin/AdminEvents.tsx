@@ -29,6 +29,26 @@ const MEMBER_TYPES_OPTIONS: { label: string, value: MemberType }[] = [
     { label: 'ร้านค้าปศุสัตว์', value: 'livestock_shop' },
 ];
 
+const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
+    farm: [
+        { value: 'owner', label: 'เจ้าของกิจการ' },
+        { value: 'farm_manager', label: 'ผู้จัดการฟาร์ม' },
+        { value: 'animal_husbandry', label: 'สัตวบาล' },
+        { value: 'admin', label: 'ธุรการ' },
+        { value: 'other', label: 'อื่นๆ' },
+    ],
+    company_employee: [
+        { value: 'animal_production', label: 'ผลิตสัตว์/ส่งออกหรือแปรรูปเนื้อสัตว์' },
+        { value: 'animal_feed', label: 'ผลิตอาหารสัตว์' },
+        { value: 'veterinary_distribution', label: 'จัดจำหน่ายเวชภัณฑ์สัตว์' },
+        { value: 'elanco', label: 'พนักงานอีแลนโค (Elanco)' },
+        { value: 'other', label: 'อื่นๆ' },
+    ],
+    veterinarian: [
+        { value: 'livestock', label: 'สัตวแพทย์ประจำปศุสัตว์' },
+    ],
+};
+
 // Will fetch dynamically now
 const FALLBACK_TIER_OPTIONS: { label: string, value: TierLevel }[] = [
     { label: 'บรอนซ์', value: 'bronze' },
@@ -56,6 +76,7 @@ interface Event {
     is_active: boolean;
     event_type: string | null;
     allowed_member_types: string[] | null;
+    allowed_sub_types?: Record<string, string[]> | null;
     allowed_tiers: string[] | null;
     mission_id: string | null;
     created_at?: string;
@@ -79,6 +100,7 @@ export default function AdminEvents() {
         is_active: boolean;
         event_type: string;
         allowed_member_types: string[];
+        allowed_sub_types: Record<string, string[]>;
         allowed_tiers: string[];
         mission_id: string | null;
         rewards: EventReward[];
@@ -91,6 +113,7 @@ export default function AdminEvents() {
         is_active: true,
         event_type: 'general_event',
         allowed_member_types: [],
+        allowed_sub_types: {},
         allowed_tiers: [],
         mission_id: null,
         rewards: []
@@ -129,7 +152,7 @@ export default function AdminEvents() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('tier_settings')
-                .select('tier, display_name')
+                .select('tier, display_name, color')
                 .order('min_points', { ascending: true });
             if (error) throw error;
             return data;
@@ -151,6 +174,7 @@ export default function AdminEvents() {
                 is_active: formData.is_active,
                 event_type: formData.event_type,
                 allowed_member_types: formData.allowed_member_types.length > 0 ? formData.allowed_member_types : null,
+                allowed_sub_types: Object.keys(formData.allowed_sub_types).length > 0 ? formData.allowed_sub_types : null,
                 allowed_tiers: formData.allowed_tiers.length > 0 ? formData.allowed_tiers : null,
                 mission_id: formData.event_type === 'mission_event' ? formData.mission_id : null
             };
@@ -240,6 +264,7 @@ export default function AdminEvents() {
                 is_active: event.is_active,
                 event_type: event.event_type || 'general_event',
                 allowed_member_types: event.allowed_member_types || [],
+                allowed_sub_types: (event.allowed_sub_types as Record<string, string[]>) || {},
                 allowed_tiers: event.allowed_tiers || [],
                 mission_id: event.mission_id || null,
                 rewards: event.event_rewards || []
@@ -255,6 +280,7 @@ export default function AdminEvents() {
                 is_active: true,
                 event_type: 'general_event',
                 allowed_member_types: [],
+                allowed_sub_types: {},
                 allowed_tiers: [],
                 mission_id: null,
                 rewards: []
@@ -284,12 +310,35 @@ export default function AdminEvents() {
     };
 
     const handleToggleMemberType = (type: string) => {
-        setFormData(prev => ({
-            ...prev,
-            allowed_member_types: prev.allowed_member_types.includes(type)
-                ? prev.allowed_member_types.filter(t => t !== type)
-                : [...prev.allowed_member_types, type]
-        }));
+        setFormData(prev => {
+            const isChecked = prev.allowed_member_types.includes(type);
+            let newTypes = [];
+            let newSubTypes = { ...prev.allowed_sub_types };
+            if (isChecked) {
+                newTypes = prev.allowed_member_types.filter(t => t !== type);
+                delete newSubTypes[type];
+            } else {
+                newTypes = [...prev.allowed_member_types, type];
+            }
+            return {
+                ...prev,
+                allowed_member_types: newTypes,
+                allowed_sub_types: newSubTypes
+            };
+        });
+    };
+
+    const handleToggleSubType = (type: string, subType: string) => {
+        setFormData(prev => {
+            const current = prev.allowed_sub_types[type] || [];
+            const updated = current.includes(subType)
+                ? current.filter(v => v !== subType)
+                : [...current, subType];
+            return {
+                ...prev,
+                allowed_sub_types: { ...prev.allowed_sub_types, [type]: updated }
+            };
+        });
     };
 
     const handleToggleTier = (tier: string) => {
@@ -365,6 +414,7 @@ export default function AdminEvents() {
                                 <TableRow>
                                     <TableHead className="w-[300px]">ชื่อกิจกรรมและสถานที่</TableHead>
                                     <TableHead>ประเภท</TableHead>
+                                    <TableHead>กลุ่มเป้าหมาย</TableHead>
                                     <TableHead>วัน-เวลา</TableHead>
                                     <TableHead>สถานะ</TableHead>
                                     <TableHead className="w-[150px] text-right">จัดการ</TableHead>
@@ -386,6 +436,61 @@ export default function AdminEvents() {
                                             <Badge variant="outline">
                                                 {event.event_type === 'mission_event' ? 'ภารกิจพิเศษ' : 'กิจกรรมทั่วไป'}
                                             </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1 max-w-[200px]">
+                                                {/* Member Types */}
+                                                {event.allowed_member_types && event.allowed_member_types.length > 0 ? (
+                                                    <div className="flex flex-col gap-1.5 w-full">
+                                                        {event.allowed_member_types.map((type) => {
+                                                            const subTypes = event.allowed_sub_types?.[type] || [];
+                                                            return (
+                                                                <div key={type} className="border border-border/50 rounded p-1.5 bg-background">
+                                                                    <div className="text-[11px] font-medium text-foreground leading-none">
+                                                                        {MEMBER_TYPES_OPTIONS.find(t => t.value === type)?.label || type}
+                                                                    </div>
+                                                                    <div className="mt-1.5 flex flex-wrap gap-1">
+                                                                        {subTypes.length > 0 ? (
+                                                                            subTypes.map((sub: string) => (
+                                                                                <Badge key={sub} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal bg-secondary/60 text-secondary-foreground leading-none flex items-center">
+                                                                                    {MEMBER_SUB_TYPES[type]?.find(s => s.value === sub)?.label || sub}
+                                                                                </Badge>
+                                                                            ))
+                                                                        ) : (
+                                                                            <span className="text-[10px] text-muted-foreground leading-none">ทุกประเภทย่อย</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">ทุกประเภท</span>
+                                                )}
+                                                {/* Tiers */}
+                                                {event.allowed_tiers && event.allowed_tiers.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {event.allowed_tiers.map((tier) => {
+                                                            const matchedTier = tiersData.find(t => t.tier === tier);
+                                                            const displayName = matchedTier?.display_name || tier;
+                                                            const customColor = matchedTier?.color;
+                                                            const badgeClass = customColor ? '' : (tier === 'platinum' ? 'bg-purple-600 text-white' : tier === 'gold' ? 'bg-yellow-500 text-white' : tier === 'silver' ? 'bg-gray-400 text-white' : 'bg-amber-700 text-white');
+
+                                                            return (
+                                                                <Badge
+                                                                    key={tier}
+                                                                    className={`text-[10px] px-1 h-fit border-0 capitalize ${badgeClass}`}
+                                                                    style={customColor ? { backgroundColor: customColor, color: '#fff' } : undefined}
+                                                                >
+                                                                    {displayName}
+                                                                </Badge>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">ทุกระดับ</span>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm">
@@ -569,17 +674,44 @@ export default function AdminEvents() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-3">
                                     <Label>ประเภทสมาชิกที่อนุญาต</Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {MEMBER_TYPES_OPTIONS.map(opt => (
-                                            <div key={opt.value} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`member_${opt.value}`}
-                                                    checked={formData.allowed_member_types.includes(opt.value)}
-                                                    onCheckedChange={() => handleToggleMemberType(opt.value)}
-                                                />
-                                                <label htmlFor={`member_${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
-                                            </div>
-                                        ))}
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {MEMBER_TYPES_OPTIONS.map(opt => {
+                                            const subTypes = MEMBER_SUB_TYPES[opt.value];
+                                            const isChecked = formData.allowed_member_types.includes(opt.value);
+                                            return (
+                                                <div key={opt.value} className="space-y-2 border p-2 rounded bg-background">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id={`member_${opt.value}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={() => handleToggleMemberType(opt.value)}
+                                                        />
+                                                        <label htmlFor={`member_${opt.value}`} className="text-sm font-medium cursor-pointer flex-1">
+                                                            {opt.label}
+                                                        </label>
+                                                        {subTypes && <span className="text-xs text-muted-foreground mr-2">({subTypes.length} ประเภทย่อย)</span>}
+                                                    </div>
+
+                                                    {isChecked && subTypes && (
+                                                        <div className="ml-6 mt-1 pl-3 border-l-2 border-primary/30 space-y-1">
+                                                            <p className="text-xs text-muted-foreground mb-1">เลือกประเภทย่อย (ว่าง = ทุกประเภทย่อย)</p>
+                                                            {subTypes.map(sub => (
+                                                                <div key={sub.value} className="flex items-center space-x-2 p-1 rounded hover:bg-slate-50">
+                                                                    <Checkbox
+                                                                        id={`sub_${opt.value}_${sub.value}`}
+                                                                        checked={(formData.allowed_sub_types[opt.value] || []).includes(sub.value)}
+                                                                        onCheckedChange={() => handleToggleSubType(opt.value, sub.value)}
+                                                                    />
+                                                                    <label htmlFor={`sub_${opt.value}_${sub.value}`} className="text-sm cursor-pointer">
+                                                                        {sub.label}
+                                                                    </label>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 <div className="space-y-3">

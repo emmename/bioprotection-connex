@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface Event {
     id: string;
@@ -20,6 +21,7 @@ interface Event {
     is_active: boolean;
     event_type: string | null;
     allowed_member_types: string[] | null;
+    allowed_sub_types?: Record<string, string[]> | null;
     allowed_tiers: string[] | null;
 }
 
@@ -59,6 +61,16 @@ export default function Events() {
                 if (event.allowed_member_types && event.allowed_member_types.length > 0) {
                     if (!profile?.member_type || !event.allowed_member_types.includes(profile.member_type)) {
                         return false;
+                    }
+
+                    // Check subtype access
+                    if (event.allowed_sub_types && profile?.member_type) {
+                        const allowedSubTypesForMember = event.allowed_sub_types[profile.member_type];
+                        if (allowedSubTypesForMember && allowedSubTypesForMember.length > 0) {
+                            if (!profile.member_sub_type || !allowedSubTypesForMember.includes(profile.member_sub_type)) {
+                                return false; // User's subtype is not in the allowed list for their member type
+                            }
+                        }
                     }
                 }
 
@@ -127,118 +139,120 @@ export default function Events() {
     }
 
     return (
-        <div className="container max-w-4xl py-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">กิจกรรมที่น่าสนใจ</h1>
-                    <p className="text-muted-foreground">เลือกลงทะเบียนกิจกรรมที่คุณสนใจ และรับ QR Code สำหรับเช็คอินหน้างาน</p>
-                </div>
+        <div className="min-h-screen bg-background pb-24">
+            <PageHeader title="กิจกรรมที่น่าสนใจ" onBack={() => navigate(-1)}>
                 {canScanEvents && (
-                    <Button onClick={() => navigate('/events/scanner')} variant="secondary" className="hidden sm:flex shrink-0">
+                    <Button onClick={() => navigate('/events/scanner')} variant="secondary" size="sm" className="hidden sm:flex shrink-0">
                         <QrCode className="w-4 h-4 mr-2" />
-                        สแกนเข้างาน (Staff)
+                        สแกน (Staff)
                     </Button>
                 )}
-            </div>
+            </PageHeader>
 
-            {canScanEvents && (
-                <div className="sm:hidden mb-4">
-                    <Button onClick={() => navigate('/events/scanner')} variant="secondary" className="w-full">
-                        <QrCode className="w-4 h-4 mr-2" />
-                        โหมดสแกนเข้างาน (Staff)
-                    </Button>
+            <div className="container max-w-4xl py-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="space-y-2">
+                    <p className="text-muted-foreground text-sm">เลือกลงทะเบียนกิจกรรมที่คุณสนใจ และรับ QR Code สำหรับเช็คอินหน้างาน</p>
                 </div>
-            )}
 
-            {events.length === 0 ? (
-                <Card className="bg-slate-50 border-dashed">
-                    <CardContent className="flex flex-col items-center justify-center p-12 text-center text-slate-500">
-                        <Calendar className="w-12 h-12 mb-4 text-slate-300" />
-                        <p className="font-medium text-lg text-slate-700">ไม่มีกิจกรรมที่กำลังจะเปิดเร็วๆ นี้</p>
-                        <p className="mt-2">โปรดติดตามกิจกรรมใหม่ๆ ของเราได้ในภายหลัง</p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {events.map((event) => {
-                        const registration = registrations.find(r => r.event_id === event.id);
-                        const isRegistered = !!registration && registration.status !== 'cancelled';
-                        const isCheckedIn = registration?.status === 'checked_in';
+                {canScanEvents && (
+                    <div className="sm:hidden mb-4">
+                        <Button onClick={() => navigate('/events/scanner')} variant="secondary" className="w-full">
+                            <QrCode className="w-4 h-4 mr-2" />
+                            โหมดสแกนเข้างาน (Staff)
+                        </Button>
+                    </div>
+                )}
 
-                        return (
-                            <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                                <CardHeader>
-                                    <div className="flex justify-between items-start mb-2 gap-2">
-                                        <div className="flex flex-col gap-1">
-                                            <CardTitle className="text-xl leading-tight text-slate-800 line-clamp-2">{event.title}</CardTitle>
-                                            {event.event_type === 'mission_event' && (
-                                                <Badge variant="secondary" className="w-fit bg-blue-100 text-blue-800 hover:bg-blue-100 font-normal">ภารกิจพิเศษ (Missions)</Badge>
+                {events.length === 0 ? (
+                    <Card className="bg-slate-50 border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center p-12 text-center text-slate-500">
+                            <Calendar className="w-12 h-12 mb-4 text-slate-300" />
+                            <p className="font-medium text-lg text-slate-700">ไม่มีกิจกรรมที่กำลังจะเปิดเร็วๆ นี้</p>
+                            <p className="mt-2">โปรดติดตามกิจกรรมใหม่ๆ ของเราได้ในภายหลัง</p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {events.map((event) => {
+                            const registration = registrations.find(r => r.event_id === event.id);
+                            const isRegistered = !!registration && registration.status !== 'cancelled';
+                            const isCheckedIn = registration?.status === 'checked_in';
+
+                            return (
+                                <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start mb-2 gap-2">
+                                            <div className="flex flex-col gap-1">
+                                                <CardTitle className="text-xl leading-tight text-slate-800 line-clamp-2">{event.title}</CardTitle>
+                                                {event.event_type === 'mission_event' && (
+                                                    <Badge variant="secondary" className="w-fit bg-blue-100 text-blue-800 hover:bg-blue-100 font-normal">ภารกิจพิเศษ (Missions)</Badge>
+                                                )}
+                                            </div>
+                                            {isRegistered && (
+                                                <Badge variant="default" className={isCheckedIn ? 'bg-green-600' : 'bg-primary'}>
+                                                    {isCheckedIn ? 'เข้าร่วมแล้ว' : 'ลงทะเบียนแล้ว'}
+                                                </Badge>
                                             )}
                                         </div>
-                                        {isRegistered && (
-                                            <Badge variant="default" className={isCheckedIn ? 'bg-green-600' : 'bg-primary'}>
-                                                {isCheckedIn ? 'เข้าร่วมแล้ว' : 'ลงทะเบียนแล้ว'}
-                                            </Badge>
+                                        {event.description && (
+                                            <CardDescription className="line-clamp-2">{event.description}</CardDescription>
                                         )}
-                                    </div>
-                                    {event.description && (
-                                        <CardDescription className="line-clamp-2">{event.description}</CardDescription>
-                                    )}
-                                </CardHeader>
-                                <CardContent className="space-y-3 flex-grow">
-                                    <div className="flex items-start text-sm text-slate-600 gap-2">
-                                        <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                        <span>
-                                            {format(new Date(event.start_date), 'd MMMM yyyy', { locale: th })}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-start text-sm text-slate-600 gap-2">
-                                        <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                        <span>
-                                            {format(new Date(event.start_date), 'HH:mm', { locale: th })} - {format(new Date(event.end_date), 'HH:mm', { locale: th })} น.
-                                        </span>
-                                    </div>
-                                    {event.location && (
+                                    </CardHeader>
+                                    <CardContent className="space-y-3 flex-grow">
                                         <div className="flex items-start text-sm text-slate-600 gap-2">
-                                            <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                            <span className="line-clamp-2">{event.location}</span>
+                                            <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                            <span>
+                                                {format(new Date(event.start_date), 'd MMMM yyyy', { locale: th })}
+                                            </span>
                                         </div>
-                                    )}
-                                </CardContent>
-                                <CardFooter className="bg-slate-50 pt-4 flex gap-2">
-                                    {isRegistered ? (
-                                        <Button
-                                            className="w-full"
-                                            variant={isCheckedIn ? "outline" : "default"}
-                                            onClick={() => navigate(`/events/${event.id}/ticket`)}
-                                        >
-                                            {isCheckedIn ? (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                                                    ดูรายละเอียด (เช็คอินแล้ว)
-                                                </>
-                                            ) : (
-                                                <>
-                                                    ดูตั๋ว QR Code ของคุณ
-                                                    <ArrowRight className="w-4 h-4 ml-2" />
-                                                </>
-                                            )}
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            className="w-full"
-                                            onClick={() => registerMutation.mutate(event.id)}
-                                            disabled={registerMutation.isPending}
-                                        >
-                                            {registerMutation.isPending ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนเข้าร่วมกิจกรรม'}
-                                        </Button>
-                                    )}
-                                </CardFooter>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
+                                        <div className="flex items-start text-sm text-slate-600 gap-2">
+                                            <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                            <span>
+                                                {format(new Date(event.start_date), 'HH:mm', { locale: th })} - {format(new Date(event.end_date), 'HH:mm', { locale: th })} น.
+                                            </span>
+                                        </div>
+                                        {event.location && (
+                                            <div className="flex items-start text-sm text-slate-600 gap-2">
+                                                <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                                <span className="line-clamp-2">{event.location}</span>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                    <CardFooter className="bg-slate-50 pt-4 flex gap-2">
+                                        {isRegistered ? (
+                                            <Button
+                                                className="w-full"
+                                                variant={isCheckedIn ? "outline" : "default"}
+                                                onClick={() => navigate(`/events/${event.id}/ticket`)}
+                                            >
+                                                {isCheckedIn ? (
+                                                    <>
+                                                        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                                        ดูรายละเอียด (เช็คอินแล้ว)
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        ดูตั๋ว QR Code ของคุณ
+                                                        <ArrowRight className="w-4 h-4 ml-2" />
+                                                    </>
+                                                )}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                className="w-full"
+                                                onClick={() => registerMutation.mutate(event.id)}
+                                                disabled={registerMutation.isPending}
+                                            >
+                                                {registerMutation.isPending ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนเข้าร่วมกิจกรรม'}
+                                            </Button>
+                                        )}
+                                    </CardFooter>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -129,8 +129,8 @@ export type Database = {
           published_at: string | null
           requirements: Json | null
           target_member_types:
-            | Database["public"]["Enums"]["member_type"][]
-            | null
+          | Database["public"]["Enums"]["member_type"][]
+          | null
           target_tiers: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url: string | null
           title: string
@@ -148,8 +148,8 @@ export type Database = {
           published_at?: string | null
           requirements?: Json | null
           target_member_types?:
-            | Database["public"]["Enums"]["member_type"][]
-            | null
+          | Database["public"]["Enums"]["member_type"][]
+          | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url?: string | null
           title: string
@@ -167,8 +167,8 @@ export type Database = {
           published_at?: string | null
           requirements?: Json | null
           target_member_types?:
-            | Database["public"]["Enums"]["member_type"][]
-            | null
+          | Database["public"]["Enums"]["member_type"][]
+          | null
           target_tiers?: Database["public"]["Enums"]["tier_level"][] | null
           thumbnail_url?: string | null
           title?: string
@@ -355,6 +355,7 @@ export type Database = {
       events: {
         Row: {
           allowed_member_types: string[] | null
+          allowed_sub_types: Json | null
           allowed_tiers: string[] | null
           created_at: string
           description: string | null
@@ -370,6 +371,7 @@ export type Database = {
         }
         Insert: {
           allowed_member_types?: string[] | null
+          allowed_sub_types?: Json | null
           allowed_tiers?: string[] | null
           created_at?: string
           description?: string | null
@@ -385,6 +387,7 @@ export type Database = {
         }
         Update: {
           allowed_member_types?: string[] | null
+          allowed_sub_types?: Json | null
           allowed_tiers?: string[] | null
           created_at?: string
           description?: string | null
@@ -1650,25 +1653,25 @@ export type Database = {
         Returns: undefined
       }
       redeem_reward:
-        | {
-            Args: {
-              p_points_cost: number
-              p_profile_id: string
-              p_reward_id: string
-              p_shipping_address: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_notes?: string
-              p_points_cost: number
-              p_profile_id: string
-              p_reward_id: string
-              p_shipping_address: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_points_cost: number
+          p_profile_id: string
+          p_reward_id: string
+          p_shipping_address: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_notes?: string
+          p_points_cost: number
+          p_profile_id: string
+          p_reward_id: string
+          p_shipping_address: string
+        }
+        Returns: Json
+      }
       spend_coins_for_game: {
         Args: {
           p_amount: number
@@ -1683,19 +1686,19 @@ export type Database = {
       app_role: "admin" | "user"
       approval_status: "pending" | "approved" | "rejected"
       company_business:
-        | "animal_production"
-        | "animal_feed"
-        | "veterinary_distribution"
-        | "other"
+      | "animal_production"
+      | "animal_feed"
+      | "veterinary_distribution"
+      | "other"
       content_type: "article" | "video" | "quiz" | "survey"
       event_registration_status: "registered" | "checked_in" | "cancelled"
       member_type:
-        | "farm"
-        | "company_employee"
-        | "veterinarian"
-        | "livestock_shop"
-        | "government"
-        | "other"
+      | "farm"
+      | "company_employee"
+      | "veterinarian"
+      | "livestock_shop"
+      | "government"
+      | "other"
       tier_level: "bronze" | "silver" | "gold" | "platinum"
       transaction_type: "earn" | "spend"
       vet_type: "livestock" | "hospital_clinic"
@@ -1712,116 +1715,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {

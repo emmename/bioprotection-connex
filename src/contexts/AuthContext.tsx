@@ -10,6 +10,7 @@ interface Profile {
   first_name: string;
   last_name: string;
   member_type: string;
+  member_sub_type: string | null;
   approval_status: string;
   tier: string;
   total_points: number;
@@ -117,7 +118,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: retryResult.error?.message || 'none',
         });
         if (retryResult.data) {
-          setProfile(retryResult.data);
+          let retryProfile = retryResult.data;
+          let memberSubType = null;
+          if (retryProfile.member_type === 'farm') {
+            const { data } = await supabase.from('farm_details').select('position').eq('profile_id', retryProfile.id).maybeSingle();
+            if (data?.position) memberSubType = data.position;
+          } else if (retryProfile.member_type === 'company_employee') {
+            const { data } = await supabase.from('company_details').select('business_type').eq('profile_id', retryProfile.id).maybeSingle();
+            if (data?.business_type) memberSubType = data.business_type;
+          } else if (retryProfile.member_type === 'veterinarian') {
+            const { data } = await supabase.from('vet_details').select('vet_type').eq('profile_id', retryProfile.id).maybeSingle();
+            if (data?.vet_type) memberSubType = data.vet_type;
+          }
+          (retryProfile as any).member_sub_type = memberSubType;
+
+          setProfile(retryProfile as unknown as Profile);
           setIsAdmin(isLegacyAdmin);
           setPermissions(extractedPermissions);
           setRoleNames(extractedRoles);
@@ -125,7 +140,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      setProfile(profileResult.data);
+      let baseProfile = profileResult.data;
+      if (baseProfile) {
+        let memberSubType = null;
+        if (baseProfile.member_type === 'farm') {
+          const { data } = await supabase.from('farm_details').select('position').eq('profile_id', baseProfile.id).maybeSingle();
+          if (data?.position) memberSubType = data.position;
+        } else if (baseProfile.member_type === 'company_employee') {
+          const { data } = await supabase.from('company_details').select('business_type').eq('profile_id', baseProfile.id).maybeSingle();
+          if (data?.business_type) memberSubType = data.business_type;
+        } else if (baseProfile.member_type === 'veterinarian') {
+          const { data } = await supabase.from('vet_details').select('vet_type').eq('profile_id', baseProfile.id).maybeSingle();
+          if (data?.vet_type) memberSubType = data.vet_type;
+        }
+        (baseProfile as any).member_sub_type = memberSubType;
+      }
+
+      setProfile(baseProfile as unknown as Profile);
       setIsAdmin(isLegacyAdmin);
       setPermissions(extractedPermissions);
       setRoleNames(extractedRoles);

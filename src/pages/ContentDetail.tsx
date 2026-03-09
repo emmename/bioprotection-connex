@@ -413,15 +413,7 @@ export default function ContentDetail() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => {
-              const isMissionSurvey = content.content_type === 'survey' &&
-                (content.requirements as any)?.is_mission_survey === true;
-              if (isMissionSurvey) {
-                navigate('/missions');
-              } else {
-                navigate('/content');
-              }
-            }}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1 min-w-0">
@@ -650,7 +642,7 @@ export default function ContentDetail() {
                 const isMissionSurvey = content.content_type === 'survey' &&
                   (content.requirements as any)?.is_mission_survey === true;
                 if (isMissionSurvey) {
-                  navigate('/missions');
+                  navigate(-1);
                 }
               }} className="w-full mt-4">
                 ตกลง
