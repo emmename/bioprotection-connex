@@ -11,6 +11,7 @@ import { MemberColumnsSelector, ColumnConfig } from '@/components/admin/MemberCo
 import { MembersTable } from '@/components/admin/MembersTable';
 import { BulkDeleteMembersDialog } from '@/components/admin/BulkDeleteMembersDialog';
 import { downloadMembersCSV } from '@/lib/member-export';
+import { useTierSettings } from '@/hooks/useGamification';
 
 interface Profile {
   id: string;
@@ -58,6 +59,7 @@ export default function AdminMembers() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const { tiers: tierSettings } = useTierSettings();
 
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
@@ -253,6 +255,7 @@ export default function AdminMembers() {
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
               adminUserIds={adminUserIds}
+              tierSettings={tierSettings}
             />
           </div>
         </CardContent>

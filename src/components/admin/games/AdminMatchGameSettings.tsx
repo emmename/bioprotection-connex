@@ -161,8 +161,8 @@ export function AdminMatchGameSettings() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="coins">Coins</SelectItem>
-                                <SelectItem value="points">Points</SelectItem>
+                                <SelectItem value="coins">เหรียญ</SelectItem>
+                                <SelectItem value="points">แต้ม</SelectItem>
                                 <SelectItem value="none">ไม่มีรางวัล</SelectItem>
                             </SelectContent>
                         </Select>

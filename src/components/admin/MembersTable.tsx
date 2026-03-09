@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { CheckCircle, XCircle, Eye, ArrowUpDown, ArrowUp, ArrowDown, Shield } from 'lucide-react';
 import { ColumnConfig } from './MemberColumnsSelector';
+import { TierSettings } from '@/types/gamification';
 
 interface Profile {
   id: string;
@@ -55,11 +56,12 @@ interface MembersTableProps {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   adminUserIds?: Set<string>;
+  tierSettings?: TierSettings[];
 }
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
-export function MembersTable({ members, isLoading, columns, onUpdateStatus, selectedIds, onSelectionChange, adminUserIds }: MembersTableProps) {
+export function MembersTable({ members, isLoading, columns, onUpdateStatus, selectedIds, onSelectionChange, adminUserIds, tierSettings }: MembersTableProps) {
   const navigate = useNavigate();
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: null });
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,8 +140,10 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
           bValue = statusLabels[b.approval_status]?.label || b.approval_status;
           break;
         case 'tier':
-          aValue = a.tier;
-          bValue = b.tier;
+          const aTier = tierSettings?.find(t => t.tier === a.tier)?.display_name || a.tier;
+          const bTier = tierSettings?.find(t => t.tier === b.tier)?.display_name || b.tier;
+          aValue = aTier;
+          bValue = bTier;
           break;
         case 'total_points':
           aValue = a.total_points;
@@ -247,7 +251,8 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
           </Badge>
         );
       case 'tier':
-        return <span className="capitalize">{member.tier}</span>;
+        const tierName = tierSettings?.find(t => t.tier === member.tier)?.display_name || member.tier;
+        return <span className="capitalize">{tierName}</span>;
       case 'total_points':
         return member.total_points.toLocaleString();
       case 'total_coins':

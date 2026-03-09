@@ -356,9 +356,9 @@ export default function AdminGames() {
                                                         >
                                                             <SelectTrigger className="h-8 text-sm bg-transparent border-transparent hover:border-input focus:border-input px-2"><SelectValue /></SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="points">Points</SelectItem>
-                                                                <SelectItem value="coins">Coins</SelectItem>
-                                                                <SelectItem value="none">None</SelectItem>
+                                                                <SelectItem value="points">แต้ม</SelectItem>
+                                                                <SelectItem value="coins">เหรียญ</SelectItem>
+                                                                <SelectItem value="none">ไม่มีรางวัล</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </TableCell>
