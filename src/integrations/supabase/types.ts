@@ -311,41 +311,102 @@ export type Database = {
           },
         ]
       }
+      event_rewards: {
+        Row: {
+          coins_reward: number | null
+          created_at: string | null
+          event_id: string
+          id: string
+          member_type: string | null
+          points_reward: number | null
+          tier_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          coins_reward?: number | null
+          created_at?: string | null
+          event_id: string
+          id?: string
+          member_type?: string | null
+          points_reward?: number | null
+          tier_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          coins_reward?: number | null
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          member_type?: string | null
+          points_reward?: number | null
+          tier_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rewards_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          allowed_member_types: string[] | null
+          allowed_tiers: string[] | null
           created_at: string
           description: string | null
           end_date: string
+          event_type: string | null
           id: string
           is_active: boolean
           location: string | null
+          mission_id: string | null
           start_date: string
           title: string
           updated_at: string
         }
         Insert: {
+          allowed_member_types?: string[] | null
+          allowed_tiers?: string[] | null
           created_at?: string
           description?: string | null
           end_date: string
+          event_type?: string | null
           id?: string
           is_active?: boolean
           location?: string | null
+          mission_id?: string | null
           start_date: string
           title: string
           updated_at?: string
         }
         Update: {
+          allowed_member_types?: string[] | null
+          allowed_tiers?: string[] | null
           created_at?: string
           description?: string | null
           end_date?: string
+          event_type?: string | null
           id?: string
           is_active?: boolean
           location?: string | null
+          mission_id?: string | null
           start_date?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       farm_details: {
         Row: {
@@ -1584,6 +1645,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_event_checkin: {
+        Args: { p_registration_id: string }
+        Returns: undefined
+      }
       redeem_reward:
         | {
             Args: {
@@ -1785,3 +1850,4 @@ export const Constants = {
     },
   },
 } as const
+

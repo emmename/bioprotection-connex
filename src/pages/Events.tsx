@@ -18,6 +18,9 @@ interface Event {
     start_date: string;
     end_date: string;
     is_active: boolean;
+    event_type: string | null;
+    allowed_member_types: string[] | null;
+    allowed_tiers: string[] | null;
 }
 
 interface Registration {
@@ -48,7 +51,29 @@ export default function Events() {
                 .order('start_date', { ascending: true });
 
             if (error) throw error;
-            return data as Event[];
+
+            const eventsData = data as Event[];
+
+            return eventsData.filter(event => {
+                // Check member type access
+                if (event.allowed_member_types && event.allowed_member_types.length > 0) {
+                    if (!profile?.member_type || !event.allowed_member_types.includes(profile.member_type)) {
+                        return false;
+                    }
+                }
+
+                // Check tier access
+                if (event.allowed_tiers && event.allowed_tiers.length > 0) {
+                    if (!profile?.tier || !event.allowed_tiers.includes(profile.tier.toLowerCase())) {
+                        return false;
+                    }
+                }
+
+                // Exclude mission_events from the general events page as they will be in SpecialMissionsSection
+                // Or maybe keep them but add a badge? Let's keep them and add a visual indicator later.
+
+                return true;
+            });
         }
     });
 
@@ -144,7 +169,12 @@ export default function Events() {
                             <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                                 <CardHeader>
                                     <div className="flex justify-between items-start mb-2 gap-2">
-                                        <CardTitle className="text-xl leading-tight text-slate-800 line-clamp-2">{event.title}</CardTitle>
+                                        <div className="flex flex-col gap-1">
+                                            <CardTitle className="text-xl leading-tight text-slate-800 line-clamp-2">{event.title}</CardTitle>
+                                            {event.event_type === 'mission_event' && (
+                                                <Badge variant="secondary" className="w-fit bg-blue-100 text-blue-800 hover:bg-blue-100 font-normal">ภารกิจพิเศษ (Missions)</Badge>
+                                            )}
+                                        </div>
                                         {isRegistered && (
                                             <Badge variant="default" className={isCheckedIn ? 'bg-green-600' : 'bg-primary'}>
                                                 {isCheckedIn ? 'เข้าร่วมแล้ว' : 'ลงทะเบียนแล้ว'}

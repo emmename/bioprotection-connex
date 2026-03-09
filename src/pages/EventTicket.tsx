@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,6 +63,34 @@ export default function EventTicket() {
 
     const isLoading = isLoadingEvent || isLoadingRegistration;
 
+    const [qrValue, setQrValue] = useState('');
+    const [timeLeft, setTimeLeft] = useState(15);
+
+    useEffect(() => {
+        if (!registration?.id || registration.status === 'checked_in') return;
+
+        const updateQr = () => {
+            setQrValue(JSON.stringify({
+                r: registration.id,
+                t: Date.now()
+            }));
+            setTimeLeft(15);
+        };
+
+        updateQr();
+
+        const qrInterval = setInterval(updateQr, 15000);
+
+        const timerInterval = setInterval(() => {
+            setTimeLeft(prev => prev > 0 ? prev - 1 : 15);
+        }, 1000);
+
+        return () => {
+            clearInterval(qrInterval);
+            clearInterval(timerInterval);
+        };
+    }, [registration?.id, registration?.status]);
+
     if (isLoading) {
         return (
             <div className="flex justify-center py-20">
@@ -118,7 +147,7 @@ export default function EventTicket() {
 
                                     <div className="relative z-10">
                                         <QRCode
-                                            value={registration.id}
+                                            value={qrValue || registration.id}
                                             size={200}
                                             viewBox={`0 0 200 200`}
                                             style={{ height: "auto", maxWidth: "100%", width: "100%" }}
@@ -126,10 +155,17 @@ export default function EventTicket() {
                                         />
                                     </div>
                                 </div>
-                                <p className="text-xs text-center mt-4 text-slate-500">
-                                    โปรดแสดง QR Code นี้แก่เจ้าหน้าที่ที่จุดลงทะเบียน<br />
-                                    รหัสอ้างอิง: <span className="font-mono text-slate-400">{registration.id.split('-')[0]}</span>
-                                </p>
+                                <div className="mt-4 w-full max-w-[200px] text-center space-y-2">
+                                    <div className="flex items-center justify-center gap-2 text-primary font-medium text-sm bg-primary/10 rounded-full py-1.5 px-3">
+                                        <Clock className="w-4 h-4" />
+                                        QR Code อัปเดตใน {timeLeft} วิ
+                                    </div>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        โปรดแสดง QR Code นี้แก่พนักงาน<br />
+                                        ห้ามแคปหน้าจอเพื่อป้องกันการสวมสิทธิ์<br />
+                                        รหัสอ้างอิง: <span className="font-mono text-slate-400">{registration.id.split('-')[0]}</span>
+                                    </p>
+                                </div>
                             </>
                         )}
                     </div>

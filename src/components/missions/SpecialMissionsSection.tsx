@@ -17,6 +17,7 @@ interface Mission {
     content_id?: string;
     [key: string]: unknown;
   } | null;
+  events?: { id: string; title: string }[];
 }
 
 interface SpecialMissionsSectionProps {
@@ -104,10 +105,14 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                 : isExpired
                   ? 'bg-muted/30 border-border opacity-60'
                   : 'bg-card border-border hover:border-primary/30'
-                } ${mission.mission_type === 'survey' && !isCompleted && !isExpired ? 'cursor-pointer' : ''}`}
+                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
               onClick={() => {
-                if (mission.mission_type === 'survey' && !isCompleted && !isExpired && mission.requirements?.content_id) {
-                  navigate(`/content/${mission.requirements.content_id}`);
+                if (!isCompleted && !isExpired) {
+                  if (mission.mission_type === 'survey' && mission.requirements?.content_id) {
+                    navigate(`/content/${mission.requirements.content_id}`);
+                  } else if (mission.events && mission.events.length > 0) {
+                    navigate(`/events`);
+                  }
                 }
               }}
             >
@@ -132,10 +137,10 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                   )}
                   <div className="flex flex-wrap gap-1.5">
                     <Badge variant="outline" className={`text-[10px] ${mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200' :
-                        mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          mission.mission_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                            mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                              'bg-primary/10 text-primary border-primary/20'
+                      mission.mission_type === 'location_visit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        mission.mission_type === 'survey' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                          mission.mission_type === 'special' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                            'bg-primary/10 text-primary border-primary/20'
                       }`}>
                       {getMissionTypeLabel(mission.mission_type)}
                     </Badge>
@@ -161,6 +166,12 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                         <span>{new Date(mission.end_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       )}
                       {isExpired && <Badge variant="outline" className="text-[10px] ml-1">หมดเขต</Badge>}
+                    </div>
+                  )}
+                  {mission.events && mission.events.length > 0 && !isCompleted && !isExpired && (
+                    <div className="mt-2 text-xs font-medium text-primary flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      เข้าร่วมกิจกรรมเพื่อทำภารกิจนี้
                     </div>
                   )}
                 </div>

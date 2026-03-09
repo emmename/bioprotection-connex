@@ -63,6 +63,7 @@ export interface Mission {
     is_active: boolean;
     created_at: string;
     qr_code?: string | null;
+    events?: { id: string; title: string }[];
 }
 
 export interface DailyMissionStatus {

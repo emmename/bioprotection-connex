@@ -50,6 +50,30 @@ export default function EventScanner() {
 
     const checkInMutation = useMutation({
         mutationFn: async ({ registrationId, eventId }: { registrationId: string, eventId: string }) => {
+            let actualRegistrationId = registrationId;
+
+            // Try to parse the QR code as JSON (the new Dynamic QR format)
+            try {
+                const parsed = JSON.parse(registrationId);
+                if (parsed && typeof parsed === 'object' && parsed.r && parsed.t) {
+                    actualRegistrationId = parsed.r;
+
+                    // Validate timestamp (e.g., must be within the last 60 seconds)
+                    const qrTime = new Date(parsed.t).getTime();
+                    const now = Date.now();
+                    const diffSeconds = (now - qrTime) / 1000;
+
+                    if (diffSeconds > 60 || diffSeconds < -60) {
+                        throw new Error('QR Code หมดอายุ กรุณาเปิดหน้าจอใหม่บนมือถือของคุณเพื่ออัปเดต QR Code');
+                    }
+                }
+            } catch (e) {
+                if (e instanceof Error && e.message.includes('หมดอายุ')) {
+                    throw e; // rethrow the expiration error
+                }
+                // If it's not JSON, we assume it's the old raw uuid format
+            }
+
             // First verify the registration belongs to the selected event
             const { data: regData, error: regError } = await supabase
                 .from('event_registrations')
@@ -58,7 +82,7 @@ export default function EventScanner() {
           event_id,
           profile:profiles(first_name, last_name)
         `)
-                .eq('id', registrationId)
+                .eq('id', actualRegistrationId)
                 .single();
 
             if (regError) {
@@ -79,16 +103,13 @@ export default function EventScanner() {
                 throw new Error('การลงทะเบียนนี้ถูกยกเลิกไปแล้ว');
             }
 
-            // Perform check in
-            const { error: updateError } = await supabase
-                .from('event_registrations')
-                .update({
-                    status: 'checked_in',
-                    checked_in_at: new Date().toISOString()
-                })
-                .eq('id', registrationId);
+            // Perform check in and reward distribution via RPC
+            const { error: rpcError } = await supabase
+                .rpc('process_event_checkin', {
+                    p_registration_id: actualRegistrationId
+                });
 
-            if (updateError) throw updateError;
+            if (rpcError) throw rpcError;
 
             const profile = Array.isArray(regData.profile) ? regData.profile[0] : regData.profile;
             return profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'ผู้ใช้งาน';

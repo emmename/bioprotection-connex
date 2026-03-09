@@ -298,10 +298,10 @@ export function useSpecialMissions() {
     const fetchData = async () => {
       setIsLoading(true);
 
-      // Fetch active missions
+      // Fetch active missions and any linked events
       const { data: missionsData, error } = await supabase
         .from('missions')
-        .select('*')
+        .select('*, events(id, title)')
         .eq('is_active', true)
         // Filter out expired missions if end_date is set
         .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
