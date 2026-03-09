@@ -55,12 +55,20 @@ export const MemoryMatchGame = () => {
     const [isChecking, setIsChecking] = useState(false);
     const [userCoins, setUserCoins] = useState<number>(0);
     const [playedToday, setPlayedToday] = useState(0);
+    const [isStarting, setIsStarting] = useState(false);
     const navigate = useNavigate();
+    const audioCtxRef = useRef<AudioContext | null>(null);
 
     // Sound effects using Web Audio API
     const playSound = (freq: number, dur: number, type: OscillatorType = 'sine') => {
         try {
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            }
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
@@ -151,16 +159,17 @@ export const MemoryMatchGame = () => {
         stopTimer();
         setTimeLeft(duration);
         timerRef.current = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    stopTimer();
-                    handleTimeOut();
-                    return 0;
-                }
-                return prev - 1;
-            });
+            setTimeLeft(prev => Math.max(0, prev - 1));
         }, 1000);
     };
+
+    // Watch for timeout side-effect cleanly
+    useEffect(() => {
+        if (gameState === 'playing' && timeLeft === 0 && !isChecking) {
+            stopTimer();
+            handleTimeOut();
+        }
+    }, [timeLeft, gameState, isChecking]);
 
     const generateLevel = (levelIdx: number, bonusTime?: number) => {
         if (!config || images.length === 0) return;
@@ -174,12 +183,14 @@ export const MemoryMatchGame = () => {
         const totalPairs = Math.floor(totalCards / 2);
         const actualCardsToPlay = totalPairs * 2;
 
-        // Select random images for pairs
+        // Select unique images for pairs
+        const shuffledImages = [...images].sort(() => Math.random() - 0.5);
         const selectedPairs: string[] = [];
+
         for (let i = 0; i < totalPairs; i++) {
-            // Pick a random image from available images (can repeat if fewer images than pairs)
-            const randomImg = images[Math.floor(Math.random() * images.length)];
-            selectedPairs.push(randomImg.image_url);
+            // Pick images sequentially from shuffled deck, wrap around if needed (highly unlikely but safe)
+            const img = shuffledImages[i % shuffledImages.length];
+            selectedPairs.push(img.image_url);
         }
 
         // Create full deck (2 of each)
@@ -210,6 +221,8 @@ export const MemoryMatchGame = () => {
     };
 
     const handleStartGame = async () => {
+        if (isStarting) return;
+
         if (!config || images.length < 1) {
             toast.error("เกมยังไม่พร้อมให้บริการ");
             return;
@@ -220,6 +233,7 @@ export const MemoryMatchGame = () => {
             return;
         }
 
+        setIsStarting(true);
         try {
             // Step 1: Get user profile
             console.log("[MatchGame] Step 1: Fetching profile...");
@@ -291,6 +305,8 @@ export const MemoryMatchGame = () => {
         } catch (error) {
             console.error("[MatchGame] Failed to start game:", error);
             toast.error("ไม่สามารถเริ่มเกมได้ กรุณาลองใหม่");
+        } finally {
+            setIsStarting(false);
         }
     };
 
@@ -497,8 +513,8 @@ export const MemoryMatchGame = () => {
             <div className="absolute left-0 right-0 flex items-center justify-center px-2" style={{ top: topZoneHeight, height: gameZoneHeight }}>
                 {gameState === 'idle' && (
                     <div className="flex flex-col items-center justify-center space-y-3 bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200 p-6 text-center shadow-lg mx-auto max-w-xs">
-                        <Button size="lg" className="w-52 h-12 text-base rounded-xl shadow-lg hover:scale-105 transition-transform" onClick={handleStartGame} disabled={!canAfford}>
-                            <Play className="w-5 h-5 mr-2" />
+                        <Button size="lg" className="w-52 h-12 text-base rounded-xl shadow-lg hover:scale-105 transition-transform" onClick={handleStartGame} disabled={!canAfford || isStarting}>
+                            {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
                             {isFreePlayAvailable ? 'เริ่มเล่นเกม (ฟรี!)' : <>เริ่มเล่นเกม ({config.coins_cost} <Coins className="w-4 h-4 mx-0.5" />)</>}
                         </Button>
                         <p className="text-xs text-slate-500">{!canAfford ? '❌ เหรียญไม่เพียงพอ' : 'จับคู่ภาพทั้งหมดให้ทันเวลา!'}</p>
@@ -526,8 +542,8 @@ export const MemoryMatchGame = () => {
                         <img src={loseImage} alt="เสียใจ" className="w-28 h-28 object-contain" />
                         <h3 className="text-xl font-bold text-slate-800">เสียใจด้วย หมดเวลาแล้ว!</h3>
                         <p className="text-slate-500 text-sm">ไม่เป็นไร ลองใหม่ได้เลย สู้ ๆ นะ! 💪</p>
-                        <Button size="default" className="w-full max-w-[220px]" onClick={handleStartGame} disabled={!canAfford}>
-                            <RefreshCw className="w-4 h-4 mr-2" />
+                        <Button size="default" className="w-full max-w-[220px]" onClick={handleStartGame} disabled={!canAfford || isStarting}>
+                            {isStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                             {isFreePlayAvailable ? 'ลองใหม่อีกครั้ง (ฟรี!)' : <>ลองใหม่อีกครั้ง ({config.coins_cost} <Coins className="w-3.5 h-3.5 mx-0.5" />)</>}
                         </Button>
                     </div>
@@ -545,8 +561,8 @@ export const MemoryMatchGame = () => {
                             </div>
                         )}
 
-                        <Button size="default" className="w-full max-w-[220px] mt-2" onClick={handleStartGame} disabled={!canAfford}>
-                            <RefreshCw className="w-4 h-4 mr-2" />
+                        <Button size="default" className="w-full max-w-[220px] mt-2" onClick={handleStartGame} disabled={!canAfford || isStarting}>
+                            {isStarting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                             {isFreePlayAvailable ? 'เล่นอีกครั้ง (ฟรี!)' : <>เล่นอีกครั้ง ({config.coins_cost} <Coins className="w-3.5 h-3.5 mx-0.5" />)</>}
                         </Button>
                     </div>

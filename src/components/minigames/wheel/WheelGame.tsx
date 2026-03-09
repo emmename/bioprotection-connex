@@ -59,6 +59,10 @@ const playWin = () => {
     setTimeout(() => playTone(554.37, 'sine', 0.2, 0.1), 150); // C#5
     setTimeout(() => playTone(659.25, 'sine', 0.4, 0.1), 300); // E5
 };
+const playLose = () => {
+    playTone(300, 'sawtooth', 0.3, 0.1);
+    setTimeout(() => playTone(200, 'sawtooth', 0.5, 0.1), 200);
+};
 
 // Utility to convert hex to number for PIXI
 const hexToNumber = (hex: string) => parseInt(hex.replace('#', ''), 16);
@@ -214,6 +218,7 @@ export const WheelGame = () => {
     const startRotationRef = useRef<number>(0);
     const targetRotationRef = useRef<number>(0);
     const startTimeRef = useRef<number>(0);
+    const lastTickAngleRef = useRef<number>(0);
 
     // Easing function (easeOutCirc for dramatic stopping effect)
     const easeOutCirc = (x: number): number => {
@@ -242,44 +247,46 @@ export const WheelGame = () => {
         // Apply easing
         const easedProgress = easeOutCirc(progress);
 
-        // Detect slice crossing for tick sound
-        const sliceAngle = rewards.length > 0 ? (Math.PI * 2) / rewards.length : 1;
-        const previousRotation = rotation;
-
-
         // Calculate current rotation
         const currentRotation = startRotationRef.current + (targetRotationRef.current - startRotationRef.current) * easedProgress;
         setRotation(currentRotation);
 
-        // Tick sound logic
-        const prevNormalized = previousRotation % sliceAngle;
-        const currentNormalized = currentRotation % sliceAngle;
-        if (currentNormalized < prevNormalized && elapsed > 50) {
+        // Tick sound logic reliably using ref
+        const sliceAngle = rewards.length > 0 ? (Math.PI * 2) / rewards.length : 1;
+        if (currentRotation - lastTickAngleRef.current >= sliceAngle) {
             playTick();
+            // Advance the ref to the next slice boundary passed
+            lastTickAngleRef.current += sliceAngle;
         }
 
         if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
         } else {
             setIsSpinning(false);
-            playWin();
+
             // Determine winner based on final normalized rotation
             const normalizedRotation = currentRotation % (Math.PI * 2);
 
             // The top pointer is essentially at an angle of 3*Math.PI/2 backwards relative to rotation.
-            // We will adjust the logic to find which slice lands at the top (pointer is at X=0, Y=-150).
-            // Since PIXI handles rotation, 0 angle is on the right (+X axis).
-            // So pointer is at 270 degrees (or -90 deg / -1.57 rad). 
-            // The easiest way is to just find the angle of the pointer relative to the wheel.
             let pointerAngleRelativeToWheel = (Math.PI * 1.5 - normalizedRotation) % (Math.PI * 2);
             if (pointerAngleRelativeToWheel < 0) pointerAngleRelativeToWheel += Math.PI * 2;
 
             const winningIndex = Math.floor(pointerAngleRelativeToWheel / sliceAngle);
-            if (rewards[winningIndex]) {
-                setResult(rewards[winningIndex]);
+            const winningReward = rewards[winningIndex];
+
+            if (winningReward) {
+                setResult(winningReward);
+                // Play appropriate sound based on reward value
+                if (winningReward.type === 'none' || winningReward.value <= 0) {
+                    playLose();
+                } else {
+                    playWin();
+                }
+            } else {
+                playLose();
             }
         }
-    }, [rotation, rewards]);
+    }, [rewards]);
 
     const spin = async () => {
         if (isSpinning || rewards.length === 0 || !config || !userProfile) return;
@@ -383,6 +390,10 @@ export const WheelGame = () => {
         targetRotationRef.current += randomOffset;
 
         startTimeRef.current = 0;
+        lastTickAngleRef.current = rotation; // Initialize tick tracker
+
+        // Using requestAnimationFrame instead of d3.timer for simple easing
+        cancelAnimationFrame(animationRef.current!);
         animationRef.current = requestAnimationFrame(animate);
     };
 
