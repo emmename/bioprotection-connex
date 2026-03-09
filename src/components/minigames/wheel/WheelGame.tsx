@@ -320,27 +320,17 @@ export const WheelGame = () => {
         try {
             // Deduct coins if not free spin
             if (!isFreeSpin && cost > 0) {
-                // Update profile coins directly
-                const { error: updateError } = await supabase
-                    .from('profiles')
-                    .update({ total_coins: userProfile.total_coins - cost })
-                    .eq('id', userProfile.id);
-                if (updateError) {
-                    console.error('[Wheel] profile coins update failed:', updateError);
-                    throw updateError;
-                }
-
-                // Record the transaction
-                const { error: txError } = await (supabase as any).from('coins_transactions').insert({
-                    profile_id: userProfile.id,
-                    amount: -cost,
-                    transaction_type: 'spend',
-                    source: 'game',
-                    description: 'เล่นเกมหมุนวงล้อเสี่ยงโชค'
+                // Use secure RPC to spend coins and record transaction
+                const { error: txError } = await (supabase as any).rpc('spend_coins_for_game', {
+                    p_profile_id: userProfile.id,
+                    p_amount: cost,
+                    p_game_type: 'wheel',
+                    p_description: 'เล่นเกมหมุนวงล้อเสี่ยงโชค'
                 });
+
                 if (txError) {
-                    console.error('[Wheel] coins_transaction insert failed:', txError);
-                    // Don't throw - profile already updated, just log
+                    console.error('[Wheel] spend coins failed:', txError);
+                    throw txError;
                 }
 
                 setUserProfile((prev: any) => prev ? { ...prev, total_coins: prev.total_coins - cost } : null);
@@ -360,54 +350,19 @@ export const WheelGame = () => {
                 throw sessionError;
             }
 
-            // Add won reward to transactions
+            // Add won reward to transactions securely via RPC
             if (wonRewardData.type !== 'none' && wonRewardData.value > 0) {
-                // Fetch the latest profile to get current values
-                const { data: latestProfile } = await supabase
-                    .from('profiles')
-                    .select('total_points, total_coins')
-                    .eq('id', userProfile.id)
-                    .single();
+                const { error: rewardError } = await (supabase as any).rpc('earn_reward_from_game', {
+                    p_profile_id: userProfile.id,
+                    p_reward_type: wonRewardData.type,
+                    p_amount: wonRewardData.value,
+                    p_game_type: 'wheel',
+                    p_description: `หมุนวงล้อ: ${wonRewardData.label}`
+                });
 
-                if (wonRewardData.type === 'points') {
-                    const newTotal = (latestProfile?.total_points || 0) + wonRewardData.value;
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ total_points: newTotal })
-                        .eq('id', userProfile.id);
-                    if (updateError) {
-                        console.error('[Wheel] update points failed:', updateError);
-                        throw updateError;
-                    }
-
-                    // Record transaction
-                    await (supabase as any).from('points_transactions').insert({
-                        profile_id: userProfile.id,
-                        amount: wonRewardData.value,
-                        transaction_type: 'earn',
-                        source: 'game',
-                        description: `หมุนวงล้อ: ${wonRewardData.label}`
-                    });
-
-                } else if (wonRewardData.type === 'coins') {
-                    const newTotal = (latestProfile?.total_coins || 0) + wonRewardData.value;
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ total_coins: newTotal })
-                        .eq('id', userProfile.id);
-                    if (updateError) {
-                        console.error('[Wheel] update coins failed:', updateError);
-                        throw updateError;
-                    }
-
-                    // Record transaction
-                    await (supabase as any).from('coins_transactions').insert({
-                        profile_id: userProfile.id,
-                        amount: wonRewardData.value,
-                        transaction_type: 'earn',
-                        source: 'game',
-                        description: `หมุนวงล้อ: ${wonRewardData.label}`
-                    });
+                if (rewardError) {
+                    console.error('[Wheel] earn reward failed:', rewardError);
+                    throw rewardError;
                 }
             }
 
@@ -471,9 +426,9 @@ export const WheelGame = () => {
         >
             {/* Content Container */}
             <div className="relative z-10 w-full h-full max-w-md flex flex-col items-center justify-between py-6">
-                <div className="w-full pt-[140px] z-20 px-4">
+                <div className="w-full pt-[130px] z-20 px-4">
                     {userProfile && (
-                        <div className="w-full flex flex-col items-end gap-2">
+                        <div className="w-full flex flex-col items-end gap-2.5">
                             <div className="bg-black/30 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg border border-white/10 min-w-[120px] text-right">
                                 ⭐ {userProfile.total_points?.toLocaleString()} คะแนน
                             </div>
@@ -484,7 +439,7 @@ export const WheelGame = () => {
                     )}
                 </div>
 
-                <div className="relative w-full max-w-[400px] h-[380px] flex items-center justify-center mt-4 z-10">
+                <div className="relative w-full max-w-[400px] h-[380px] flex items-center justify-center mt-1 z-10">
                     {isLoading ? (
                         <div className="absolute inset-0 flex items-center justify-center z-20 bg-white/50 backdrop-blur-sm rounded-2xl">
                             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -604,7 +559,7 @@ export const WheelGame = () => {
                     )}
                 </div>
 
-                <div className="w-full flex flex-col items-center gap-2 -mt-4">
+                <div className="w-full flex flex-col items-center gap-2 -mt-10 relative z-30">
                     <button
                         onClick={spin}
                         disabled={isSpinning || rewards.length === 0 || isLoading || buttonProps.disabled}

@@ -469,11 +469,11 @@ export const MemoryMatchGame = () => {
     return (
         <div className="relative w-full max-w-md mx-auto overflow-hidden" style={{ height: '100dvh', backgroundImage: `url(${gameBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             {/* Back button */}
-            <button onClick={() => navigate('/games')} className="absolute top-3 left-3 z-20 p-1.5 bg-black/20 backdrop-blur-sm rounded-full text-white/80 hover:text-white hover:bg-black/30 transition-colors">
+            <button onClick={() => navigate('/games')} className="absolute top-3 left-3 z-20 p-1.5 bg-black/40 backdrop-blur-sm rounded-full text-white/80 hover:text-white hover:bg-black/60 transition-colors">
                 <ChevronLeft className="w-5 h-5" />
             </button>
             {/* Floating header info — just below the airplane banner, right-aligned */}
-            <div className="absolute right-2 z-10 flex items-center gap-3 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-lg" style={{ top: '14%' }}>
+            <div className="absolute right-2 z-10 flex items-center gap-3 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg" style={{ top: '14%' }}>
                 <div>
                     {gameState === 'playing' && (
                         <p className="text-xs text-white/80 font-medium">Level {currentLevelIdx + 1} / {config.levels_config.length}</p>
