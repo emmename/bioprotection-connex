@@ -185,7 +185,7 @@ export default function Events() {
                                             <div className="flex flex-col gap-1">
                                                 <CardTitle className="text-xl leading-tight text-slate-800 line-clamp-2">{event.title}</CardTitle>
                                                 {event.event_type === 'mission_event' && (
-                                                    <Badge variant="secondary" className="w-fit bg-blue-100 text-blue-800 hover:bg-blue-100 font-normal">ภารกิจพิเศษ (Missions)</Badge>
+                                                    <Badge variant="outline" className="w-fit bg-rose-50 text-rose-700 border-rose-200 font-normal">ภารกิจพิเศษ (Missions)</Badge>
                                                 )}
                                             </div>
                                             {isRegistered && (

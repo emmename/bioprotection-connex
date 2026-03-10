@@ -433,7 +433,13 @@ export default function AdminEvents() {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline">
+                                            <Badge
+                                                variant="outline"
+                                                className={event.event_type === 'mission_event'
+                                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                }
+                                            >
                                                 {event.event_type === 'mission_event' ? 'ภารกิจพิเศษ' : 'กิจกรรมทั่วไป'}
                                             </Badge>
                                         </TableCell>

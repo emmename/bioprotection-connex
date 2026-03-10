@@ -64,7 +64,7 @@ export default function EventTicket() {
     const isLoading = isLoadingEvent || isLoadingRegistration;
 
     const [qrValue, setQrValue] = useState('');
-    const [timeLeft, setTimeLeft] = useState(15);
+    const [timeLeft, setTimeLeft] = useState(60);
 
     useEffect(() => {
         if (!registration?.id || registration.status === 'checked_in') return;
@@ -74,15 +74,15 @@ export default function EventTicket() {
                 r: registration.id,
                 t: Date.now()
             }));
-            setTimeLeft(15);
+            setTimeLeft(60);
         };
 
         updateQr();
 
-        const qrInterval = setInterval(updateQr, 15000);
+        const qrInterval = setInterval(updateQr, 60000);
 
         const timerInterval = setInterval(() => {
-            setTimeLeft(prev => prev > 0 ? prev - 1 : 15);
+            setTimeLeft(prev => prev > 0 ? prev - 1 : 60);
         }, 1000);
 
         return () => {
