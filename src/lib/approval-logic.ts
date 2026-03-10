@@ -46,8 +46,8 @@ export function checkAutoApproval(
     }
     // ❌ Not approved: Hospital/clinic veterinarian
     if (vetType === 'hospital_clinic') {
-      return { 
-        approved: false, 
+      return {
+        approved: false,
         message: 'ขอขอบคุณที่คุณให้ความสนใจในการสมัครเข้าร่วมกิจกรรม ระบบสมาชิกขอสงวนสิทธิ์เฉพาะกลุ่มลูกค้าที่เกี่ยวข้องกับสินค้าปศุสัตว์เท่านั้นนะคะ ขออภัยในความไม่สะดวกด้วยค่ะ ทั้งนี้กรณีท่านเป็นกลุ่มสินค้าปศุสัตว์ กรุณาติดต่อ พนักงานขายของบริษัทอีแลนโค เพื่อขอรับรหัสเข้าสมัครสมาชิก'
       };
     }
@@ -62,11 +62,11 @@ export function checkAutoApproval(
     // Veterinary distribution - check if Elanco
     if (businessType === 'veterinary_distribution') {
       if (isElanco) {
-        return { approved: true, message: 'อนุมัติอัตโนมัติ: พนักงาน Elanco' };
+        return { approved: true, message: 'อนุมัติอัตโนมัติ: พนักงานอีแลนโค (Elanco)' };
       }
       // ❌ Not approved: Non-Elanco veterinary distribution
-      return { 
-        approved: false, 
+      return {
+        approved: false,
         message: 'ขอขอบคุณที่คุณให้ความสนใจในการสมัครเข้าร่วมกิจกรรม ระบบสมาชิกขอสงวนสิทธิ์เฉพาะกลุ่มลูกค้าที่เกี่ยวข้องกับสินค้าปศุสัตว์เท่านั้นนะคะ ขออภัยในความไม่สะดวกด้วยค่ะ ทั้งนี้กรณีท่านเป็นกลุ่มสินค้าปศุสัตว์ กรุณาติดต่อ พนักงานขายของบริษัทอีแลนโค เพื่อขอรับรหัสเข้าสมัครสมาชิก'
       };
     }
@@ -74,16 +74,16 @@ export function checkAutoApproval(
 
   // ❌ Not approved: Government
   if (memberType === 'government') {
-    return { 
-      approved: false, 
+    return {
+      approved: false,
       message: 'ขอขอบคุณที่คุณให้ความสนใจในการสมัครเข้าร่วมกิจกรรม ระบบสมาชิกขอสงวนสิทธิ์เฉพาะกลุ่มลูกค้าที่เกี่ยวข้องกับสินค้าปศุสัตว์เท่านั้นนะคะ ขออภัยในความไม่สะดวกด้วยค่ะ ทั้งนี้กรณีท่านเป็นกลุ่มสินค้าปศุสัตว์ กรุณาติดต่อ พนักงานขายของบริษัทอีแลนโค เพื่อขอรับรหัสเข้าสมัครสมาชิก'
     };
   }
 
   // ❌ Not approved: Other
   if (memberType === 'other') {
-    return { 
-      approved: false, 
+    return {
+      approved: false,
       message: 'ขอขอบคุณที่คุณให้ความสนใจในการสมัครเข้าร่วมกิจกรรม ระบบสมาชิกขอสงวนสิทธิ์เฉพาะกลุ่มลูกค้าที่เกี่ยวข้องกับสินค้าปศุสัตว์เท่านั้นนะคะ ขออภัยในความไม่สะดวกด้วยค่ะ ทั้งนี้กรณีท่านเป็นกลุ่มสินค้าปศุสัตว์ กรุณาติดต่อ พนักงานขายของบริษัทอีแลนโค เพื่อขอรับรหัสเข้าสมัครสมาชิก'
     };
   }
@@ -107,8 +107,8 @@ export const VET_TYPE_OPTIONS = [
 ];
 
 export const COMPANY_BUSINESS_OPTIONS = [
-  { value: 'animal_production', label: 'ผลิตสัตว์' },
-  { value: 'animal_feed', label: 'อาหารสัตว์' },
+  { value: 'animal_production', label: 'ผลิตสัตว์/ส่งออกหรือแปรรูปเนื้อสัตว์' },
+  { value: 'animal_feed', label: 'ผลิตอาหารสัตว์' },
   { value: 'veterinary_distribution', label: 'จัดจำหน่ายเวชภัณฑ์สัตว์' },
   { value: 'other', label: 'อื่นๆ' },
 ];
@@ -177,9 +177,9 @@ export const PEST_CONTROL_METHODS = [
 ];
 
 export const FARM_POSITIONS = [
-  'เจ้าของฟาร์ม',
+  'เจ้าของกิจการ',
   'ผู้จัดการฟาร์ม',
   'สัตวบาล',
-  'พนักงาน',
+  'ธุรการ',
   'อื่นๆ',
 ];

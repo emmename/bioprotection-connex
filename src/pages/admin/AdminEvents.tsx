@@ -23,10 +23,10 @@ type MemberType = Database['public']['Enums']['member_type'];
 type TierLevel = Database['public']['Enums']['tier_level'];
 
 const MEMBER_TYPES_OPTIONS: { label: string, value: MemberType }[] = [
-    { label: 'ฟาร์ม', value: 'farm' },
+    { label: 'ฟาร์มเลี้ยงสัตว์', value: 'farm' },
     { label: 'พนักงานบริษัท', value: 'company_employee' },
     { label: 'สัตวแพทย์', value: 'veterinarian' },
-    { label: 'ร้านค้าปศุสัตว์', value: 'livestock_shop' },
+    { label: 'ร้านค้าสินค้าปศุสัตว์', value: 'livestock_shop' },
 ];
 
 const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {

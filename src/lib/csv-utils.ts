@@ -21,7 +21,7 @@ export interface MemberImportData {
   known_products?: string[];
   referral_source?: string;
   created_at?: string;
-  
+
   // Farm details (7 columns)
   farm_name?: string;
   farm_position?: string;
@@ -30,20 +30,20 @@ export interface MemberImportData {
   building_count?: string;
   pest_problems?: string[];
   pest_control_methods?: string[];
-  
+
   // Company details (4 columns)
   company_name?: string;
   business_type?: string;
   company_position?: string;
   is_elanco?: boolean;
-  
+
   // Vet details (2 columns)
   vet_organization?: string;
   vet_type?: string;
-  
+
   // Shop details (1 column)
   shop_name?: string;
-  
+
   // Government details (1 column)
   government_organization?: string;
 }
@@ -70,10 +70,10 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    
+
     if (char === '"') {
       // Check for escaped quote
       if (inQuotes && line[i + 1] === '"') {
@@ -89,10 +89,10 @@ function parseCSVLine(line: string): string[] {
       current += char;
     }
   }
-  
+
   // Don't forget the last value
   result.push(current.trim());
-  
+
   return result;
 }
 
@@ -101,34 +101,34 @@ function parseCSVLine(line: string): string[] {
  */
 export function parseCSV(csvText: string): MemberImportData[] {
   const lines = csvText.split(/\r?\n/).filter(line => line.trim());
-  
+
   if (lines.length < 2) {
     throw new Error('CSV ต้องมีอย่างน้อย 2 บรรทัด (header และ data)');
   }
-  
+
   const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
-  
+
   // Validate required headers
   const requiredHeaders = ['phone', 'first_name', 'last_name', 'member_type'];
   const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-  
+
   if (missingHeaders.length > 0) {
     throw new Error(`ขาด column ที่จำเป็น: ${missingHeaders.join(', ')}`);
   }
-  
+
   const members: MemberImportData[] = [];
-  
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
+
     const values = parseCSVLine(line);
     const member: Record<string, unknown> = {};
-    
+
     headers.forEach((header, index) => {
       const value = values[index]?.trim();
       if (!value) return;
-      
+
       // Handle array fields (separated by |)
       if (ARRAY_FIELDS.includes(header)) {
         member[header] = value.split('|').map(v => v.trim()).filter(v => v);
@@ -147,13 +147,13 @@ export function parseCSV(csvText: string): MemberImportData[] {
         member[header] = value;
       }
     });
-    
+
     // Only add if has required phone
     if (member.phone) {
       members.push(member as unknown as MemberImportData);
     }
   }
-  
+
   return members;
 }
 
@@ -204,7 +204,7 @@ export function generateCSVTemplate(): string {
     // Government details
     'government_organization'
   ];
-  
+
   const exampleRow = [
     'MB-0001',
     '0812345678',
@@ -242,7 +242,7 @@ export function generateCSVTemplate(): string {
     '',
     ''
   ];
-  
+
   return headers.join(',') + '\n' + exampleRow.join(',');
 }
 
@@ -288,35 +288,35 @@ export function exportMembersToCSV(members: MemberImportData[]): string {
     'shop_name',
     'government_organization'
   ];
-  
+
   const rows = members.map(member => {
     return headers.map(header => {
       const value = member[header as keyof MemberImportData];
-      
+
       if (value === null || value === undefined) {
         return '';
       }
-      
+
       // Handle arrays - join with pipe
       if (Array.isArray(value)) {
         return value.join('|');
       }
-      
+
       // Handle booleans
       if (typeof value === 'boolean') {
         return value ? 'true' : 'false';
       }
-      
+
       // Handle strings with commas or quotes - wrap in quotes
       const strValue = String(value);
       if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
         return `"${strValue.replace(/"/g, '""')}"`;
       }
-      
+
       return strValue;
     }).join(',');
   });
-  
+
   return [headers.join(','), ...rows].join('\n');
 }
 
@@ -325,22 +325,22 @@ export function exportMembersToCSV(members: MemberImportData[]): string {
  */
 export function validateMemberData(member: MemberImportData): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   // Required fields
   if (!member.phone) {
     errors.push('phone is required');
   } else if (!/^[0-9]{9,10}$/.test(member.phone.replace(/[^0-9]/g, ''))) {
     errors.push('phone must be 9-10 digits');
   }
-  
+
   if (!member.first_name) {
     errors.push('first_name is required');
   }
-  
+
   if (!member.last_name) {
     errors.push('last_name is required');
   }
-  
+
   if (!member.member_type) {
     errors.push('member_type is required');
   } else {
@@ -349,7 +349,7 @@ export function validateMemberData(member: MemberImportData): { valid: boolean; 
       errors.push(`member_type must be one of: ${validTypes.join(', ')}`);
     }
   }
-  
+
   // Validate tier if provided
   if (member.tier) {
     const validTiers = ['bronze', 'silver', 'gold', 'platinum'];
@@ -357,26 +357,26 @@ export function validateMemberData(member: MemberImportData): { valid: boolean; 
       errors.push(`tier must be one of: ${validTiers.join(', ')}`);
     }
   }
-  
+
   // Validate occupation-specific required fields
   if (member.member_type === 'farm' && !member.farm_name) {
     // Farm name is optional but recommended
   }
-  
+
   if (member.member_type === 'company_employee' && member.business_type) {
-    const validBusinessTypes = ['feed', 'farm_equipment', 'veterinary_distributor', 'animal_health', 'other'];
+    const validBusinessTypes = ['animal_production', 'animal_feed', 'veterinary_distribution', 'other'];
     if (!validBusinessTypes.includes(member.business_type)) {
       errors.push(`business_type must be one of: ${validBusinessTypes.join(', ')}`);
     }
   }
-  
+
   if (member.member_type === 'veterinarian' && member.vet_type) {
-    const validVetTypes = ['private_clinic', 'government', 'company', 'freelance'];
+    const validVetTypes = ['livestock', 'hospital_clinic'];
     if (!validVetTypes.includes(member.vet_type)) {
       errors.push(`vet_type must be one of: ${validVetTypes.join(', ')}`);
     }
   }
-  
+
   return {
     valid: errors.length === 0,
     errors

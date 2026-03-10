@@ -230,10 +230,10 @@ export default function AdminMembers() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทุกประเภท</SelectItem>
-                <SelectItem value="farm">ฟาร์มปศุสัตว์</SelectItem>
+                <SelectItem value="farm">ฟาร์มเลี้ยงสัตว์</SelectItem>
                 <SelectItem value="company_employee">พนักงานบริษัท</SelectItem>
                 <SelectItem value="veterinarian">สัตวแพทย์</SelectItem>
-                <SelectItem value="livestock_shop">ร้านค้าปศุสัตว์</SelectItem>
+                <SelectItem value="livestock_shop">ร้านค้าสินค้าปศุสัตว์</SelectItem>
                 <SelectItem value="government">รับราชการ</SelectItem>
                 <SelectItem value="other">อื่นๆ</SelectItem>
               </SelectContent>

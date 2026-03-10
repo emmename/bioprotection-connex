@@ -55,7 +55,7 @@ const MEMBER_TYPES = [
   { value: 'farm', label: 'ฟาร์มเลี้ยงสัตว์' },
   { value: 'company_employee', label: 'พนักงานบริษัท' },
   { value: 'veterinarian', label: 'สัตวแพทย์' },
-  { value: 'livestock_shop', label: 'ร้านค้าปศุสัตว์' },
+  { value: 'livestock_shop', label: 'ร้านค้าสินค้าปศุสัตว์' },
 ];
 
 // Sub-types matching registration system (OccupationStep.tsx)

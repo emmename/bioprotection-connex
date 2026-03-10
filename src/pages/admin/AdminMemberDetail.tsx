@@ -124,12 +124,25 @@ interface ReceiptRecord {
   reviewed_at: string | null;
 }
 
+const farmPositionLabels: Record<string, string> = {
+  'owner': 'เจ้าของกิจการ',
+  'farm_manager': 'ผู้จัดการฟาร์ม',
+  'animal_husbandry': 'สัตวบาล',
+  'admin': 'ธุรการ',
+  'other': 'อื่นๆ'
+};
+
+const farmPositionOptions = Object.entries(farmPositionLabels).map(([value, label]) => ({
+  value,
+  label
+}));
+
 const memberTypeLabels: Record<string, string> = {
-  farm: 'เจ้าของฟาร์ม',
+  farm: 'ฟาร์มเลี้ยงสัตว์',
   company_employee: 'พนักงานบริษัท',
   veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านขายอาหารสัตว์',
-  government: 'หน่วยงานราชการ',
+  livestock_shop: 'ร้านค้าสินค้าปศุสัตว์',
+  government: 'รับราชการ',
   other: 'อื่นๆ',
 };
 
@@ -154,8 +167,8 @@ const businessTypeLabels: Record<string, string> = {
 };
 
 const vetTypeLabels: Record<string, string> = {
-  livestock: 'ปศุสัตว์',
-  hospital_clinic: 'โรงพยาบาล/คลินิก',
+  livestock: 'สัตวแพทย์ประจำปศุสัตว์',
+  hospital_clinic: 'สัตวแพทย์ประจำโรงพยาบาลสัตว์/คลินิก',
 };
 
 const statusOptions = [
@@ -196,7 +209,7 @@ export default function AdminMemberDetail() {
         .single();
 
       if (profileError) throw profileError;
-      setProfile(profileData);
+      setProfile(profileData as any);
 
       const occupationDetails: OccupationDetails = {};
 
@@ -683,10 +696,11 @@ export default function AdminMemberDetail() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">ตำแหน่ง</p>
-                      <InlineEditField
+                      <InlineEditSelect
                         value={occupation.farm_details.position || ''}
+                        options={farmPositionOptions}
                         onSave={(v) => updateOccupationField('farm_details', occupation.farm_details!.id, 'position', v)}
-                        placeholder="-"
+                        displayValue={farmPositionLabels[occupation.farm_details.position || ''] || occupation.farm_details.position || '-'}
                       />
                     </div>
                     <div>

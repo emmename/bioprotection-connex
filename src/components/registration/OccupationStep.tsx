@@ -54,7 +54,7 @@ const memberTypeOptions = [
   { value: 'other', label: 'อื่นๆ', icon: HelpCircle },
 ];
 
-const animalTypeOptions = ['ไก่พันธุ์', 'ไก่เนื้อ', 'ไก่ไข่', 'สุกร', 'วัว', 'สัตว์อื่นๆ'];
+const animalTypeOptions = ['สุกร', 'ไก่เนื้อ', 'ไก่ไข่', 'เป็ด', 'โคเนื้อ', 'โคนม', 'กระบือ', 'แพะ/แกะ', 'อื่นๆ'];
 const farmPositionOptions = [
   { value: 'owner', label: 'เจ้าของกิจการ' },
   { value: 'farm_manager', label: 'ผู้จัดการฟาร์ม' },
@@ -62,7 +62,7 @@ const farmPositionOptions = [
   { value: 'admin', label: 'ธุรการ' },
   { value: 'other', label: 'อื่นๆ' },
 ];
-const pestProblemOptions = ['แมลงวัน', 'แมลงปีกแข็ง', 'หนู', 'อื่นๆ'];
+const pestProblemOptions = ['แมลงวัน', 'ยุง', 'เห็บ', 'เหา', 'ไร', 'มด', 'แมลงสาบ', 'หนู'];
 const flyControlOptions = [
   'ใช้สารเคมีควบคุมตัวเต็มวัย',
   'ใช้สารเคมีควบคุมตัวหนอนแมลงวัน',

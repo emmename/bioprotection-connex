@@ -61,7 +61,7 @@ const MEMBER_TYPE_OPTIONS: { value: MemberType; label: string }[] = [
   { value: 'farm', label: 'ฟาร์มเลี้ยงสัตว์' },
   { value: 'company_employee', label: 'พนักงานบริษัท' },
   { value: 'veterinarian', label: 'สัตวแพทย์' },
-  { value: 'livestock_shop', label: 'ร้านขายสินค้าปศุสัตว์' },
+  { value: 'livestock_shop', label: 'ร้านค้าสินค้าปศุสัตว์' },
 ];
 
 const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
@@ -147,7 +147,9 @@ export default function AdminRewards() {
     } else if (data) {
       const mappedRewards: Reward[] = data.map(item => ({
         ...item,
-        tier_points_cost: item.tier_points_cost as unknown as TierPointsCost | null
+        tier_points_cost: item.tier_points_cost as unknown as TierPointsCost | null,
+        target_member_types: item.target_member_types as MemberType[] | null,
+        target_tiers: item.target_tiers as TierLevel[] | null,
       }));
       setRewards(mappedRewards);
     }
