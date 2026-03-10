@@ -84,9 +84,9 @@ BEGIN
   -- Mark Mission as complete if applicable
   IF v_event_type = 'mission_event' AND v_mission_id IS NOT NULL THEN
     -- Check if not already completed
-    IF NOT EXISTS (SELECT 1 FROM mission_progress WHERE profile_id = v_profile_id AND mission_id = v_mission_id) THEN
-      INSERT INTO mission_progress (profile_id, mission_id, status, current_value, target_value)
-      VALUES (v_profile_id, v_mission_id, 'completed', 1, 1);
+    IF NOT EXISTS (SELECT 1 FROM mission_completions WHERE profile_id = v_profile_id AND mission_id = v_mission_id) THEN
+      INSERT INTO mission_completions (profile_id, mission_id, status, points_earned, coins_earned)
+      VALUES (v_profile_id, v_mission_id, 'approved', v_points_reward, v_coins_reward);
     END IF;
   END IF;
 
