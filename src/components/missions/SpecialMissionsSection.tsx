@@ -145,18 +145,19 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                       }`}>
                       {getMissionTypeLabel(mission.mission_type)}
                     </Badge>
-                    {(mission.display_points || mission.points_reward) > 0 && (
-                      <Badge variant="secondary" className={`text-xs ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {isCompleted ? (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> สำเร็จแล้ว
-                          </span>
-                        ) : (
-                          `+${mission.display_points || mission.points_reward} ⭐`
-                        )}
+                    {isCompleted && (
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> สำเร็จแล้ว
+                        </span>
                       </Badge>
                     )}
-                    {mission.coins_reward > 0 && (
+                    {!isCompleted && (mission.display_points || mission.points_reward) > 0 && (
+                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                        +{(mission.display_points || mission.points_reward)} ⭐
+                      </Badge>
+                    )}
+                    {!isCompleted && mission.coins_reward > 0 && (
                       <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
                         +{mission.coins_reward} 🪙
                       </Badge>

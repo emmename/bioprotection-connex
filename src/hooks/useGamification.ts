@@ -371,11 +371,43 @@ export function useSpecialMissions() {
         .select('mission_id, status')
         .eq('profile_id', profile.id);
 
+      let completedIds: string[] = [];
+
       if (completions) {
         // Consider 'pending' or 'approved' as interacted/completed depending on logic
         // Usually for missions like Scan QR, if it exists in completion, it's done.
-        setCompletedMissionIds(completions.map(c => c.mission_id));
+        completedIds = completions.map(c => c.mission_id);
       }
+
+      // Check survey missions progress
+      if (missionsData) {
+        const surveyMissions = (missionsData as Mission[]).filter(m => m.mission_type === 'survey');
+        if (surveyMissions.length > 0) {
+          const contentIds = surveyMissions.map(m => (m.requirements as any)?.content_id).filter(Boolean);
+          if (contentIds.length > 0) {
+            const { data: contentCompletions } = await supabase
+              .from('content_progress')
+              .select('content_id')
+              .eq('profile_id', profile.id)
+              .eq('is_completed', true)
+              .in('content_id', contentIds);
+
+            if (contentCompletions) {
+              const completedContentIds = contentCompletions.map(c => c.content_id);
+              surveyMissions.forEach(m => {
+                const cId = (m.requirements as any)?.content_id;
+                if (cId && completedContentIds.includes(cId)) {
+                  if (!completedIds.includes(m.id)) {
+                    completedIds.push(m.id);
+                  }
+                }
+              });
+            }
+          }
+        }
+      }
+
+      setCompletedMissionIds(completedIds);
       setIsLoading(false);
     };
 
