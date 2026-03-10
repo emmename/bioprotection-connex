@@ -70,14 +70,14 @@ BEGIN
 
   -- Give Rewards
   IF v_points_reward > 0 THEN
-    UPDATE profiles SET points = COALESCE(points, 0) + v_points_reward WHERE id = v_profile_id;
-    INSERT INTO points_transactions (profile_id, amount, transaction_type, source, description, reference_id)
+    UPDATE profiles SET total_points = COALESCE(total_points, 0) + v_points_reward WHERE id = v_profile_id;
+    INSERT INTO points_transactions (profile_id, amount, transaction_type, source, description, source_id)
     VALUES (v_profile_id, v_points_reward, 'earn', 'event_checkin', 'Event Check-in Reward', v_event_id::text);
   END IF;
 
   IF v_coins_reward > 0 THEN
-    UPDATE profiles SET coins = COALESCE(coins, 0) + v_coins_reward WHERE id = v_profile_id;
-    INSERT INTO coins_transactions (profile_id, amount, transaction_type, source, description, reference_id)
+    UPDATE profiles SET total_coins = COALESCE(total_coins, 0) + v_coins_reward WHERE id = v_profile_id;
+    INSERT INTO coins_transactions (profile_id, amount, transaction_type, source, description, source_id)
     VALUES (v_profile_id, v_coins_reward, 'earn', 'event_checkin', 'Event Check-in Reward', v_event_id::text);
   END IF;
 

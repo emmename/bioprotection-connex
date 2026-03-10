@@ -180,7 +180,11 @@ export default function EventScanner() {
 
         const scanner = new Html5QrcodeScanner(
             "reader",
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                videoConstraints: { facingMode: "environment" }
+            },
             false
         );
 
