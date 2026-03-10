@@ -187,8 +187,8 @@ export default function Events() {
                                         isCheckedIn
                                             ? "bg-gradient-to-br from-emerald-100 via-emerald-50/50 to-emerald-200/50 border-emerald-400/50 shadow-emerald-900/10 shadow-md"
                                             : isRegistered
-                                                ? "bg-gradient-to-br from-blue-100 via-blue-50/50 to-blue-200/50 border-blue-400/50 shadow-blue-900/10 shadow-md"
-                                                : "border-transparent"
+                                                ? "bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 border-blue-400 shadow-blue-900/20 shadow-md"
+                                                : "border-blue-400 shadow-md"
                                     )}
                                 >
                                     <CardHeader>
@@ -234,8 +234,8 @@ export default function Events() {
                                         isCheckedIn
                                             ? "bg-emerald-100/50 border-emerald-200"
                                             : isRegistered
-                                                ? "bg-blue-100/50 border-blue-200"
-                                                : "bg-slate-50 border-slate-100"
+                                                ? "bg-blue-200/50 border-blue-300"
+                                                : "bg-slate-50 border-slate-200"
                                     )}>
                                         {isRegistered ? (
                                             <Button
@@ -260,7 +260,8 @@ export default function Events() {
                                             </Button>
                                         ) : (
                                             <Button
-                                                className="w-full"
+                                                className="w-full text-white hover:opacity-90"
+                                                style={{ backgroundColor: '#2e9ef8' }}
                                                 onClick={() => registerMutation.mutate(event.id)}
                                                 disabled={registerMutation.isPending}
                                             >
