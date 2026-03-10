@@ -39,7 +39,7 @@ function getMissionIcon(type: string) {
 function getMissionTypeLabel(type: string) {
   switch (type) {
     case 'qr_scan': return 'สแกน QR';
-    case 'location_visit': return 'เยี่ยมชมสถานที่';
+    case 'location_visit': return 'Check-in';
     case 'survey': return 'ทำแบบสำรวจ';
     default: return 'ภารกิจพิเศษ';
   }

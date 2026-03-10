@@ -105,7 +105,7 @@ export function SpecialMissionsCard() {
                                                         'bg-primary/10 text-primary border-primary/20'
                                             }`}>
                                             {mission.mission_type === 'survey' ? 'ทำแบบสำรวจ' :
-                                                mission.mission_type === 'location_visit' ? 'เยี่ยมชมสถานที่' :
+                                                mission.mission_type === 'location_visit' ? 'Check-in' :
                                                     mission.mission_type === 'qr_scan' ? 'สแกน QR' : 'ภารกิจพิเศษ'}
                                         </Badge>
                                         <Badge variant={isCompleted ? "secondary" : "default"} className={isCompleted ? "bg-green-100 text-green-700 border-green-200" : "bg-amber-500 hover:bg-amber-600"}>

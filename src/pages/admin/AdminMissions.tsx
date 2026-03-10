@@ -46,7 +46,7 @@ interface Mission {
 
 const MISSION_TYPES = [
   { value: 'qr_scan', label: 'สแกน QR Code', icon: QrCode },
-  { value: 'location_visit', label: 'เยี่ยมชมสถานที่', icon: MapPin },
+  { value: 'location_visit', label: 'Check-in', icon: MapPin },
   { value: 'survey', label: 'ทำแบบสำรวจ', icon: ClipboardList },
   { value: 'special', label: 'ภารกิจพิเศษ', icon: Target },
 ];
@@ -520,7 +520,7 @@ export default function AdminMissions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">จัดการภารกิจพิเศษ</h1>
-          <p className="text-muted-foreground">สร้างและจัดการภารกิจสแกน QR, เยี่ยมชมสถานที่, ทำแบบสำรวจ และภารกิจพิเศษ</p>
+          <p className="text-muted-foreground">สร้างและจัดการภารกิจสแกน QR, Check-in, ทำแบบสำรวจ และภารกิจพิเศษ</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
