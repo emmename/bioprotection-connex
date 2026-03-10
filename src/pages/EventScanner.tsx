@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePermissions } from '@/contexts/AuthContext';
+import { usePermissions, useAuth } from '@/contexts/AuthContext';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +19,7 @@ interface Event {
 
 export default function EventScanner() {
     const { hasPermission } = usePermissions();
+    const { profile: currentUserProfile } = useAuth();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const canScanEvents = hasPermission('scan_events');
@@ -106,7 +107,8 @@ export default function EventScanner() {
             // Perform check in and reward distribution via RPC
             const { error: rpcError } = await supabase
                 .rpc('process_event_checkin', {
-                    p_registration_id: actualRegistrationId
+                    p_registration_id: actualRegistrationId,
+                    p_scanned_by: currentUserProfile?.id
                 });
 
             if (rpcError) throw rpcError;

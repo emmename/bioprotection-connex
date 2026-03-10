@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePermissions } from '@/contexts/AuthContext';
-import { ArrowLeft, UserCheck, Calendar, MapPin, Clock, Search, XCircle, CheckCircle } from 'lucide-react';
+import { usePermissions, useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft, UserCheck, Calendar, MapPin, Clock, Search, XCircle, CheckCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,12 +34,17 @@ interface Registration {
         phone: string | null;
         email: string | null;
     };
+    scanned_by_profile: {
+        first_name: string | null;
+        last_name: string | null;
+    } | null;
 }
 
 export default function AdminEventDetail() {
     const { id: eventId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { hasPermission } = usePermissions();
+    const { profile: currentUserProfile } = useAuth();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -71,11 +76,15 @@ export default function AdminEventDetail() {
           status,
           checked_in_at,
           created_at,
-          profile:profiles (
+          profile:profiles!event_registrations_profile_id_fkey (
             first_name,
             last_name,
             phone,
             email
+          ),
+          scanned_by_profile:profiles!event_registrations_scanned_by_fkey (
+            first_name,
+            last_name
           )
         `)
                 .eq('event_id', eventId)
@@ -91,12 +100,19 @@ export default function AdminEventDetail() {
 
     const checkInMutation = useMutation({
         mutationFn: async ({ registrationId, status }: { registrationId: string, status: 'checked_in' | 'cancelled' | 'registered' }) => {
+            const updatePayload: any = { status };
+
+            if (status === 'checked_in') {
+                updatePayload.checked_in_at = new Date().toISOString();
+                updatePayload.scanned_by = currentUserProfile?.id || null;
+            } else if (status === 'registered') {
+                updatePayload.checked_in_at = null;
+                updatePayload.scanned_by = null;
+            }
+
             const { error } = await supabase
                 .from('event_registrations')
-                .update({
-                    status,
-                    checked_in_at: status === 'checked_in' ? new Date().toISOString() : null
-                })
+                .update(updatePayload)
                 .eq('id', registrationId);
 
             if (error) throw error;
@@ -141,6 +157,52 @@ export default function AdminEventDetail() {
 
     const totalRegistered = registrations.length;
     const totalCheckedIn = registrations.filter(r => r.status === 'checked_in').length;
+
+    const handleExportCSV = () => {
+        if (!filteredRegistrations || filteredRegistrations.length === 0) {
+            toast.error('ไม่มีข้อมูลสำหรับ Export');
+            return;
+        }
+
+        const headers = ['รหัส', 'ชื่อ', 'นามสกุล', 'เบอร์โทร', 'อีเมล', 'วันที่ลงทะเบียน', 'สถานะ', 'วันเวลาเช็คอิน', 'ผู้สแกน'];
+
+        const rows = filteredRegistrations.map(reg => {
+            const statusText = reg.status === 'registered' ? 'ลงทะเบียนแล้ว' :
+                reg.status === 'checked_in' ? 'เข้าร่วมงาน' : 'ยกเลิก';
+
+            const createdAt = format(new Date(reg.created_at), 'dd/MM/yyyy HH:mm:ss');
+            const checkedInAt = reg.checked_in_at ? format(new Date(reg.checked_in_at), 'dd/MM/yyyy HH:mm:ss') : '-';
+
+            const scannedByText = reg.scanned_by_profile ?
+                `${reg.scanned_by_profile.first_name || ''} ${reg.scanned_by_profile.last_name || ''}`.trim() : '-';
+
+            return [
+                reg.id.split('-')[0], // Use short ID as displayed
+                `"${reg.profile?.first_name || ''}"`,
+                `"${reg.profile?.last_name || ''}"`,
+                `"${reg.profile?.phone || ''}"`,
+                `"${reg.profile?.email || ''}"`,
+                createdAt,
+                statusText,
+                checkedInAt,
+                `"${scannedByText}"`
+            ].join(',');
+        });
+
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+
+        const filename = `event_participants_${event?.title ? event.title.replace(/\s+/g, '_') : 'export'}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+        link.setAttribute('download', filename);
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="space-y-6">
@@ -212,15 +274,21 @@ export default function AdminEventDetail() {
                         <CardTitle>รายชื่อผู้เข้าร่วม</CardTitle>
                         <CardDescription>รายชื่อสมาชิกที่ลงทะเบียนสำหรับกิจกรรมนี้</CardDescription>
                     </div>
-                    <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="ค้นหาชื่อ, เบอร์โทร..."
-                            className="pl-8"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex items-center gap-2">
+                        <div className="relative w-48 md:w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="ค้นหาชื่อ, เบอร์โทร..."
+                                className="pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button variant="outline" onClick={handleExportCSV}>
+                            <Download className="w-4 h-4 mr-2" />
+                            <span className="hidden md:inline">Export CSV</span>
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -241,6 +309,7 @@ export default function AdminEventDetail() {
                                     <TableHead>เบอร์โทร</TableHead>
                                     <TableHead>วันที่ลงทะเบียน</TableHead>
                                     <TableHead>สถานะ</TableHead>
+                                    <TableHead>ผู้สแกน</TableHead>
                                     <TableHead className="text-right">จัดการ (สแกนแทน)</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -265,9 +334,18 @@ export default function AdminEventDetail() {
                                         <TableCell>
                                             {getStatusBadge(reg.status)}
                                             {reg.status === 'checked_in' && reg.checked_in_at && (
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    {format(new Date(reg.checked_in_at), 'HH:mm:ss', { locale: th })}
+                                                <div className="text-xs text-muted-foreground mt-1 text-nowrap">
+                                                    {format(new Date(reg.checked_in_at), 'd MMM yy HH:mm', { locale: th })}
                                                 </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {reg.scanned_by_profile ? (
+                                                <span className="text-xs text-slate-600">
+                                                    {reg.scanned_by_profile.first_name} {reg.scanned_by_profile.last_name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400">-</span>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
