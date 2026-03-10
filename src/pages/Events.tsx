@@ -10,6 +10,7 @@ import { th } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { cn } from "@/lib/utils";
 
 interface Event {
     id: string;
@@ -179,7 +180,17 @@ export default function Events() {
                             const isCheckedIn = registration?.status === 'checked_in';
 
                             return (
-                                <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                                <Card
+                                    key={event.id}
+                                    className={cn(
+                                        "overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col border-2",
+                                        isCheckedIn
+                                            ? "bg-gradient-to-br from-emerald-100 via-emerald-50/50 to-emerald-200/50 border-emerald-400/50 shadow-emerald-900/10 shadow-md"
+                                            : isRegistered
+                                                ? "bg-gradient-to-br from-blue-100 via-blue-50/50 to-blue-200/50 border-blue-400/50 shadow-blue-900/10 shadow-md"
+                                                : "border-transparent"
+                                    )}
+                                >
                                     <CardHeader>
                                         <div className="flex justify-between items-start mb-2 gap-2">
                                             <div className="flex flex-col gap-1">
@@ -218,17 +229,27 @@ export default function Events() {
                                             </div>
                                         )}
                                     </CardContent>
-                                    <CardFooter className="bg-slate-50 pt-4 flex gap-2">
+                                    <CardFooter className={cn(
+                                        "pt-4 flex gap-2 border-t mt-auto",
+                                        isCheckedIn
+                                            ? "bg-emerald-100/50 border-emerald-200"
+                                            : isRegistered
+                                                ? "bg-blue-100/50 border-blue-200"
+                                                : "bg-slate-50 border-slate-100"
+                                    )}>
                                         {isRegistered ? (
                                             <Button
-                                                className="w-full"
-                                                variant={isCheckedIn ? "outline" : "default"}
+                                                className={cn(
+                                                    "w-full transition-colors",
+                                                    isCheckedIn ? "bg-emerald-600 hover:bg-emerald-700 text-white border-none" : ""
+                                                )}
+                                                variant={isCheckedIn ? "default" : "default"}
                                                 onClick={() => navigate(`/events/${event.id}/ticket`)}
                                             >
                                                 {isCheckedIn ? (
                                                     <>
-                                                        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                                                        ดูรายละเอียด (เช็คอินแล้ว)
+                                                        <CheckCircle className="w-4 h-4 mr-2 text-white" />
+                                                        เช็คอินเรียบร้อยแล้ว
                                                     </>
                                                 ) : (
                                                     <>

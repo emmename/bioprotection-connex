@@ -91,11 +91,17 @@ export default function History() {
                         <Tabs defaultValue="points" className="w-full">
                             <div className="p-4 border-b">
                                 <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="points" className="flex items-center gap-2">
+                                    <TabsTrigger
+                                        value="points"
+                                        className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+                                    >
                                         <Star className="w-4 h-4" />
                                         คะแนนสะสม
                                     </TabsTrigger>
-                                    <TabsTrigger value="coins" className="flex items-center gap-2">
+                                    <TabsTrigger
+                                        value="coins"
+                                        className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+                                    >
                                         <Coins className="w-4 h-4" />
                                         เหรียญ
                                     </TabsTrigger>

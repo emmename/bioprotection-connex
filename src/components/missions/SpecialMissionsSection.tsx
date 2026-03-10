@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, QrCode, Star, Check, Clock, ClipboardList } from 'lucide-react';
+import { MapPin, QrCode, Star, Check, Clock, ClipboardList, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ interface Mission {
   description: string | null;
   mission_type: string;
   points_reward: number;
+  display_points?: number;
   coins_reward: number;
   start_date: string | null;
   end_date: string | null;
@@ -127,7 +128,7 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                       {mission.title}
                     </p>
                     {isCompleted && (
-                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 animate-in zoom-in duration-300">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -144,9 +145,15 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                       }`}>
                       {getMissionTypeLabel(mission.mission_type)}
                     </Badge>
-                    {mission.points_reward > 0 && (
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
-                        +{mission.points_reward} ⭐
+                    {(mission.display_points || mission.points_reward) > 0 && (
+                      <Badge variant="secondary" className={`text-xs ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {isCompleted ? (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> สำเร็จแล้ว
+                          </span>
+                        ) : (
+                          `+${mission.display_points || mission.points_reward} ⭐`
+                        )}
                       </Badge>
                     )}
                     {mission.coins_reward > 0 && (

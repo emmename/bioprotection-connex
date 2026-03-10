@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, ChevronRight, Check, ScanLine, MapPin, Loader2, Star } from 'lucide-react';
+import { Calendar, ChevronRight, Check, ScanLine, MapPin, Loader2, Star, QrCode, ClipboardList, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSpecialMissions } from '@/hooks/useGamification';
 
@@ -46,6 +46,22 @@ export function SpecialMissionsCard() {
                     {missions.map((mission) => {
                         const isCompleted = completedMissionIds.includes(mission.id);
 
+                        // Icon mapping
+                        const getIcon = () => {
+                            const iconClass = `w-5 h-5 ${isCompleted ? 'text-slate-500' : 'text-amber-600'}`;
+                            switch (mission.mission_type) {
+                                case 'qr_scan':
+                                case 'scan_qr':
+                                    return <QrCode className={iconClass} />;
+                                case 'location_visit':
+                                    return <MapPin className={iconClass} />;
+                                case 'survey':
+                                    return <ClipboardList className={iconClass} />;
+                                default:
+                                    return <Star className={iconClass} />;
+                            }
+                        };
+
                         // Determine action based on mission type
                         const handleAction = () => {
                             if (mission.mission_type === 'survey') {
@@ -79,11 +95,7 @@ export function SpecialMissionsCard() {
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <div className={`p-2 rounded-lg ${isCompleted ? 'bg-slate-100' : 'bg-amber-100'}`}>
-                                        {mission.mission_type === 'scan_qr' ? (
-                                            <ScanLine className={`w-5 h-5 ${isCompleted ? 'text-slate-500' : 'text-amber-600'}`} />
-                                        ) : (
-                                            <MapPin className={`w-5 h-5 ${isCompleted ? 'text-slate-500' : 'text-amber-600'}`} />
-                                        )}
+                                        {getIcon()}
                                     </div>
                                     <div className="flex gap-1.5 flex-col items-end">
                                         <Badge variant="outline" className={`text-[10px] ${mission.mission_type === 'qr_scan' ? 'bg-sky-50 text-sky-700 border-sky-200' :
@@ -96,8 +108,14 @@ export function SpecialMissionsCard() {
                                                 mission.mission_type === 'location_visit' ? 'เยี่ยมชมสถานที่' :
                                                     mission.mission_type === 'qr_scan' ? 'สแกน QR' : 'ภารกิจพิเศษ'}
                                         </Badge>
-                                        <Badge variant={isCompleted ? "secondary" : "default"} className={isCompleted ? "" : "bg-amber-500 hover:bg-amber-600"}>
-                                            +{mission.display_points} คะแนน
+                                        <Badge variant={isCompleted ? "secondary" : "default"} className={isCompleted ? "bg-green-100 text-green-700 border-green-200" : "bg-amber-500 hover:bg-amber-600"}>
+                                            {isCompleted ? (
+                                                <span className="flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3 h-3" /> สำเร็จแล้ว
+                                                </span>
+                                            ) : (
+                                                `+${mission.display_points} คะแนน`
+                                            )}
                                         </Badge>
                                     </div>
                                 </div>
