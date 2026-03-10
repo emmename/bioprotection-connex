@@ -248,8 +248,10 @@ export default function AdminEvents() {
     const handleOpenDialog = (event?: Event) => {
         if (event) {
             setEditingEvent(event);
-            const formatForInput = (dateStr: string) => {
+            const formatForInput = (dateStr?: string | null) => {
+                if (!dateStr) return '';
                 const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '';
                 const offset = d.getTimezoneOffset() * 60000;
                 const localDate = new Date(d.getTime() - offset);
                 return localDate.toISOString().slice(0, 16);
@@ -603,7 +605,10 @@ export default function AdminEvents() {
                                             {missions.map(mission => (
                                                 <SelectItem key={mission.id} value={mission.id}>{mission.title}</SelectItem>
                                             ))}
-                                            {missions.length === 0 && (
+                                            {formData.mission_id && !missions.some(m => m.id === formData.mission_id) && (
+                                                <SelectItem value={formData.mission_id}>ภารกิจที่ถูกลบ / ไม่มีในระบบ</SelectItem>
+                                            )}
+                                            {missions.length === 0 && !formData.mission_id && (
                                                 <SelectItem value="empty" disabled>ไม่พบภารกิจที่เปิดใช้งาน</SelectItem>
                                             )}
                                         </SelectContent>

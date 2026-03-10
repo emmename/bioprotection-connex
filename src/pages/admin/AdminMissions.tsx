@@ -141,6 +141,8 @@ export default function AdminMissions() {
       const { data, error } = await query;
       if (error) throw error;
 
+      const missionsArray = (data || []) as Mission[];
+
       // Fetch completion counts
       const { data: completions } = await supabase
         .from('mission_completions')
@@ -151,7 +153,32 @@ export default function AdminMissions() {
         countMap[c.mission_id] = (countMap[c.mission_id] || 0) + 1;
       });
 
-      setMissions(((data || []) as Mission[]).map(m => ({
+      // Fetch content completions for survey missions
+      const surveyMissions = missionsArray.filter(m => m.mission_type === 'survey');
+      if (surveyMissions.length > 0) {
+        const contentIds = surveyMissions.map(m => (m.requirements as any)?.content_id).filter(Boolean);
+        if (contentIds.length > 0) {
+          const { data: contentCompletions } = await supabase
+            .from('content_progress')
+            .select('content_id')
+            .eq('is_completed', true)
+            .in('content_id', contentIds);
+
+          const contentCountMap: Record<string, number> = {};
+          contentCompletions?.forEach(c => {
+            contentCountMap[c.content_id] = (contentCountMap[c.content_id] || 0) + 1;
+          });
+
+          surveyMissions.forEach(m => {
+            const cId = (m.requirements as any)?.content_id;
+            if (cId) {
+              countMap[m.id] = (countMap[m.id] || 0) + (contentCountMap[cId] || 0);
+            }
+          });
+        }
+      }
+
+      setMissions(missionsArray.map(m => ({
         ...m,
         completion_count: countMap[m.id] || 0,
       })));
@@ -224,13 +251,47 @@ export default function AdminMissions() {
           .order('order_index');
 
         if (data) {
-          setSurveyQuestions(data.map(q => ({
-            id: q.id,
-            question: q.question,
-            questionType: q.question_type as SurveyQuestion['questionType'],
-            options: (q.options as string[]) || [],
-            isRequired: q.is_required,
-          })));
+          setSurveyQuestions(data.map(q => {
+            let parsedOpts: string[] = [];
+            let extraFields: any = {};
+            const opts = q.options as any;
+            if (opts) {
+              if (Array.isArray(opts)) {
+                parsedOpts = opts;
+              } else {
+                if (opts.choices) parsedOpts = opts.choices;
+                if (opts.max) extraFields.maxRating = opts.max;
+                if (opts.min !== undefined) {
+                  extraFields.sliderMin = opts.min;
+                  extraFields.sliderMax = opts.max;
+                  extraFields.sliderStep = opts.step;
+                  extraFields.sliderMinLabel = opts.minLabel;
+                  extraFields.sliderMaxLabel = opts.maxLabel;
+                }
+                if (opts.rows) {
+                  extraFields.matrixRows = opts.rows;
+                  extraFields.matrixColumns = opts.columns;
+                }
+                if (opts.items) parsedOpts = opts.items;
+                if (opts.labels) {
+                  extraFields.likertScale = opts.labels.length;
+                  extraFields.likertLabels = { left: opts.labels[0] || '', right: opts.labels[opts.labels.length - 1] || '' };
+                }
+                if (opts.screeningCorrectAnswer !== undefined && opts.choices) {
+                  extraFields.isScreening = true;
+                  extraFields.screeningLogic = { option: opts.choices[opts.screeningCorrectAnswer], action: 'terminate' };
+                }
+              }
+            }
+            return {
+              id: q.id,
+              question: q.question,
+              questionType: q.question_type as SurveyQuestion['questionType'],
+              options: parsedOpts,
+              isRequired: q.is_required,
+              ...extraFields
+            };
+          }));
         } else {
           setSurveyQuestions([]);
         }

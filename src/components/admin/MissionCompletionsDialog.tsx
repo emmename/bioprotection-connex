@@ -10,7 +10,13 @@ import { th } from 'date-fns/locale';
 import { Check, X, Clock } from 'lucide-react';
 
 interface MissionCompletionsDialogProps {
-  mission: { id: string; title: string };
+  mission: {
+    id: string;
+    title: string;
+    mission_type?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    requirements?: any;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -37,21 +43,45 @@ export function MissionCompletionsDialog({ mission, open, onOpenChange }: Missio
   const fetchCompletions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('mission_completions')
-        .select('*, profile:profiles(first_name, last_name, member_id)')
-        .eq('mission_id', mission.id)
-        .order('completed_at', { ascending: false });
+      if (mission.mission_type === 'survey' && mission.requirements?.content_id) {
+        const { data, error } = await supabase
+          .from('content_progress')
+          .select('id, profile_id, completed_at, points_earned, profile:profiles(first_name, last_name, member_id)')
+          .eq('content_id', mission.requirements.content_id)
+          .eq('is_completed', true)
+          .order('completed_at', { ascending: false });
 
-      if (error) throw error;
-      setCompletions((data || []) as unknown as Completion[]);
+        if (error) throw error;
+
+        const formattedData = (data || []).map(d => ({
+          id: d.id,
+          profile_id: d.profile_id,
+          status: 'approved',
+          points_earned: d.points_earned || 0,
+          coins_earned: 0,
+          completed_at: d.completed_at || new Date().toISOString(),
+          proof_image_url: null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          profile: (d.profile as any) || null
+        }));
+        setCompletions(formattedData as Completion[]);
+      } else {
+        const { data, error } = await supabase
+          .from('mission_completions')
+          .select('*, profile:profiles(first_name, last_name, member_id)')
+          .eq('mission_id', mission.id)
+          .order('completed_at', { ascending: false });
+
+        if (error) throw error;
+        setCompletions((data || []) as unknown as Completion[]);
+      }
     } catch (error) {
       console.error('Error fetching completions:', error);
       toast.error('ไม่สามารถโหลดข้อมูลได้');
     } finally {
       setIsLoading(false);
     }
-  }, [mission.id]);
+  }, [mission.id, mission.mission_type, mission.requirements?.content_id]);
 
   useEffect(() => {
     if (open) fetchCompletions();
