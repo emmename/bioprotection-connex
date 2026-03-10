@@ -100,22 +100,30 @@ export default function AdminEventDetail() {
 
     const checkInMutation = useMutation({
         mutationFn: async ({ registrationId, status }: { registrationId: string, status: 'checked_in' | 'cancelled' | 'registered' }) => {
-            const updatePayload: any = { status };
-
             if (status === 'checked_in') {
-                updatePayload.checked_in_at = new Date().toISOString();
-                updatePayload.scanned_by = currentUserProfile?.id || null;
+                // Use RPC for check-in to handle missions and distribute rewards
+                const { error } = await supabase.rpc('process_event_checkin', {
+                    p_registration_id: registrationId,
+                    p_scanned_by: currentUserProfile?.id || null
+                });
+
+                if (error) throw error;
             } else if (status === 'registered') {
-                updatePayload.checked_in_at = null;
-                updatePayload.scanned_by = null;
+                // Revert check-in
+                const { error } = await supabase.rpc('revert_event_checkin', {
+                    p_registration_id: registrationId
+                });
+
+                if (error) throw error;
+            } else {
+                // Cancel
+                const { error } = await supabase
+                    .from('event_registrations')
+                    .update({ status: 'cancelled' })
+                    .eq('id', registrationId);
+
+                if (error) throw error;
             }
-
-            const { error } = await supabase
-                .from('event_registrations')
-                .update(updatePayload)
-                .eq('id', registrationId);
-
-            if (error) throw error;
         },
         onSuccess: () => {
             toast.success('อัปเดตสถานะสำเร็จ');

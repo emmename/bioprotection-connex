@@ -176,12 +176,12 @@ export default function AdminMembers() {
             {isExporting ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <Upload className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2" />
             )}
             {isExporting ? 'กำลังส่งออก...' : 'Export CSV'}
           </Button>
           <Button onClick={() => setIsImportDialogOpen(true)}>
-            <Download className="h-4 w-4 mr-2" />
+            <Upload className="h-4 w-4 mr-2" />
             Import สมาชิก
           </Button>
         </div>
