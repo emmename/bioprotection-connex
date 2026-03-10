@@ -187,7 +187,7 @@ export default function Events() {
                                         isCheckedIn
                                             ? "bg-gradient-to-br from-emerald-100 via-emerald-50/50 to-emerald-200/50 border-emerald-400/50 shadow-emerald-900/10 shadow-md"
                                             : isRegistered
-                                                ? "bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 border-blue-400 shadow-blue-900/20 shadow-md"
+                                                ? "bg-gradient-to-br from-blue-100 via-white to-blue-100 border-blue-400 shadow-blue-900/10 shadow-md"
                                                 : "border-blue-400 shadow-md"
                                     )}
                                 >
