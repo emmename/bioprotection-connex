@@ -13,6 +13,7 @@ import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
 import { DailyCheckinCard } from '@/components/dashboard/DailyCheckinCard';
 import { DailyMissionsCard } from '@/components/dashboard/DailyMissionsCard';
 import { SpecialMissionsCard } from '@/components/dashboard/SpecialMissionsCard';
+import { MissionGroupsCard } from '@/components/dashboard/MissionGroupsCard';
 
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { TierUpCelebration } from '@/components/dashboard/TierUpCelebration';
@@ -170,6 +171,9 @@ export default function Dashboard() {
 
         {/* Special Missions */}
         <SpecialMissionsCard />
+
+        {/* Mission Groups */}
+        <MissionGroupsCard />
 
 
       </main>

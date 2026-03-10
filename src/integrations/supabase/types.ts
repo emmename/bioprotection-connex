@@ -767,19 +767,61 @@ export type Database = {
           },
         ]
       }
+      mission_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          grand_bonus_coins: number
+          grand_bonus_points: number
+          id: string
+          is_active: boolean
+          start_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          grand_bonus_coins?: number
+          grand_bonus_points?: number
+          id?: string
+          is_active?: boolean
+          start_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          grand_bonus_coins?: number
+          grand_bonus_points?: number
+          id?: string
+          is_active?: boolean
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           coins_reward: number
           created_at: string
           description: string | null
           end_date: string | null
+          group_id: string | null
           id: string
           is_active: boolean
           location: string | null
           mission_type: string
+          prerequisite_mission_id: string | null
           points_reward: number
           qr_code: string | null
           requirements: Json | null
+          sequence_order: number | null
           start_date: string | null
           title: string
           updated_at: string
@@ -789,13 +831,16 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date?: string | null
+          group_id?: string | null
           id?: string
           is_active?: boolean
           location?: string | null
           mission_type: string
           points_reward?: number
+          prerequisite_mission_id?: string | null
           qr_code?: string | null
           requirements?: Json | null
+          sequence_order?: number | null
           start_date?: string | null
           title: string
           updated_at?: string
@@ -805,18 +850,36 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date?: string | null
+          group_id?: string | null
           id?: string
           is_active?: boolean
           location?: string | null
           mission_type?: string
           points_reward?: number
+          prerequisite_mission_id?: string | null
           qr_code?: string | null
           requirements?: Json | null
+          sequence_order?: number | null
           start_date?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "missions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "mission_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missions_prerequisite_mission_id_fkey"
+            columns: ["prerequisite_mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -1440,6 +1503,57 @@ export type Database = {
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mission_groups: {
+        Row: {
+          bonus_coins_earned: number
+          bonus_points_earned: number
+          completed_at: string | null
+          created_at: string
+          group_id: string
+          id: string
+          is_completed: boolean
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_coins_earned?: number
+          bonus_points_earned?: number
+          completed_at?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          is_completed?: boolean
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_coins_earned?: number
+          bonus_points_earned?: number
+          completed_at?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_completed?: boolean
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mission_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "mission_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_mission_groups_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

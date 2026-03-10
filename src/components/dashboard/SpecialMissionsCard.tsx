@@ -8,7 +8,8 @@ import { useSpecialMissions } from '@/hooks/useGamification';
 
 export function SpecialMissionsCard() {
     const navigate = useNavigate();
-    const { missions, completedMissionIds, isLoading } = useSpecialMissions();
+    const { missions: allMissions, completedMissionIds, isLoading } = useSpecialMissions();
+    const missions = allMissions.filter(m => !m.group_id);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     if (isLoading) {

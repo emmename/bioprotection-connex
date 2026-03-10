@@ -49,13 +49,22 @@ export function DailyCheckinCard() {
         <CardContent className="pt-6">
           <div className="relative">
             {/* Progress Line Background */}
-            <div className="absolute top-[2.4rem] left-0 w-full h-[6px] bg-slate-200 rounded-full -z-10" />
+            <div
+              className="absolute h-[6px] bg-slate-200 rounded-full z-0"
+              style={{
+                top: '2.4rem',
+                left: `calc(100% / 14)`, // 7 columns, so middle is 1/14
+                width: `calc(100% * 6 / 7)`
+              }}
+            />
 
             {/* Active Progress Line (calculated width based on streak) */}
             <div
-              className="absolute top-[2.4rem] left-0 h-[6px] bg-green-200 rounded-full -z-10 transition-all duration-500"
+              className="absolute h-[6px] bg-green-200 rounded-full z-0 transition-all duration-500"
               style={{
-                width: `${Math.min(((streak % 7 || 7) - 0.5) / 7 * 100, 100)}%`
+                top: '2.4rem',
+                left: `calc(100% / 14)`,
+                width: `calc(100% * ${Math.max(0, (streak % 7 || 7) - 1)} / 7)`
               }}
             />
 

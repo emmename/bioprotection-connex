@@ -417,3 +417,175 @@ export function useSpecialMissions() {
   return { missions, completedMissionIds, isLoading };
 }
 
+export function useMissionGroups() {
+  const { profile } = useAuth();
+  const [missionGroups, setMissionGroups] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!profile) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      // Fetch active mission groups
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('mission_groups')
+        .select(`
+          *,
+          missions (
+            id, title, description, mission_type, points_reward, coins_reward, sequence_order, requirements, start_date, end_date
+          )
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (groupsError) {
+        console.error('Error fetching mission groups:', groupsError);
+      }
+
+      // Fetch user's completed individual missions to determine group progress
+      const { data: completions } = await supabase
+        .from('mission_completions')
+        .select('mission_id')
+        .eq('profile_id', profile.id);
+
+      const completedMissionIds = completions?.map(c => c.mission_id) || [];
+
+      // Check content progress for survey missions
+      let allCompletedIds = [...completedMissionIds];
+      if (groupsData) {
+        const surveyContentIds: string[] = [];
+        groupsData.forEach(g => {
+          if (g.missions) {
+            g.missions.forEach((m: any) => {
+              if (m.mission_type === 'survey' && m.requirements?.content_id) {
+                surveyContentIds.push(m.requirements.content_id);
+              }
+            });
+          }
+        });
+
+        if (surveyContentIds.length > 0) {
+          const { data: contentComps } = await supabase
+            .from('content_progress')
+            .select('content_id')
+            .eq('profile_id', profile.id)
+            .eq('is_completed', true)
+            .in('content_id', surveyContentIds);
+
+          if (contentComps) {
+            const completedContentIds = contentComps.map(c => c.content_id);
+            groupsData.forEach(g => {
+              if (g.missions) {
+                g.missions.forEach((m: any) => {
+                  const cId = m.requirements?.content_id;
+                  if (cId && completedContentIds.includes(cId)) {
+                    if (!allCompletedIds.includes(m.id)) {
+                      allCompletedIds.push(m.id);
+                    }
+                  }
+                });
+              }
+            });
+          }
+        }
+      }
+
+      // Fetch user's completed groups
+      const { data: userGroups } = await supabase
+        .from('user_mission_groups')
+        .select('group_id, is_completed')
+        .eq('profile_id', profile.id);
+
+      const completedGroupIds = userGroups?.filter(ug => ug.is_completed).map(ug => ug.group_id) || [];
+
+      if (groupsData) {
+        // Filter groups: the user must be eligible for EVERY mission within the group
+        const eligibleGroups = groupsData.filter(group => {
+          if (!group.missions || group.missions.length === 0) return false;
+
+          return group.missions.every((mission: any) => {
+            const targeting = mission.requirements?.targeting;
+
+            // Check Member Type targeting
+            if (targeting?.member_types && targeting.member_types.length > 0) {
+              if (!profile.member_type || !targeting.member_types.includes(profile.member_type)) {
+                return false;
+              }
+            }
+
+            // Check Tier targeting
+            if (targeting?.tiers && targeting.tiers.length > 0) {
+              if (!profile.tier || !targeting.tiers.includes(profile.tier)) {
+                return false;
+              }
+            }
+
+            return true;
+          });
+        });
+
+        // Sort missions inside groups by sequence order
+        const processedGroups = eligibleGroups.map(group => {
+          const sortedMissions = (group.missions || []).sort((a: any, b: any) => (a.sequence_order || 0) - (b.sequence_order || 0));
+
+          let currentStep = 1; // 1-indexed step that user is currently on
+          for (let i = 0; i < sortedMissions.length; i++) {
+            if (allCompletedIds.includes(sortedMissions[i].id)) {
+              currentStep = i + 2;
+            } else {
+              break;
+            }
+          }
+
+          // Apply targeting and reward overrides for each mission
+          const processedMissions = sortedMissions.map((mission: any, index: number) => {
+            let points = mission.points_reward;
+
+            if (mission.requirements?.reward_overrides) {
+              const memberTypeOverride = mission.requirements.reward_overrides.find(
+                (r: any) => r.type === 'member_type' && r.value === profile.member_type
+              );
+              if (memberTypeOverride) {
+                points = memberTypeOverride.points;
+              } else {
+                const tierOverride = mission.requirements.reward_overrides.find(
+                  (r: any) => r.type === 'tier' && r.value === profile.tier
+                );
+                if (tierOverride) points = tierOverride.points;
+              }
+            }
+
+            return {
+              ...mission,
+              display_points: points,
+              is_completed: allCompletedIds.includes(mission.id),
+              is_locked: currentStep <= index // Lock if it's beyond the current step
+            };
+          });
+
+          return {
+            ...group,
+            missions: processedMissions,
+            is_completed: completedGroupIds.includes(group.id) || currentStep > sortedMissions.length,
+            current_step: currentStep,
+            total_steps: sortedMissions.length
+          };
+        });
+
+        setMissionGroups(processedGroups);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [profile]);
+
+  return { missionGroups, isLoading };
+}
+

@@ -25,6 +25,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Events from "./pages/Events";
 import EventTicket from "./pages/EventTicket";
 import EventScanner from "./pages/EventScanner";
+import MissionGroupDetail from "./pages/MissionGroupDetail";
 import AdminLayout from "./components/admin/AdminLayout";
 import History from "./pages/History";
 import AdminAuth from "./pages/admin/AdminAuth";
@@ -37,6 +38,7 @@ import AdminRewards from "./pages/admin/AdminRewards";
 import AdminMemberDetail from "./pages/admin/AdminMemberDetail";
 import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import AdminMissions from "./pages/admin/AdminMissions";
+import AdminMissionGroups from "./pages/admin/AdminMissionGroups";
 import AdminLibrary from "./pages/admin/AdminLibrary";
 import AdminGames from "./pages/admin/AdminGames";
 import AdminRoles from "./pages/admin/AdminRoles";
@@ -76,6 +78,7 @@ const App = () => (
             <Route path="/content" element={<ProtectedRoute><AppLayout><Content /></AppLayout></ProtectedRoute>} />
             <Route path="/content/:id" element={<ProtectedRoute><AppLayout><ContentDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/missions" element={<ProtectedRoute><AppLayout><Missions /></AppLayout></ProtectedRoute>} />
+            <Route path="/mission-groups/:id" element={<ProtectedRoute><AppLayout><MissionGroupDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
             <Route path="/coming-soon" element={<ProtectedRoute><AppLayout><ComingSoon /></AppLayout></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><AppLayout><Library /></AppLayout></ProtectedRoute>} />
@@ -94,6 +97,7 @@ const App = () => (
             <Route path="/admin/rewards" element={<AdminLayout><AdminRewards /></AdminLayout>} />
             <Route path="/admin/redemptions" element={<AdminLayout><AdminRedemptions /></AdminLayout>} />
             <Route path="/admin/missions" element={<AdminLayout><AdminMissions /></AdminLayout>} />
+            <Route path="/admin/mission-groups" element={<AdminLayout><AdminMissionGroups /></AdminLayout>} />
             <Route path="/admin/library" element={<AdminLayout><AdminLibrary /></AdminLayout>} />
             <Route path="/admin/games" element={<AdminLayout><AdminGames /></AdminLayout>} />
             <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />

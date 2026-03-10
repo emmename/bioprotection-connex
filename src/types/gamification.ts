@@ -45,6 +45,8 @@ export interface Mission {
     points_reward: number;
     coins_reward: number;
     mission_type: string;
+    group_id?: string | null;
+    sequence_order?: number | null;
     requirements?: {
         targeting?: {
             member_types?: string[];

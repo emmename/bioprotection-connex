@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDailyCheckin, useDailyMissions, useSpecialMissions } from '@/hooks/useGamification';
+import { useDailyCheckin, useDailyMissions, useSpecialMissions, useMissionGroups } from '@/hooks/useGamification';
 import { DashboardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { DailyMissionsSection } from '@/components/missions/DailyMissionsSection';
 import { SpecialMissionsSection } from '@/components/missions/SpecialMissionsSection';
@@ -65,7 +65,7 @@ export default function Missions() {
         />
 
         <SpecialMissionsSection
-          missions={specialMissions}
+          missions={specialMissions.filter(m => !m.group_id)}
           completedMissionIds={completedMissionIds}
           isLoading={specialMissionsLoading}
         />
