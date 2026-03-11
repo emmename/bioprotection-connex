@@ -111,7 +111,7 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                 : isExpired
                   ? 'bg-muted/30 border-border opacity-60'
                   : 'bg-card border-border hover:border-primary/30'
-                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || mission.mission_type === 'special' || mission.mission_type === 'location_visit' || (mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
+                } ${(!isCompleted && !isExpired && (mission.mission_type === 'qr_scan' || mission.mission_type === 'survey' || mission.mission_type === 'special' || mission.mission_type === 'location_visit' || (mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (!isCompleted && !isExpired) {
                   if (mission.mission_type === 'qr_scan') {

@@ -2,20 +2,35 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyCheckin, useDailyMissions, useSpecialMissions } from '@/hooks/useGamification';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { DashboardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { DailyMissionsSection } from '@/components/missions/DailyMissionsSection';
 import { SpecialMissionsSection } from '@/components/missions/SpecialMissionsSection';
 import { MissionGroupsCard } from '@/components/dashboard/MissionGroupsCard';
+import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function Missions() {
   const navigate = useNavigate();
-  const { user, profile, isLoading: authLoading } = useAuth();
-  const { todayCheckin, checkin, isLoading: checkinLoading } = useDailyCheckin();
-  const { missionStatus, isLoading: dailyMissionsLoading } = useDailyMissions();
-  const { missions: specialMissions, completedMissionIds, isLoading: specialMissionsLoading } = useSpecialMissions();
+  const { user, profile, isLoading: authLoading, refreshProfile } = useAuth();
+  const { todayCheckin, checkin, isLoading: checkinLoading, refetch: refetchCheckin } = useDailyCheckin();
+  const { missionStatus, isLoading: dailyMissionsLoading, refetch: refetchDaily } = useDailyMissions();
+  const { missions: specialMissions, completedMissionIds, isLoading: specialMissionsLoading, refetch: refetchSpecial } = useSpecialMissions();
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      refreshProfile(),
+      refetchCheckin(),
+      refetchDaily(),
+      refetchSpecial()
+    ]);
+  }, [refreshProfile, refetchCheckin, refetchDaily, refetchSpecial]);
+
+  const { containerRef, isRefreshing, pullDistance } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
 
   if (authLoading || dailyMissionsLoading || specialMissionsLoading) {
     return <DashboardSkeleton />;
@@ -33,7 +48,14 @@ export default function Missions() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div 
+      ref={containerRef}
+      className="min-h-screen bg-background overflow-auto pb-24"
+    >
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+      />
       <PageHeader title="ภารกิจทั้งหมด" onBack={() => navigate('/dashboard')} />
 
       {/* Daily Progress Summary */}
