@@ -111,10 +111,10 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                 : isExpired
                   ? 'bg-muted/30 border-border opacity-60'
                   : 'bg-card border-border hover:border-primary/30'
-                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
+                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || mission.mission_type === 'special' || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (!isCompleted && !isExpired) {
-                  if (mission.mission_type === 'survey' && mission.requirements?.content_id) {
+                  if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
                     navigate(`/content/${mission.requirements.content_id}`);
                   } else if (mission.events && mission.events.length > 0) {
                     navigate(`/events`);

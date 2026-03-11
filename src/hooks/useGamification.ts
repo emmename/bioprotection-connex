@@ -381,7 +381,7 @@ export function useSpecialMissions() {
 
       // Check survey missions progress
       if (missionsData) {
-        const surveyMissions = (missionsData as Mission[]).filter(m => m.mission_type === 'survey');
+        const surveyMissions = (missionsData as Mission[]).filter(m => m.mission_type === 'survey' || m.mission_type === 'special');
         if (surveyMissions.length > 0) {
           const contentIds = surveyMissions.map(m => (m.requirements as Record<string, any>)?.content_id).filter(Boolean) as string[];
           if (contentIds.length > 0) {
@@ -462,7 +462,7 @@ export function useMissionGroups() {
         groupsData.forEach(g => {
           if (g.missions) {
             g.missions.forEach((m: any) => {
-              if (m.mission_type === 'survey' && m.requirements?.content_id) {
+              if ((m.mission_type === 'survey' || m.mission_type === 'special') && m.requirements?.content_id) {
                 surveyContentIds.push(m.requirements.content_id);
               }
             });

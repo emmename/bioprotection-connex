@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ChevronRight, ChevronLeft, Send, Upload, X, Loader2, Camera, Image as ImageIcon, Star } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Send, Upload, X, Loader2, Camera, Image as ImageIcon, Star, CalendarDays } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -27,6 +27,7 @@ interface SurveyQuestion {
 interface SurveyPlayerProps {
   questions: SurveyQuestion[];
   onComplete: (responses: Record<string, unknown>) => void;
+  isLongForm?: boolean;
 }
 
 interface QuestionOptions {
@@ -47,7 +48,7 @@ interface QuestionOptions {
   additionalTextPlaceholder?: string[];
 }
 
-export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProps) {
+export default function SurveyPlayer({ questions, onComplete, isLongForm = false }: SurveyPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, unknown>>({});
   const [isCompleted, setIsCompleted] = useState(false);
@@ -59,7 +60,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
   const sortedQuestions = [...questions].sort((a, b) => a.order_index - b.order_index);
   const currentQuestion = sortedQuestions[currentIndex];
   const totalQuestions = sortedQuestions.length;
-  const progress = ((currentIndex + 1) / totalQuestions) * 100;
+  const progress = isLongForm ? 100 : ((currentIndex + 1) / totalQuestions) * 100;
 
   const getOptions = (options: Json): QuestionOptions => {
     // Handle the legacy scenario where options was stored as an array directly
@@ -75,33 +76,42 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
   const currentResponse = responses[currentQuestion?.id];
   const options = currentQuestion ? getOptions(currentQuestion.options) : {};
 
-  const isCurrentValid = () => {
-    if (!currentQuestion.is_required) return true;
-    const response = responses[currentQuestion.id];
+  const isQuestionValid = (q: SurveyQuestion) => {
+    if (!q.is_required) return true;
+    const response = responses[q.id];
     if (response === undefined || response === null || response === '') return false;
     if (Array.isArray(response) && response.length === 0) return false;
-    if (currentQuestion.question_type === 'matrix' && typeof response === 'object') {
-      const rows = options.rows || [];
-      return rows.every((row) => response[row] !== undefined);
+    
+    const opts = getOptions(q.options);
+    if (q.question_type === 'matrix' && typeof response === 'object') {
+      const rows = opts.rows || [];
+      return rows.every((row) => (response as Record<string, number>)[row] !== undefined);
     }
     
     // Validate additional text if required
-    if (currentQuestion.question_type === 'single' || currentQuestion.question_type === 'single_choice' || currentQuestion.question_type === 'screening') {
-      if (options.allowAdditionalText?.[response as number]) {
-         const text = responses[`${currentQuestion.id}_text_${response}`];
+    if (q.question_type === 'single' || q.question_type === 'single_choice' || q.question_type === 'screening') {
+      if (opts.allowAdditionalText?.[response as number]) {
+         const text = responses[`${q.id}_text_${response}`];
          if (!text || (text as string).trim() === '') return false;
       }
     }
-    if (currentQuestion.question_type === 'multiple' || currentQuestion.question_type === 'multiple_choice') {
+    if (q.question_type === 'multiple' || q.question_type === 'multiple_choice') {
       for (const idx of (response as number[])) {
-        if (options.allowAdditionalText?.[idx]) {
-           const text = responses[`${currentQuestion.id}_text_${idx}`];
+        if (opts.allowAdditionalText?.[idx]) {
+           const text = responses[`${q.id}_text_${idx}`];
            if (!text || (text as string).trim() === '') return false;
         }
       }
     }
 
     return true;
+  };
+
+  const isCurrentValid = () => {
+    if (isLongForm) {
+      return sortedQuestions.every(isQuestionValid);
+    }
+    return isQuestionValid(currentQuestion);
   };
 
   const handleNext = () => {
@@ -119,44 +129,47 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
     }
   };
 
-  const updateResponse = (value: unknown) => {
+  const updateResponse = (questionId: string, value: unknown) => {
     setResponses((prev) => ({
       ...prev,
-      [currentQuestion.id]: value,
+      [questionId]: value,
     }));
   };
 
-  const renderQuestion = () => {
-    switch (currentQuestion.question_type) {
+  const renderQuestion = (q: SurveyQuestion) => {
+    const qResponse = responses[q.id];
+    const qOptions = getOptions(q.options);
+
+    switch (q.question_type) {
       case 'single':
       case 'single_choice':
       case 'screening':
         return (
           <RadioGroup
-            value={currentResponse?.toString()}
-            onValueChange={(val) => updateResponse(parseInt(val))}
+            value={qResponse?.toString()}
+            onValueChange={(val) => updateResponse(q.id, parseInt(val))}
             className="space-y-3"
           >
-            {(options.choices || []).map((choice, index) => (
+            {(qOptions.choices || []).map((choice, index) => (
               <div key={index} className="space-y-2">
                 <div
                   className={cn(
                     'flex items-center space-x-3 rounded-lg border p-4 transition-colors',
-                    currentResponse === index && 'border-primary bg-primary/5',
-                    currentResponse !== index && 'hover:bg-muted/50 cursor-pointer'
+                    qResponse === index && 'border-primary bg-primary/5',
+                    qResponse !== index && 'hover:bg-muted/50 cursor-pointer'
                   )}
                 >
-                  <RadioGroupItem value={index.toString()} id={`choice-${index}`} />
-                  <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
+                  <RadioGroupItem value={index.toString()} id={`choice-${q.id}-${index}`} />
+                  <Label htmlFor={`choice-${q.id}-${index}`} className="flex-1 cursor-pointer">
                     {choice}
                   </Label>
                 </div>
-                {options.allowAdditionalText?.[index] && currentResponse === index && (
+                {qOptions.allowAdditionalText?.[index] && qResponse === index && (
                   <div className="pl-8 pr-4 pb-2 animate-in fade-in slide-in-from-top-1">
                     <Input
-                      placeholder={options.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
-                      value={(responses[`${currentQuestion.id}_text_${index}`] as string) || ''}
-                      onChange={(e) => setResponses(prev => ({ ...prev, [`${currentQuestion.id}_text_${index}`]: e.target.value }))}
+                      placeholder={qOptions.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
+                      value={(responses[`${q.id}_text_${index}`] as string) || ''}
+                      onChange={(e) => setResponses(prev => ({ ...prev, [`${q.id}_text_${index}`]: e.target.value }))}
                     />
                   </div>
                 )}
@@ -167,10 +180,10 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
 
       case 'multiple':
       case 'multiple_choice': {
-        const multiResponse = (currentResponse as number[]) || [];
+        const multiResponse = (qResponse as number[]) || [];
         return (
           <div className="space-y-3">
-            {(options.choices || []).map((choice, index) => (
+            {(qOptions.choices || []).map((choice, index) => (
               <div key={index} className="space-y-2">
                 <div
                   className={cn(
@@ -182,24 +195,24 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
                     const newResponse = multiResponse.includes(index)
                       ? multiResponse.filter((i) => i !== index)
                       : [...multiResponse, index];
-                    updateResponse(newResponse);
+                    updateResponse(q.id, newResponse);
                   }}
                 >
                   <Checkbox
                     checked={multiResponse.includes(index)}
-                    id={`choice-${index}`}
+                    id={`choice-${q.id}-${index}`}
                   />
-                  <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
+                  <Label htmlFor={`choice-${q.id}-${index}`} className="flex-1 cursor-pointer">
                     {choice}
                   </Label>
                 </div>
-                {options.allowAdditionalText?.[index] && multiResponse.includes(index) && (
+                {qOptions.allowAdditionalText?.[index] && multiResponse.includes(index) && (
                   <div className="pl-8 pr-4 pb-2 animate-in fade-in slide-in-from-top-1">
                     <Input
-                      placeholder={options.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
-                      value={(responses[`${currentQuestion.id}_text_${index}`] as string) || ''}
+                      placeholder={qOptions.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
+                      value={(responses[`${q.id}_text_${index}`] as string) || ''}
                       onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => setResponses(prev => ({ ...prev, [`${currentQuestion.id}_text_${index}`]: e.target.value }))}
+                      onChange={(e) => setResponses(prev => ({ ...prev, [`${q.id}_text_${index}`]: e.target.value }))}
                     />
                   </div>
                 )}
@@ -210,15 +223,15 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       }
 
       case 'rating': {
-        const maxRating = options.max || 5;
-        const currentRating = (currentResponse as number) || 0;
+        const maxRating = qOptions.max || 5;
+        const currentRating = (qResponse as number) || 0;
         return (
           <div className="flex justify-center gap-2 py-4">
             {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => (
               <button
                 key={rating}
                 type="button"
-                onClick={() => updateResponse(rating)}
+                onClick={() => updateResponse(q.id, rating)}
                 className="focus:outline-none transition-transform hover:scale-110"
               >
                 <Star
@@ -238,20 +251,20 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       case 'text':
         return (
           <Textarea
-            value={(currentResponse as string) || ''}
-            onChange={(e) => updateResponse(e.target.value)}
+            value={(qResponse as string) || ''}
+            onChange={(e) => updateResponse(q.id, e.target.value)}
             placeholder="พิมพ์คำตอบของคุณ..."
             className="min-h-[120px]"
           />
         );
 
       case 'likert': {
-        const labels = options.labels || ['ไม่เห็นด้วยอย่างยิ่ง', 'ไม่เห็นด้วย', 'เฉยๆ', 'เห็นด้วย', 'เห็นด้วยอย่างยิ่ง'];
+        const labels = qOptions.labels || ['ไม่เห็นด้วยอย่างยิ่ง', 'ไม่เห็นด้วย', 'เฉยๆ', 'เห็นด้วย', 'เห็นด้วยอย่างยิ่ง'];
         return (
           <div className="pt-2 pb-2">
             <RadioGroup
-              value={currentResponse?.toString()}
-              onValueChange={(val) => updateResponse(parseInt(val))}
+              value={qResponse?.toString()}
+              onValueChange={(val) => updateResponse(q.id, parseInt(val))}
               className="flex justify-between"
             >
               {labels.map((label, index) => (
@@ -261,11 +274,11 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
                   </span>
                   <RadioGroupItem
                     value={index.toString()}
-                    id={`likert-${index}`}
+                    id={`likert-${q.id}-${index}`}
                     className="h-6 w-6"
                   />
                   <Label 
-                    htmlFor={`likert-${index}`} 
+                    htmlFor={`likert-${q.id}-${index}`} 
                     className="text-sm font-medium cursor-pointer"
                   >
                     {index + 1}
@@ -278,8 +291,8 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       }
 
       case 'ranking': {
-        const items = options.items || [];
-        const ranking = (currentResponse as string[]) || [];
+        const items = qOptions.items || [];
+        const ranking = (qResponse as string[]) || [];
         const unrankedItems = items.filter((item) => !ranking.includes(item));
 
         return (
@@ -300,7 +313,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => updateResponse(ranking.filter((i) => i !== item))}
+                        onClick={() => updateResponse(q.id, ranking.filter((i) => i !== item))}
                       >
                         ✕
                       </Button>
@@ -321,7 +334,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
                       key={item}
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => updateResponse([...ranking, item])}
+                      onClick={() => updateResponse(q.id, [...ranking, item])}
                     >
                       {item}
                     </Button>
@@ -334,9 +347,9 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       }
 
       case 'matrix': {
-        const rows = options.rows || [];
-        const columns = options.columns || [];
-        const matrixResponse = (currentResponse as Record<string, number>) || {};
+        const rows = qOptions.rows || [];
+        const columns = qOptions.columns || [];
+        const matrixResponse = (qResponse as Record<string, number>) || {};
 
         return (
           <div className="overflow-x-auto">
@@ -360,12 +373,12 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
                         <RadioGroup
                           value={matrixResponse[row]?.toString()}
                           onValueChange={(val) =>
-                            updateResponse({ ...matrixResponse, [row]: parseInt(val) })
+                            updateResponse(q.id, { ...matrixResponse, [row]: parseInt(val) })
                           }
                         >
                           <RadioGroupItem
                             value={colIndex.toString()}
-                            id={`matrix-${rowIndex}-${colIndex}`}
+                            id={`matrix-${q.id}-${rowIndex}-${colIndex}`}
                           />
                         </RadioGroup>
                       </td>
@@ -379,10 +392,10 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       }
 
       case 'slider': {
-        const min = options.min || 0;
-        const max = options.max || 100;
-        const step = options.step || 1;
-        const sliderValue = (currentResponse as number) ?? Math.floor((min + max) / 2);
+        const min = qOptions.min || 0;
+        const max = qOptions.max || 100;
+        const step = qOptions.step || 1;
+        const sliderValue = (qResponse as number) ?? Math.floor((min + max) / 2);
 
         return (
           <div className="space-y-6 py-4">
@@ -391,24 +404,24 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
             </div>
             <Slider
               value={[sliderValue]}
-              onValueChange={(val) => updateResponse(val[0])}
+              onValueChange={(val) => updateResponse(q.id, val[0])}
               min={min}
               max={max}
               step={step}
               className="w-full"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{options.minLabel || min}</span>
-              <span>{options.maxLabel || max}</span>
+              <span>{qOptions.minLabel || min}</span>
+              <span>{qOptions.maxLabel || max}</span>
             </div>
           </div>
         );
       }
 
       case 'image_upload': {
-        const allowMultiple = options.allowMultipleImages || false;
-        const maxImages = options.maxImages || 5;
-        const uploadedImages = (currentResponse as string[]) || [];
+        const allowMultiple = qOptions.allowMultipleImages || false;
+        const maxImages = qOptions.maxImages || 5;
+        const uploadedImages = (qResponse as string[]) || [];
 
         const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           const files = Array.from(e.target.files || []);
@@ -454,7 +467,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
             }
 
             if (newUrls.length > 0) {
-              updateResponse(allowMultiple ? [...uploadedImages, ...newUrls] : newUrls);
+              updateResponse(q.id, allowMultiple ? [...uploadedImages, ...newUrls] : newUrls);
             }
           } catch (error) {
             toast({
@@ -469,7 +482,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
         };
 
         const removeImage = (indexToRemove: number) => {
-          updateResponse(uploadedImages.filter((_, idx) => idx !== indexToRemove));
+          updateResponse(q.id, uploadedImages.filter((_, idx) => idx !== indexToRemove));
         };
 
         return (
@@ -544,11 +557,27 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
         );
       }
 
+      case 'date':
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">เลือกวันที่</span>
+            </div>
+            <Input
+              type="date"
+              value={(qResponse as string) || ''}
+              onChange={(e) => updateResponse(q.id, e.target.value)}
+              className="w-full max-w-xs"
+            />
+          </div>
+        );
+
       default:
         return (
           <Input
-            value={(currentResponse as string) || ''}
-            onChange={(e) => updateResponse(e.target.value)}
+            value={(qResponse as string) || ''}
+            onChange={(e) => updateResponse(q.id, e.target.value)}
             placeholder="พิมพ์คำตอบของคุณ..."
           />
         );
@@ -575,6 +604,47 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
     return null;
   }
 
+  if (isLongForm) {
+    return (
+      <div className="space-y-6">
+        {sortedQuestions.map((q, index) => (
+          <Card key={q.id}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  ข้อ {index + 1} / {totalQuestions}
+                </span>
+                {q.is_required && (
+                  <span className="text-xs text-destructive">* จำเป็น</span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <CardTitle className="text-lg leading-relaxed">
+                {q.question}
+                {q.is_required && <span className="text-destructive ml-1">*</span>}
+              </CardTitle>
+
+              {renderQuestion(q)}
+            </CardContent>
+          </Card>
+        ))}
+        
+        <div className="flex justify-end pt-4">
+          <Button
+            onClick={() => onComplete(responses)}
+            disabled={!isCurrentValid() || isUploading}
+            className="w-full sm:w-auto gradient-primary text-white"
+            size="lg"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            ส่งคำตอบฉบับสมบูรณ์
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -594,7 +664,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
           {currentQuestion.is_required && <span className="text-destructive ml-1">*</span>}
         </CardTitle>
 
-        {renderQuestion()}
+        {renderQuestion(currentQuestion)}
 
         <div className="flex gap-3">
           {currentIndex > 0 && (

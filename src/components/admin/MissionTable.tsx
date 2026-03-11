@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, Trash2, Target, Users } from 'lucide-react';
+import { Pencil, Trash2, Target, Users, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { MEMBER_TYPE_OPTIONS as MEMBER_TYPES, MEMBER_SUB_TYPES } from '@/constants/memberTypes';
@@ -55,6 +55,7 @@ interface MissionTableProps {
   onDelete: (id: string) => void;
   onToggleActive: (mission: Mission) => void;
   onViewCompletions: (mission: Mission) => void;
+  onDuplicate: (mission: Mission) => void;
 }
 
 export function MissionTable({
@@ -65,6 +66,7 @@ export function MissionTable({
   onDelete,
   onToggleActive,
   onViewCompletions,
+  onDuplicate,
 }: MissionTableProps) {
   return (
     <Card>
@@ -86,6 +88,7 @@ export function MissionTable({
                 <TableRow>
                   <TableHead className="min-w-[180px]">ชื่อภารกิจ</TableHead>
                   <TableHead>ประเภท</TableHead>
+                  <TableHead>กลุ่มเป้าหมาย</TableHead>
                   <TableHead>รางวัล</TableHead>
                   <TableHead>ระยะเวลา</TableHead>
                   <TableHead className="text-center">ทำสำเร็จ</TableHead>
@@ -102,9 +105,18 @@ export function MissionTable({
                         {mission.description && (
                           <p className="text-xs text-muted-foreground line-clamp-1">{mission.description}</p>
                         )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={MISSION_TYPE_BADGE_CLASSES[mission.mission_type] || ''}>
+                        {MISSION_TYPE_LABELS[mission.mission_type] || mission.mission_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 max-w-[200px]">
                         {/* Member type targeting badges */}
-                        {mission.requirements?.targeting?.member_types && mission.requirements.targeting.member_types.length > 0 && (
-                          <div className="flex flex-col gap-1.5 mt-2 w-full">
+                        {mission.requirements?.targeting?.member_types && mission.requirements.targeting.member_types.length > 0 ? (
+                          <div className="flex flex-col gap-1.5 w-full">
                             {mission.requirements.targeting.member_types.map((type: string) => {
                               const subTypes = (mission.requirements as Record<string, unknown>)?.targeting
                                 ? ((mission.requirements as Record<string, unknown>).targeting as Record<string, unknown>)?.sub_types
@@ -132,10 +144,12 @@ export function MissionTable({
                               );
                             })}
                           </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">ทุกประเภท</span>
                         )}
                         {/* Tier targeting badges */}
-                        {mission.requirements?.targeting?.tiers && mission.requirements.targeting.tiers.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
+                        {mission.requirements?.targeting?.tiers && mission.requirements.targeting.tiers.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
                             {mission.requirements.targeting.tiers.map((tier: string) => {
                               const matchedTier = tierSettings?.find(t => t.tier === tier);
                               const displayName = matchedTier?.display_name || tier;
@@ -145,7 +159,7 @@ export function MissionTable({
                               return (
                                 <Badge
                                   key={tier}
-                                  className={`text-[9px] px-1 py-0 h-4 capitalize border-0 ${badgeClass}`}
+                                  className={`text-[10px] px-1 h-fit border-0 capitalize ${badgeClass}`}
                                   style={customColor ? { backgroundColor: customColor, color: '#fff' } : undefined}
                                 >
                                   {displayName}
@@ -153,13 +167,10 @@ export function MissionTable({
                               );
                             })}
                           </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">ทุกระดับ</span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={MISSION_TYPE_BADGE_CLASSES[mission.mission_type] || ''}>
-                        {MISSION_TYPE_LABELS[mission.mission_type] || mission.mission_type}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -203,10 +214,13 @@ export function MissionTable({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(mission)}>
+                        <Button variant="ghost" size="icon" title="แก้ไข" onClick={() => onEdit(mission)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(mission.id)}>
+                        <Button variant="ghost" size="icon" title="คัดลอกภารกิจ" onClick={() => onDuplicate(mission)}>
+                          <Copy className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" title="ลบ" onClick={() => onDelete(mission.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

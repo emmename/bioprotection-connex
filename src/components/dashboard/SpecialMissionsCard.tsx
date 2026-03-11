@@ -74,13 +74,13 @@ export function SpecialMissionsCard() {
 
                         // Determine action based on mission type
                         const handleAction = () => {
-                            if (mission.mission_type === 'survey') {
+                            if (mission.mission_type === 'survey' || mission.mission_type === 'special') {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const req = mission.requirements as Record<string, any>;
                                 if (req && req.content_id) {
                                     navigate(`/content/${req.content_id}`);
                                     return;
-                                } else {
+                                } else if (mission.mission_type === 'survey') {
                                     console.error('Survey mission missing content_id in requirements', mission);
                                     window.alert('ไม่พบข้อมูลแบบสำรวจ กรุณาแจ้งผู้ดูแลระบบให้เข้าไปกดบันทึกภารกิจนี้ใหม่อีกครั้ง');
                                     return;

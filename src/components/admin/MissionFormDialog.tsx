@@ -174,7 +174,7 @@ export function MissionFormDialog({
           )}
 
           {/* Survey Editor */}
-          {formData.mission_type === 'survey' && (
+          {(formData.mission_type === 'survey' || formData.mission_type === 'special') && (
             <div className="space-y-4 border p-4 rounded-lg bg-secondary/10">
               <h3 className="font-semibold flex items-center gap-2"><ClipboardList className="w-4 h-4" /> คำถามแบบสำรวจ</h3>
               <SurveyEditor questions={surveyQuestions} onChange={onSurveyQuestionsChange} />

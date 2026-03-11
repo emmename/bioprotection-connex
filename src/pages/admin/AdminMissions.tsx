@@ -174,7 +174,7 @@ export default function AdminMissions() {
     }
 
     // Load survey questions if survey type
-    if (mission.mission_type === 'survey') {
+    if (mission.mission_type === 'survey' || mission.mission_type === 'special') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const contentId = (mission.requirements as Record<string, any>)?.content_id;
       if (contentId) {
@@ -253,7 +253,7 @@ export default function AdminMissions() {
     }
 
     // Validate survey questions
-    if (formData.mission_type === 'survey') {
+    if (formData.mission_type === 'survey' || formData.mission_type === 'special') {
       if (surveyQuestions.length === 0) {
         toast.error('กรุณาเพิ่มคำถามแบบสำรวจอย่างน้อย 1 ข้อ');
         return;
@@ -284,7 +284,7 @@ export default function AdminMissions() {
     try {
       // Handle survey content creation/update
       let surveyContentId: string | null = null;
-      if (formData.mission_type === 'survey') {
+      if (formData.mission_type === 'survey' || formData.mission_type === 'special') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const existingContentId = editingMission?.requirements ? (editingMission.requirements as Record<string, any>).content_id : null;
 
@@ -303,7 +303,8 @@ export default function AdminMissions() {
               sub_types: targetSubTypes,
               tiers: targetTiers
             },
-            is_mission_survey: true
+            is_mission_survey: true,
+            is_special_mission: formData.mission_type === 'special'
           }
         };
 
@@ -382,6 +383,7 @@ export default function AdminMissions() {
                 break;
               }
               case 'text':
+              case 'date':
               default:
                 optionsJson = null;
                 break;
@@ -445,7 +447,7 @@ export default function AdminMissions() {
     if (!confirm('ยืนยันการลบภารกิจนี้?')) return;
     try {
       const mission = missions.find(m => m.id === id);
-      if (mission?.mission_type === 'survey') {
+      if (mission?.mission_type === 'survey' || mission?.mission_type === 'special') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const contentId = (mission.requirements as Record<string, any>)?.content_id;
         if (contentId) {
@@ -468,7 +470,7 @@ export default function AdminMissions() {
     const newStatus = !mission.is_active;
     const { error } = await supabase.from('missions').update({ is_active: newStatus }).eq('id', mission.id);
 
-    if (!error && mission.mission_type === 'survey') {
+    if (!error && (mission.mission_type === 'survey' || mission.mission_type === 'special')) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const contentId = (mission.requirements as Record<string, any>)?.content_id;
       if (contentId) {
@@ -483,6 +485,93 @@ export default function AdminMissions() {
       toast.error('ไม่สามารถอัปเดตสถานะได้');
     } else {
       fetchMissions();
+    }
+  };
+
+  const handleDuplicate = async (mission: Mission) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const requirements = mission.requirements as Record<string, any> | null;
+      let newRequirements = requirements ? { ...requirements } : {};
+      delete newRequirements.content_id; // will be re-assigned if survey/special
+
+      // If survey or special, duplicate the content + survey questions
+      if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && requirements?.content_id) {
+        // Fetch original content
+        const { data: originalContent, error: contentFetchErr } = await supabase
+          .from('content')
+          .select('*')
+          .eq('id', requirements.content_id)
+          .single();
+
+        if (contentFetchErr) throw contentFetchErr;
+
+        // Create new content (inactive)
+        const { id: _omitId, created_at: _omitCreated, updated_at: _omitUpdated, ...contentFields } = originalContent;
+        const { data: newContent, error: contentInsertErr } = await supabase
+          .from('content')
+          .insert({
+            ...contentFields,
+            title: `(สำเนา) ${contentFields.title}`,
+            is_published: false,
+            published_at: null,
+          })
+          .select('id')
+          .single();
+
+        if (contentInsertErr) throw contentInsertErr;
+
+        // Fetch original survey questions
+        const { data: originalQuestions } = await supabase
+          .from('survey_questions')
+          .select('*')
+          .eq('content_id', requirements.content_id)
+          .order('order_index');
+
+        // Duplicate survey questions
+        if (originalQuestions && originalQuestions.length > 0) {
+          const newQuestions = originalQuestions.map(q => {
+            const { id: _qId, created_at: _qCreated, content_id: _qContentId, ...qFields } = q;
+            return {
+              ...qFields,
+              content_id: newContent.id,
+            };
+          });
+
+          const { error: qInsertErr } = await supabase
+            .from('survey_questions')
+            .insert(newQuestions);
+          if (qInsertErr) throw qInsertErr;
+        }
+
+        newRequirements.content_id = newContent.id;
+      }
+
+      // Create duplicated mission
+      const { error: missionErr } = await supabase
+        .from('missions')
+        .insert([{
+          title: `(สำเนา) ${mission.title}`,
+          description: mission.description,
+          mission_type: mission.mission_type,
+          points_reward: mission.points_reward,
+          coins_reward: mission.coins_reward,
+          is_active: false,
+          start_date: mission.start_date,
+          end_date: mission.end_date,
+          qr_code: mission.qr_code,
+          location: mission.location,
+          requirements: newRequirements,
+        }]);
+
+      if (missionErr) throw missionErr;
+
+      toast.success('คัดลอกภารกิจเรียบร้อย (สถานะ: ยังไม่เปิดใช้งาน)');
+      fetchMissions();
+    } catch (error) {
+      console.error('Error duplicating mission:', error);
+      const msg = error instanceof Error ? error.message : JSON.stringify(error);
+      toast.error(`ไม่สามารถคัดลอกภารกิจได้: ${msg}`);
     }
   };
 
@@ -545,6 +634,7 @@ export default function AdminMissions() {
         onDelete={handleDelete}
         onToggleActive={toggleActive}
         onViewCompletions={setCompletionsDialogMission}
+        onDuplicate={handleDuplicate}
       />
 
       {/* Completions Dialog */}

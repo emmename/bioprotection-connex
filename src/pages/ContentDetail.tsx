@@ -544,11 +544,14 @@ export default function ContentDetail() {
         )}
 
         {/* Survey Player */}
-        {content.content_type === 'survey' && surveyQuestions.length > 0 && !progress?.is_completed && (
-          <div className="mb-6">
-            <SurveyPlayer questions={surveyQuestions} onComplete={handleSurveyComplete} />
-          </div>
-        )}
+        {content.content_type === 'survey' && surveyQuestions.length > 0 && !progress?.is_completed && (() => {
+          const isSpecialMission = (content.requirements as Record<string, any>)?.is_special_mission === true;
+          return (
+            <div className="mb-6">
+              <SurveyPlayer questions={surveyQuestions} onComplete={handleSurveyComplete} isLongForm={isSpecialMission} />
+            </div>
+          );
+        })()}
 
         {/* Complete Status or Button */}
         <div className="sticky bottom-4">

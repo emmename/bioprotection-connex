@@ -154,7 +154,7 @@ export default function MissionGroupDetail() {
                                                 'bg-slate-50/50 border-slate-100 opacity-60'}`}
                                         onClick={() => {
                                             if (isMissionCurrent) {
-                                                if (mission.mission_type === 'survey' && mission.requirements?.content_id) {
+                                                if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
                                                     navigate(`/content/${mission.requirements.content_id}`);
                                                 } else if (mission.mission_type === 'location_visit' || mission.events?.length > 0) {
                                                     navigate(`/events`);

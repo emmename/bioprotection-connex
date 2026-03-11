@@ -43,7 +43,7 @@ export function MissionCompletionsDialog({ mission, open, onOpenChange }: Missio
   const fetchCompletions = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (mission.mission_type === 'survey' && mission.requirements?.content_id) {
+      if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
         const { data, error } = await supabase
           .from('content_progress')
           .select('id, profile_id, completed_at, points_earned, profile:profiles(first_name, last_name, member_id)')
