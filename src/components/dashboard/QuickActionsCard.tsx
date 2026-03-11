@@ -74,6 +74,7 @@ export function QuickActionsCard() {
             <Link
               key={action.label}
               to={action.href}
+              onClick={() => window.scrollTo(0, 0)}
               className="group flex flex-col items-center active:scale-95 transition-transform duration-200"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-2 group-hover:-translate-y-1 transition-transform duration-300 overflow-hidden rounded-2xl flex-shrink-0 drop-shadow-sm group-hover:drop-shadow-md">
