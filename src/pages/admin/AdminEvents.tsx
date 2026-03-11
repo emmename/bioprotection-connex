@@ -171,6 +171,24 @@ export default function AdminEvents() {
         }
     });
 
+    const toggleStatusMutation = useMutation({
+        mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+            const { error } = await supabase
+                .from('events')
+                .update({ is_active })
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            toast.success('อัปเดตสถานะการใช้งานสำเร็จ');
+            queryClient.invalidateQueries({ queryKey: ['events'] });
+        },
+        onError: (error) => {
+            toast.error('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
+            console.error(error);
+        }
+    });
+
     const handleOpenDialog = (event?: AdminEvent) => {
         if (event) {
             setEditingEvent(event);
@@ -266,17 +284,18 @@ export default function AdminEvents() {
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
                     ) : (
-                        <EventTable
-                            events={events}
-                            tiersData={tiersData}
-                            onView={(id) => navigate(`/admin/events/${id}`)}
-                            onEdit={handleOpenDialog}
-                            onDelete={(id, title) => {
-                                if (window.confirm(`คุณแน่ใจหรือไม่ที่จะลบกิจกรรม "${title}"? ข้อมูลการลงทะเบียนทั้งหมดที่ผูกกับกิจกรรมนี้อาจได้รับผลกระทบ`)) {
-                                    deleteEventMutation.mutate(id);
-                                }
-                            }}
-                        />
+                            <EventTable
+                                events={events}
+                                tiersData={tiersData}
+                                onView={(id) => navigate(`/admin/events/${id}`)}
+                                onEdit={handleOpenDialog}
+                                onDelete={(id, title) => {
+                                    if (window.confirm(`คุณแน่ใจหรือไม่ที่จะลบกิจกรรม "${title}"? ข้อมูลการลงทะเบียนทั้งหมดที่ผูกกับกิจกรรมนี้อาจได้รับผลกระทบ`)) {
+                                        deleteEventMutation.mutate(id);
+                                    }
+                                }}
+                                onToggleStatus={(id, is_active) => toggleStatusMutation.mutate({ id, is_active })}
+                            />
                     )}
                 </CardContent>
             </Card>

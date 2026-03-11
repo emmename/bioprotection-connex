@@ -4,6 +4,7 @@ import { MapPin, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { MEMBER_TYPE_OPTIONS as MEMBER_TYPES_OPTIONS, MEMBER_SUB_TYPES } from '@/constants/memberTypes';
 
 export interface EventReward {
@@ -38,9 +39,10 @@ interface EventTableProps {
     onView: (id: string) => void;
     onEdit: (event: AdminEvent) => void;
     onDelete: (id: string, title: string) => void;
+    onToggleStatus?: (id: string, is_active: boolean) => void;
 }
 
-export function EventTable({ events, tiersData, onView, onEdit, onDelete }: EventTableProps) {
+export function EventTable({ events, tiersData, onView, onEdit, onDelete, onToggleStatus }: EventTableProps) {
     if (events.length === 0) {
         return (
             <div className="text-center py-8 text-slate-500">
@@ -147,9 +149,12 @@ export function EventTable({ events, tiersData, onView, onEdit, onDelete }: Even
                             </div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant={event.is_active ? 'default' : 'secondary'}>
-                                {event.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
-                            </Badge>
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    checked={event.is_active}
+                                    onCheckedChange={(checked) => onToggleStatus && onToggleStatus(event.id, checked)}
+                                />
+                            </div>
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
