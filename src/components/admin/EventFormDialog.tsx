@@ -46,7 +46,7 @@ export function EventFormDialog({
     const handleToggleMemberType = (type: string) => {
         const isChecked = formData.allowed_member_types.includes(type);
         let newTypes = [];
-        let newSubTypes = { ...formData.allowed_sub_types };
+        const newSubTypes = { ...formData.allowed_sub_types };
         if (isChecked) {
             newTypes = formData.allowed_member_types.filter(t => t !== type);
             delete newSubTypes[type];

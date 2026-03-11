@@ -202,7 +202,7 @@ export default function AdminMissions() {
           setSurveyQuestions(data.map(q => {
             let parsedOpts: string[] = [];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let extraFields: any = {};
+            const extraFields: any = {};
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const opts = q.options as Record<string, any>;
             if (opts) {
@@ -331,7 +331,7 @@ export default function AdminMissions() {
         if (existingContentId) {
           const { error: contentError } = await supabase
             .from('content')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             .update(contentData)
             .eq('id', existingContentId);
           if (contentError) throw contentError;
@@ -341,7 +341,7 @@ export default function AdminMissions() {
         } else {
           const { data: newContent, error: contentError } = await supabase
             .from('content')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             .insert(contentData)
             .select('id')
             .single();
@@ -443,12 +443,12 @@ export default function AdminMissions() {
       };
 
       if (editingMission) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('missions').update(payload).eq('id', editingMission.id);
         if (error) throw error;
         toast.success('อัปเดตภารกิจเรียบร้อย');
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('missions').insert([payload]);
         if (error) throw error;
         toast.success('สร้างภารกิจเรียบร้อย');
@@ -512,7 +512,7 @@ export default function AdminMissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requirements = mission.requirements as Record<string, any> | null;
-      let newRequirements = requirements ? { ...requirements } : {};
+      const newRequirements = requirements ? { ...requirements } : {};
       delete newRequirements.content_id; // will be re-assigned if survey/special
 
       // If survey or special, duplicate the content + survey questions

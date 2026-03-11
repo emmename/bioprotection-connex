@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     for (const fileUrl of filesToDelete) {
       // Find the bucket name by splitting the URL
       // Example public URL: https://[project].supabase.co/storage/v1/object/public/library/my-image.jpg
-      const urlMatches = fileUrl.match(/\/storage\/v1\/object\/public\/([^\/]+)\/(.+)$/)
+      const urlMatches = fileUrl.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/)
       
       if (urlMatches && urlMatches.length === 3) {
         const bucketId = urlMatches[1]

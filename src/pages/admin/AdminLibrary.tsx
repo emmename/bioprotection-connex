@@ -75,7 +75,7 @@ export default function AdminLibrary() {
   useEffect(() => { fetchCategories(); fetchItems(); }, []);
 
   const fetchCategories = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error } = await supabase.from('library_categories')
       .select('*').order('sort_order', { ascending: true });
     if (error) { console.error('Error fetching categories:', error); toast.error('ไม่สามารถโหลดหมวดหมู่ได้'); }
@@ -84,7 +84,7 @@ export default function AdminLibrary() {
 
   const fetchItems = async () => {
     setIsLoading(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error } = await supabase.from('library_items')
       .select('*').order('sort_order', { ascending: true });
     if (error) { console.error('Error fetching items:', error); toast.error('ไม่สามารถโหลดเนื้อหาได้'); }
@@ -106,14 +106,14 @@ export default function AdminLibrary() {
     setIsSaving(true);
     try {
       if (editingCategory) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('library_categories')
           .update({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, is_active: categoryForm.is_active, updated_at: new Date().toISOString() })
           .eq('id', editingCategory.id);
         if (error) throw error;
         toast.success('อัปเดตหมวดหมู่เรียบร้อย');
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('library_categories')
           .insert({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, is_active: categoryForm.is_active, sort_order: categories.length });
         if (error) throw error;
@@ -129,7 +129,7 @@ export default function AdminLibrary() {
     const msg = itemCount > 0 ? `หมวดหมู่นี้มีเนื้อหา ${itemCount} รายการ การลบจะลบเนื้อหาทั้งหมดด้วย ยืนยันการลบ?` : 'ยืนยันการลบหมวดหมู่นี้?';
     if (!confirm(msg)) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_categories').delete().eq('id', id);
       if (error) throw error;
       toast.success('ลบหมวดหมู่เรียบร้อย'); fetchCategories(); fetchItems();
@@ -175,7 +175,7 @@ export default function AdminLibrary() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const notifyUsersOfNewLibraryItem = async (itemPayload: any) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: profiles, error: profileError } = await supabase.from('profiles').select('id, member_type, tier').eq('is_approved', true);
       if (profileError || !profiles) return;
       let targetProfiles = profiles;
@@ -209,13 +209,13 @@ export default function AdminLibrary() {
       };
 
       if (editingItem) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('library_items').update(payload).eq('id', editingItem.id);
         if (error) throw error;
         toast.success('อัปเดตเนื้อหาเรียบร้อย');
         if (payload.is_published && !editingItem.is_published) notifyUsersOfNewLibraryItem(payload);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error } = await supabase.from('library_items').insert({ ...payload, sort_order: items.length });
         if (error) throw error;
         toast.success('สร้างเนื้อหาเรียบร้อย');
@@ -229,7 +229,7 @@ export default function AdminLibrary() {
   const handleDeleteItem = async (id: string) => {
     if (!confirm('ยืนยันการลบเนื้อหานี้?')) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').delete().eq('id', id);
       if (error) throw error;
       toast.success('ลบเนื้อหาเรียบร้อย'); fetchItems();
@@ -239,7 +239,7 @@ export default function AdminLibrary() {
   const togglePublish = async (item: LibraryItem) => {
     try {
       const willPublish = !item.is_published;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').update({ is_published: willPublish }).eq('id', item.id);
       if (error) throw error;
       toast.success(item.is_published ? 'ยกเลิกการเผยแพร่แล้ว' : 'เผยแพร่แล้ว');
@@ -252,7 +252,7 @@ export default function AdminLibrary() {
   const handleBulkDelete = async () => {
     if (!confirm(`คุณต้องการลบเนื้อหาที่เลือก ${selectedIds.length} รายการหรือไม่?`)) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').delete().in('id', selectedIds);
       if (error) throw error;
       toast.success(`ลบ ${selectedIds.length} รายการสำเร็จ`); setSelectedIds([]); fetchItems();
@@ -261,7 +261,7 @@ export default function AdminLibrary() {
 
   const handleBulkPublish = async (publishStatus: boolean) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').update({ is_published: publishStatus }).in('id', selectedIds);
       if (error) throw error;
       toast.success(publishStatus ? `เผยแพร่ ${selectedIds.length} รายการสำเร็จ` : `ยกเลิกเผยแพร่ ${selectedIds.length} รายการสำเร็จ`);
@@ -272,7 +272,7 @@ export default function AdminLibrary() {
   const handleBulkEditTiers = async () => {
     if (selectedIds.length === 0) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').update({ target_tiers: bulkTiersValue.length > 0 ? bulkTiersValue : null }).in('id', selectedIds);
       if (error) throw error;
       toast.success(`อัปเดต Tier ${selectedIds.length} รายการสำเร็จ`); setIsBulkEditTiersOpen(false); setSelectedIds([]); fetchItems();
@@ -282,7 +282,7 @@ export default function AdminLibrary() {
   const handleBulkEditMemberTypes = async () => {
     if (selectedIds.length === 0) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('library_items').update({ target_member_types: bulkMemberTypesValue.length > 0 ? bulkMemberTypesValue : null }).in('id', selectedIds);
       if (error) throw error;
       toast.success(`อัปเดตประเภทสมาชิก ${selectedIds.length} รายการสำเร็จ`); setIsBulkEditMemberTypesOpen(false); setSelectedIds([]); fetchItems();

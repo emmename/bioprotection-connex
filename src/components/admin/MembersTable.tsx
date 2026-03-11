@@ -139,12 +139,13 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
           aValue = statusLabels[a.approval_status]?.label || a.approval_status;
           bValue = statusLabels[b.approval_status]?.label || b.approval_status;
           break;
-        case 'tier':
+        case 'tier': {
           const aTier = tierSettings?.find(t => t.tier === a.tier)?.display_name || a.tier;
           const bTier = tierSettings?.find(t => t.tier === b.tier)?.display_name || b.tier;
           aValue = aTier;
           bValue = bTier;
           break;
+        }
         case 'total_points':
           aValue = a.total_points;
           bValue = b.total_points;
@@ -250,9 +251,10 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
             {statusLabels[member.approval_status]?.label || member.approval_status}
           </Badge>
         );
-      case 'tier':
+      case 'tier': {
         const tierName = tierSettings?.find(t => t.tier === member.tier)?.display_name || member.tier;
         return <span className="capitalize">{tierName}</span>;
+      }
       case 'total_points':
         return member.total_points.toLocaleString();
       case 'total_coins':

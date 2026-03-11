@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle();
 
         if (retryResult.data) {
-          let retryProfile = retryResult.data;
+          const retryProfile = retryResult.data;
           let memberSubType = null;
           if (retryProfile.member_type === 'farm') {
             const { data } = await supabase.from('farm_details').select('position').eq('profile_id', retryProfile.id).maybeSingle();
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      let baseProfile = profileResult.data;
+      const baseProfile = profileResult.data;
       if (baseProfile) {
         let memberSubType = null;
         if (baseProfile.member_type === 'farm') {

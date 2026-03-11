@@ -454,7 +454,7 @@ export function useMissionGroups() {
     const completedMissionIds = completions?.map(c => c.mission_id) || [];
 
     // Check content progress for survey missions
-    let allCompletedIds = [...completedMissionIds];
+    const allCompletedIds = [...completedMissionIds];
     if (groupsData) {
       const surveyContentIds: string[] = [];
       groupsData.forEach(g => {

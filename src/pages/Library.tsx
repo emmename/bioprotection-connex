@@ -73,7 +73,7 @@ export default function Library() {
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { data: catData } = await supabase.from('library_categories')
             .select('*')
             .eq('is_active', true)
@@ -81,7 +81,7 @@ export default function Library() {
 
         if (catData) setCategories(catData);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { data: itemData } = await supabase.from('library_items')
             .select('*')
             .eq('is_published', true)

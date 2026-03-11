@@ -148,7 +148,7 @@ function InlineTiersEdit({ content, dynamicTiers, onQuickUpdate }: {
                       } else {
                         newTiers = currentTiers.filter(t => t !== tier.value);
                       }
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       onQuickUpdate(content.id, { target_tiers: newTiers.length > 0 ? newTiers : null });
                     }}
                   />

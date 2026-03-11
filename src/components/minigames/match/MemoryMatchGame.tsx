@@ -180,7 +180,7 @@ export const MemoryMatchGame = () => {
 
         const levelConfig = config.levels_config[levelIdx];
         const [cols, rows] = levelConfig.grid;
-        let totalCards = cols * rows;
+        const totalCards = cols * rows;
 
         // If odd number of cards, we need to hide one (math trick for 3x3)
         // Usually, memory match needs an even number. We just use the even floor.

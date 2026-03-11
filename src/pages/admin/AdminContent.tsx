@@ -264,7 +264,7 @@ export default function AdminContent() {
 
   const handleQuickUpdate = async (id: string, updates: Partial<Content>) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error } = await supabase.from('content').update({
         ...updates,
         requirements: updates.requirements as import('@/integrations/supabase/types').Json | undefined,
@@ -332,7 +332,7 @@ export default function AdminContent() {
         setSurveyQuestions(data.map(q => {
           let parsedOpts: string[] = [];
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let extraFields: any = {};
+          const extraFields: any = {};
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const opts = q.options as Record<string, any>;
           if (opts) {
