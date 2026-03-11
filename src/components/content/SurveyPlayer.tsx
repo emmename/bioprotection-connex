@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, ChevronLeft, Send } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronRight, ChevronLeft, Send, Upload, X, Loader2, Camera, Image as ImageIcon, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,6 +11,9 @@ import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Json } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SurveyQuestion {
   id: string;
@@ -38,12 +41,20 @@ interface QuestionOptions {
   rows?: string[];
   columns?: string[];
   screeningCorrectAnswer?: number;
+  allowMultipleImages?: boolean;
+  maxImages?: number;
+  allowAdditionalText?: boolean[];
+  additionalTextPlaceholder?: string[];
 }
 
 export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, unknown>>({});
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const sortedQuestions = [...questions].sort((a, b) => a.order_index - b.order_index);
   const currentQuestion = sortedQuestions[currentIndex];
@@ -73,6 +84,23 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
       const rows = options.rows || [];
       return rows.every((row) => response[row] !== undefined);
     }
+    
+    // Validate additional text if required
+    if (currentQuestion.question_type === 'single' || currentQuestion.question_type === 'single_choice' || currentQuestion.question_type === 'screening') {
+      if (options.allowAdditionalText?.[response as number]) {
+         const text = responses[`${currentQuestion.id}_text_${response}`];
+         if (!text || (text as string).trim() === '') return false;
+      }
+    }
+    if (currentQuestion.question_type === 'multiple' || currentQuestion.question_type === 'multiple_choice') {
+      for (const idx of (response as number[])) {
+        if (options.allowAdditionalText?.[idx]) {
+           const text = responses[`${currentQuestion.id}_text_${idx}`];
+           if (!text || (text as string).trim() === '') return false;
+        }
+      }
+    }
+
     return true;
   };
 
@@ -110,18 +138,28 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
             className="space-y-3"
           >
             {(options.choices || []).map((choice, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'flex items-center space-x-3 rounded-lg border p-4 transition-colors',
-                  currentResponse === index && 'border-primary bg-primary/5',
-                  currentResponse !== index && 'hover:bg-muted/50 cursor-pointer'
+              <div key={index} className="space-y-2">
+                <div
+                  className={cn(
+                    'flex items-center space-x-3 rounded-lg border p-4 transition-colors',
+                    currentResponse === index && 'border-primary bg-primary/5',
+                    currentResponse !== index && 'hover:bg-muted/50 cursor-pointer'
+                  )}
+                >
+                  <RadioGroupItem value={index.toString()} id={`choice-${index}`} />
+                  <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
+                    {choice}
+                  </Label>
+                </div>
+                {options.allowAdditionalText?.[index] && currentResponse === index && (
+                  <div className="pl-8 pr-4 pb-2 animate-in fade-in slide-in-from-top-1">
+                    <Input
+                      placeholder={options.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
+                      value={(responses[`${currentQuestion.id}_text_${index}`] as string) || ''}
+                      onChange={(e) => setResponses(prev => ({ ...prev, [`${currentQuestion.id}_text_${index}`]: e.target.value }))}
+                    />
+                  </div>
                 )}
-              >
-                <RadioGroupItem value={index.toString()} id={`choice-${index}`} />
-                <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
-                  {choice}
-                </Label>
               </div>
             ))}
           </RadioGroup>
@@ -133,27 +171,38 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
         return (
           <div className="space-y-3">
             {(options.choices || []).map((choice, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'flex items-center space-x-3 rounded-lg border p-4 transition-colors',
-                  multiResponse.includes(index) && 'border-primary bg-primary/5',
-                  !multiResponse.includes(index) && 'hover:bg-muted/50 cursor-pointer'
+              <div key={index} className="space-y-2">
+                <div
+                  className={cn(
+                    'flex items-center space-x-3 rounded-lg border p-4 transition-colors',
+                    multiResponse.includes(index) && 'border-primary bg-primary/5',
+                    !multiResponse.includes(index) && 'hover:bg-muted/50 cursor-pointer'
+                  )}
+                  onClick={() => {
+                    const newResponse = multiResponse.includes(index)
+                      ? multiResponse.filter((i) => i !== index)
+                      : [...multiResponse, index];
+                    updateResponse(newResponse);
+                  }}
+                >
+                  <Checkbox
+                    checked={multiResponse.includes(index)}
+                    id={`choice-${index}`}
+                  />
+                  <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
+                    {choice}
+                  </Label>
+                </div>
+                {options.allowAdditionalText?.[index] && multiResponse.includes(index) && (
+                  <div className="pl-8 pr-4 pb-2 animate-in fade-in slide-in-from-top-1">
+                    <Input
+                      placeholder={options.additionalTextPlaceholder?.[index] || "โปรดระบุรายละเอียดเพิ่มเติม..."}
+                      value={(responses[`${currentQuestion.id}_text_${index}`] as string) || ''}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setResponses(prev => ({ ...prev, [`${currentQuestion.id}_text_${index}`]: e.target.value }))}
+                    />
+                  </div>
                 )}
-                onClick={() => {
-                  const newResponse = multiResponse.includes(index)
-                    ? multiResponse.filter((i) => i !== index)
-                    : [...multiResponse, index];
-                  updateResponse(newResponse);
-                }}
-              >
-                <Checkbox
-                  checked={multiResponse.includes(index)}
-                  id={`choice-${index}`}
-                />
-                <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
-                  {choice}
-                </Label>
               </div>
             ))}
           </div>
@@ -162,21 +211,25 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
 
       case 'rating': {
         const maxRating = options.max || 5;
+        const currentRating = (currentResponse as number) || 0;
         return (
           <div className="flex justify-center gap-2 py-4">
             {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => (
-              <Button
+              <button
                 key={rating}
-                variant={currentResponse === rating ? 'default' : 'outline'}
-                size="lg"
+                type="button"
                 onClick={() => updateResponse(rating)}
-                className={cn(
-                  'w-12 h-12 text-lg',
-                  currentResponse === rating && 'gradient-primary text-white'
-                )}
+                className="focus:outline-none transition-transform hover:scale-110"
               >
-                {rating}
-              </Button>
+                <Star
+                  className={cn(
+                    'w-10 h-10',
+                    rating <= currentRating
+                      ? 'fill-yellow-400 text-yellow-400 drop-shadow-md'
+                      : 'text-gray-300'
+                  )}
+                />
+              </button>
             ))}
           </div>
         );
@@ -192,35 +245,37 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
           />
         );
 
-      case 'likert':
+      case 'likert': {
+        const labels = options.labels || ['ไม่เห็นด้วยอย่างยิ่ง', 'ไม่เห็นด้วย', 'เฉยๆ', 'เห็นด้วย', 'เห็นด้วยอย่างยิ่ง'];
         return (
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              {(options.labels || ['ไม่เห็นด้วยอย่างยิ่ง', 'ไม่เห็นด้วย', 'เฉยๆ', 'เห็นด้วย', 'เห็นด้วยอย่างยิ่ง']).map(
-                (label, index) => (
-                  <span key={index} className="text-center flex-1">
-                    {label}
-                  </span>
-                )
-              )}
-            </div>
+          <div className="pt-2 pb-2">
             <RadioGroup
               value={currentResponse?.toString()}
               onValueChange={(val) => updateResponse(parseInt(val))}
               className="flex justify-between"
             >
-              {(options.labels || ['', '', '', '', '']).map((_, index) => (
-                <div key={index} className="flex flex-col items-center">
+              {labels.map((label, index) => (
+                <div key={index} className="flex flex-col items-center flex-1 gap-2">
+                  <span className="text-xs text-center text-muted-foreground h-10 flex items-end justify-center px-1">
+                    {label}
+                  </span>
                   <RadioGroupItem
                     value={index.toString()}
                     id={`likert-${index}`}
                     className="h-6 w-6"
                   />
+                  <Label 
+                    htmlFor={`likert-${index}`} 
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    {index + 1}
+                  </Label>
                 </div>
               ))}
             </RadioGroup>
           </div>
         );
+      }
 
       case 'ranking': {
         const items = options.items || [];
@@ -350,6 +405,145 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
         );
       }
 
+      case 'image_upload': {
+        const allowMultiple = options.allowMultipleImages || false;
+        const maxImages = options.maxImages || 5;
+        const uploadedImages = (currentResponse as string[]) || [];
+
+        const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length === 0) return;
+
+          if (!allowMultiple && files.length > 1) {
+            toast({ title: 'อัปโหลดได้เพียง 1 รูป', variant: 'destructive' });
+            return;
+          }
+
+          if (allowMultiple && uploadedImages.length + files.length > maxImages) {
+            toast({ title: `อัปโหลดได้สูงสุด ${maxImages} รูป`, variant: 'destructive' });
+            return;
+          }
+
+          setIsUploading(true);
+          try {
+            const newUrls: string[] = [];
+            for (const file of files) {
+              if (!file.type.startsWith('image/')) {
+                 toast({ title: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น', variant: 'destructive' });
+                 continue;
+              }
+              if (file.size > 5 * 1024 * 1024) {
+                 toast({ title: 'ขนาดไฟล์ต้องไม่เกิน 5MB', variant: 'destructive' });
+                 continue;
+              }
+
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${user?.id || 'anonymous'}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+              const { error: uploadError } = await supabase.storage
+                .from('survey_responses')
+                .upload(fileName, file);
+
+              if (uploadError) throw uploadError;
+
+              const { data: urlData } = supabase.storage
+                .from('survey_responses')
+                .getPublicUrl(fileName);
+
+              newUrls.push(urlData.publicUrl);
+            }
+
+            if (newUrls.length > 0) {
+              updateResponse(allowMultiple ? [...uploadedImages, ...newUrls] : newUrls);
+            }
+          } catch (error) {
+            toast({
+              title: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+              description: error instanceof Error ? error.message : 'กรุณาลองใหม่อีกครั้ง',
+              variant: 'destructive',
+            });
+          } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }
+        };
+
+        const removeImage = (indexToRemove: number) => {
+          updateResponse(uploadedImages.filter((_, idx) => idx !== indexToRemove));
+        };
+
+        return (
+          <div className="space-y-4">
+            <input
+              type="file"
+              accept="image/*"
+              multiple={allowMultiple}
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+            />
+
+            {uploadedImages.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                {uploadedImages.map((url, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                    <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                      type="button"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(!uploadedImages.length || (allowMultiple && uploadedImages.length < maxImages)) && (
+              <div
+                onClick={() => !isUploading && fileInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
+                  isUploading ? "opacity-50 cursor-not-allowed border-muted" : "cursor-pointer hover:border-primary/50 border-muted-foreground/25"
+                )}
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    {isUploading ? (
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    ) : (
+                      <Camera className="w-8 h-8 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {isUploading ? 'กำลังอัปโหลด...' : 'คลิกเพื่อเลือกรูปภาพ'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB
+                    </p>
+                    {allowMultiple && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        (อัปโหลดได้สูงสุด {maxImages} รูป)
+                      </p>
+                    )}
+                  </div>
+                  <Button variant="outline" type="button" disabled={isUploading}>
+                    {isUploading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                    )}
+                    {isUploading ? 'กำลังอัปโหลด...' : 'เลือกรูปภาพ'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       default:
         return (
           <Input
@@ -411,7 +605,7 @@ export default function SurveyPlayer({ questions, onComplete }: SurveyPlayerProp
           )}
           <Button
             onClick={handleNext}
-            disabled={!isCurrentValid()}
+            disabled={!isCurrentValid() || isUploading}
             className={cn('flex-1', currentIndex === totalQuestions - 1 && 'gradient-primary text-white')}
           >
             {currentIndex < totalQuestions - 1 ? (

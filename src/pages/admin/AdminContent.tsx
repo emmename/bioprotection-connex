@@ -280,10 +280,20 @@ export default function AdminContent() {
           switch (q.questionType) {
             case 'single_choice':
             case 'multiple_choice':
-              optionsJson = { choices: q.options };
+              optionsJson = { 
+                choices: q.options,
+                allowAdditionalText: q.allowAdditionalText,
+                additionalTextPlaceholder: q.additionalTextPlaceholder
+              };
               if (q.isScreening && q.questionType === 'single_choice') {
                 optionsJson.screeningCorrectAnswer = q.options.indexOf(q.screeningLogic?.option || '');
               }
+              break;
+            case 'image_upload':
+              optionsJson = {
+                allowMultipleImages: q.allowMultipleImages,
+                maxImages: q.maxImages
+              };
               break;
             case 'rating':
               optionsJson = { max: q.maxRating || 5 };
@@ -458,13 +468,51 @@ export default function AdminContent() {
         .order('order_index');
 
       if (data) {
-        setSurveyQuestions(data.map(q => ({
-          id: q.id,
-          question: q.question,
-          questionType: q.question_type as 'single_choice' | 'multiple_choice' | 'rating' | 'text',
-          options: (q.options as string[]) || [],
-          isRequired: q.is_required,
-        })));
+        setSurveyQuestions(data.map(q => {
+          let parsedOpts: string[] = [];
+          let extraFields: any = {};
+          const opts = q.options as any;
+          if (opts) {
+            if (Array.isArray(opts)) {
+              parsedOpts = opts;
+            } else {
+              if (opts.choices) parsedOpts = opts.choices;
+              if (opts.allowAdditionalText !== undefined) extraFields.allowAdditionalText = opts.allowAdditionalText;
+              if (opts.additionalTextPlaceholder !== undefined) extraFields.additionalTextPlaceholder = opts.additionalTextPlaceholder;
+              if (opts.allowMultipleImages !== undefined) extraFields.allowMultipleImages = opts.allowMultipleImages;
+              if (opts.maxImages !== undefined) extraFields.maxImages = opts.maxImages;
+              if (opts.max) extraFields.maxRating = opts.max;
+              if (opts.min !== undefined) {
+                extraFields.sliderMin = opts.min;
+                extraFields.sliderMax = opts.max;
+                extraFields.sliderStep = opts.step;
+                extraFields.sliderMinLabel = opts.minLabel;
+                extraFields.sliderMaxLabel = opts.maxLabel;
+              }
+              if (opts.rows) {
+                extraFields.matrixRows = opts.rows;
+                extraFields.matrixColumns = opts.columns;
+              }
+              if (opts.items) parsedOpts = opts.items;
+              if (opts.labels) {
+                extraFields.likertScale = opts.labels.length;
+                extraFields.likertLabels = { left: opts.labels[0] || '', right: opts.labels[opts.labels.length - 1] || '' };
+              }
+              if (opts.screeningCorrectAnswer !== undefined && opts.choices) {
+                extraFields.isScreening = true;
+                extraFields.screeningLogic = { option: opts.choices[opts.screeningCorrectAnswer], action: 'terminate' };
+              }
+            }
+          }
+          return {
+            id: q.id,
+            question: q.question,
+            questionType: q.question_type as any,
+            options: parsedOpts,
+            isRequired: q.is_required,
+            ...extraFields
+          };
+        }));
       }
     } else {
       setQuizQuestions([]);

@@ -260,6 +260,10 @@ export default function AdminMissions() {
                 parsedOpts = opts;
               } else {
                 if (opts.choices) parsedOpts = opts.choices;
+                if (opts.allowAdditionalText !== undefined) extraFields.allowAdditionalText = opts.allowAdditionalText;
+                if (opts.additionalTextPlaceholder !== undefined) extraFields.additionalTextPlaceholder = opts.additionalTextPlaceholder;
+                if (opts.allowMultipleImages !== undefined) extraFields.allowMultipleImages = opts.allowMultipleImages;
+                if (opts.maxImages !== undefined) extraFields.maxImages = opts.maxImages;
                 if (opts.max) extraFields.maxRating = opts.max;
                 if (opts.min !== undefined) {
                   extraFields.sliderMin = opts.min;
@@ -399,10 +403,20 @@ export default function AdminMissions() {
             switch (q.questionType) {
               case 'single_choice':
               case 'multiple_choice':
-                optionsJson = { choices: q.options };
+                optionsJson = { 
+                  choices: q.options,
+                  allowAdditionalText: q.allowAdditionalText,
+                  additionalTextPlaceholder: q.additionalTextPlaceholder
+                };
                 if (q.isScreening && q.questionType === 'single_choice') {
                   optionsJson.screeningCorrectAnswer = q.options.indexOf(q.screeningLogic?.option || '');
                 }
+                break;
+              case 'image_upload':
+                optionsJson = {
+                  allowMultipleImages: q.allowMultipleImages,
+                  maxImages: q.maxImages
+                };
                 break;
               case 'rating':
                 optionsJson = { max: q.maxRating || 5 };

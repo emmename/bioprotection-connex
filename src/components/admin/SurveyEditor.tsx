@@ -17,7 +17,8 @@ export type SurveyQuestionType =
   | 'likert' 
   | 'ranking' 
   | 'matrix' 
-  | 'slider';
+  | 'slider'
+  | 'image_upload';
 
 export interface SurveyQuestion {
   id: string;
@@ -41,6 +42,12 @@ export interface SurveyQuestion {
   // Screening
   isScreening?: boolean;
   screeningLogic?: { option: string; action: 'continue' | 'terminate' };
+  // Image Upload
+  allowMultipleImages?: boolean;
+  maxImages?: number;
+  // Text Input for Choices
+  allowAdditionalText?: boolean[];
+  additionalTextPlaceholder?: string[];
 }
 
 interface SurveyEditorProps {
@@ -57,6 +64,7 @@ const questionTypeLabels: Record<SurveyQuestionType, string> = {
   ranking: 'จัดลำดับ',
   matrix: 'ตาราง',
   slider: 'Slider',
+  image_upload: 'อัปโหลดรูปภาพ',
 };
 
 export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
@@ -78,6 +86,10 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
       matrixRows: [''],
       matrixColumns: [''],
       isScreening: false,
+      allowMultipleImages: false,
+      maxImages: 5,
+      allowAdditionalText: [false, false],
+      additionalTextPlaceholder: ['', ''],
     };
     onChange([...questions, newQuestion]);
   };
@@ -110,6 +122,17 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
     const newQuestions = [...questions];
     if (newQuestions[questionIndex].options.length < 10) {
       newQuestions[questionIndex].options.push('');
+      if (newQuestions[questionIndex].allowAdditionalText) {
+        newQuestions[questionIndex].allowAdditionalText!.push(false);
+        if (!newQuestions[questionIndex].additionalTextPlaceholder) {
+          newQuestions[questionIndex].additionalTextPlaceholder = newQuestions[questionIndex].options.map(() => '');
+        } else {
+          newQuestions[questionIndex].additionalTextPlaceholder!.push('');
+        }
+      } else {
+        newQuestions[questionIndex].allowAdditionalText = newQuestions[questionIndex].options.map(() => false);
+        newQuestions[questionIndex].additionalTextPlaceholder = newQuestions[questionIndex].options.map(() => '');
+      }
       onChange(newQuestions);
     }
   };
@@ -118,6 +141,12 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
     const newQuestions = [...questions];
     if (newQuestions[questionIndex].options.length > 2) {
       newQuestions[questionIndex].options.splice(optionIndex, 1);
+      if (newQuestions[questionIndex].allowAdditionalText) {
+        newQuestions[questionIndex].allowAdditionalText!.splice(optionIndex, 1);
+        if (newQuestions[questionIndex].additionalTextPlaceholder) {
+          newQuestions[questionIndex].additionalTextPlaceholder!.splice(optionIndex, 1);
+        }
+      }
       onChange(newQuestions);
     }
   };
@@ -260,6 +289,19 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
               step={q.sliderStep || 1}
               disabled
             />
+          </div>
+        );
+      case 'image_upload':
+        return (
+          <div className="mt-4 border-2 border-dashed border-muted-foreground/30 p-8 rounded-lg flex flex-col items-center justify-center text-center">
+            <div className="bg-muted p-4 rounded-full mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            </div>
+            <p className="text-sm font-medium">บริเวณสำหรับอัปโหลดรูปภาพ</p>
+            <p className="text-xs text-muted-foreground mt-1">ผู้ใช้จะสามารถอัปโหลดรูปภาพได้ที่นี่</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              (รองรับ{q.allowMultipleImages ? `หลายรูปภาพ (สูงสุด ${q.maxImages || 5} รูป)` : 'ภาพเดียว'})
+            </p>
           </div>
         );
       default:
@@ -474,6 +516,31 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
           </div>
         );
 
+      case 'image_upload':
+        return (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={q.allowMultipleImages || false}
+                onCheckedChange={(checked) => updateQuestion(qIndex, { allowMultipleImages: checked })}
+              />
+              <Label className="text-sm">อนุญาตให้อัปโหลดหลายรูป</Label>
+            </div>
+            {q.allowMultipleImages && (
+              <div className="space-y-2 max-w-[200px]">
+                <Label className="text-sm">จำนวนรูปสูงสุด</Label>
+                <Input
+                  type="number"
+                  min={2}
+                  max={20}
+                  value={q.maxImages || 5}
+                  onChange={(e) => updateQuestion(qIndex, { maxImages: parseInt(e.target.value) || 5 })}
+                />
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -604,8 +671,9 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
                       
                       <div className="space-y-2">
                         {q.options.map((option, oIndex) => (
-                          <div key={oIndex} className="flex items-center gap-2">
-                            {q.questionType === 'ranking' ? (
+                          <div key={oIndex} className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              {q.questionType === 'ranking' ? (
                               <span className="shrink-0 w-6 h-6 flex items-center justify-center text-xs font-medium bg-muted rounded">
                                 {oIndex + 1}
                               </span>
@@ -631,6 +699,36 @@ export function SurveyEditor({ questions, onChange }: SurveyEditorProps) {
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
+                            )}
+                            </div>
+                            {(q.questionType === 'single_choice' || q.questionType === 'multiple_choice') && (
+                              <div className="flex items-center gap-2 ml-8 mb-2">
+                                <Switch
+                                  checked={q.allowAdditionalText?.[oIndex] || false}
+                                  onCheckedChange={(checked) => {
+                                    const newAllow = [...(q.allowAdditionalText || q.options.map(() => false))];
+                                    newAllow[oIndex] = checked;
+                                    updateQuestion(qIndex, { allowAdditionalText: newAllow });
+                                  }}
+                                  className="scale-75 origin-left"
+                                />
+                                <Label className="text-xs text-muted-foreground mr-4">ช่องระบุข้อความเพิ่มเติม</Label>
+                                {q.allowAdditionalText?.[oIndex] && (
+                                  <div className="flex-1 flex items-center gap-2 max-w-[300px]">
+                                    <Label className="text-[10px] text-muted-foreground whitespace-nowrap">ข้อความคำใบ้:</Label>
+                                    <Input
+                                      value={q.additionalTextPlaceholder?.[oIndex] || ''}
+                                      onChange={(e) => {
+                                        const newPlaceholders = [...(q.additionalTextPlaceholder || q.options.map(() => ''))];
+                                        newPlaceholders[oIndex] = e.target.value;
+                                        updateQuestion(qIndex, { additionalTextPlaceholder: newPlaceholders });
+                                      }}
+                                      placeholder="ระบุเพิ่มเติม..."
+                                      className="h-7 text-xs"
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         ))}
