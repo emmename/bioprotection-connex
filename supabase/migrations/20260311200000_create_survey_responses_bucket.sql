@@ -1,19 +1,29 @@
--- Create storage bucket for survey responses if it doesn't exist
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('survey_responses', 'survey_responses', true)
-ON CONFLICT (id) DO NOTHING;
+-- Create storage bucket for survey responses with Size & Mime limits
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'survey_responses', 
+    'survey_responses', 
+    true, 
+    5242880,
+    '{image/jpeg,image/png,image/gif,image/webp}'::text[]
+)
+ON CONFLICT (id) DO UPDATE
+SET 
+    file_size_limit = 5242880,
+    allowed_mime_types = '{image/jpeg,image/png,image/gif,image/webp}'::text[];
 
--- Allow anyone to upload images to the survey_responses bucket
+-- Drop existing policies to recreate them securely
+DROP POLICY IF EXISTS "Public can upload survey responses" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload survey responses" ON storage.objects;
+DROP POLICY IF EXISTS "Public can read survey responses" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can manage survey responses" ON storage.objects;
+
+-- Allow anyone to upload images to the bucket
 CREATE POLICY "Public can upload survey responses"
 ON storage.objects FOR INSERT TO public
 WITH CHECK (bucket_id = 'survey_responses');
 
--- Allow authenticated users to upload images as well (just in case)
-CREATE POLICY "Authenticated users can upload survey responses"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'survey_responses');
-
--- Allow public read access (required for getPublicUrl to work)
+-- Allow public read access (Required for getPublicUrl to work)
 CREATE POLICY "Public can read survey responses"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'survey_responses');
