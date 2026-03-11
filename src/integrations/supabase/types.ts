@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -364,7 +364,7 @@ export type Database = {
           id: string
           is_active: boolean
           location: string | null
-          mission_id: string | null
+
           start_date: string
           title: string
           updated_at: string
@@ -380,7 +380,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           location?: string | null
-          mission_id?: string | null
+
           start_date: string
           title: string
           updated_at?: string
@@ -396,20 +396,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           location?: string | null
-          mission_id?: string | null
+
           start_date?: string
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "events_mission_id_fkey"
-            columns: ["mission_id"]
-            isOneToOne: false
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       farm_details: {
         Row: {

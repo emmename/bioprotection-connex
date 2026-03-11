@@ -24,13 +24,11 @@ interface EventFormDialogProps {
         allowed_member_types: string[];
         allowed_sub_types: Record<string, string[]>;
         allowed_tiers: string[];
-        mission_id: string | null;
         rewards: EventReward[];
     };
     setFormData: (data: any) => void;
     onSubmit: (e: React.FormEvent) => void;
     isSaving: boolean;
-    missions: { id: string; title: string }[];
     tierOptions: { label: string; value: string }[];
 }
 
@@ -42,7 +40,6 @@ export function EventFormDialog({
     setFormData,
     onSubmit,
     isSaving,
-    missions,
     tierOptions,
 }: EventFormDialogProps) {
 
@@ -124,43 +121,18 @@ export function EventFormDialog({
                                 <Label htmlFor="event_type">ประเภทกิจกรรม</Label>
                                 <Select
                                     value={formData.event_type}
-                                    onValueChange={(value) => setFormData({ ...formData, event_type: value, mission_id: value === 'general_event' ? null : formData.mission_id })}
+                                    onValueChange={(value) => setFormData({ ...formData, event_type: value })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="เลือกประเภทกิจกรรม" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="general_event">กิจกรรมทั่วไป</SelectItem>
-                                        <SelectItem value="mission_event">เชื่อมโยงกับภารกิจ (Mission)</SelectItem>
+                                        <SelectItem value="mission_event">ภารกิจพิเศษ</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
-
-                        {formData.event_type === 'mission_event' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="mission_id">เลือกภารกิจที่เกี่ยวข้อง <span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={formData.mission_id || ''}
-                                    onValueChange={(value) => setFormData({ ...formData, mission_id: value })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="เลือกภารกิจ" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {missions.map(mission => (
-                                            <SelectItem key={mission.id} value={mission.id}>{mission.title}</SelectItem>
-                                        ))}
-                                        {formData.mission_id && !missions.some(m => m.id === formData.mission_id) && (
-                                            <SelectItem value={formData.mission_id}>ภารกิจที่ถูกลบ / ไม่มีในระบบ</SelectItem>
-                                        )}
-                                        {missions.length === 0 && !formData.mission_id && (
-                                            <SelectItem value="empty" disabled>ไม่พบภารกิจที่เปิดใช้งาน</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="description">รายละเอียดกิจกรรม</Label>

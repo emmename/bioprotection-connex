@@ -42,7 +42,6 @@ export default function AdminEvents() {
         allowed_member_types: string[];
         allowed_sub_types: Record<string, string[]>;
         allowed_tiers: string[];
-        mission_id: string | null;
         rewards: EventReward[];
     }>({
         title: '',
@@ -55,7 +54,6 @@ export default function AdminEvents() {
         allowed_member_types: [],
         allowed_sub_types: {},
         allowed_tiers: [],
-        mission_id: null,
         rewards: []
     });
 
@@ -74,18 +72,7 @@ export default function AdminEvents() {
         enabled: canManageEvents,
     });
 
-    const { data: missions = [] } = useQuery({
-        queryKey: ['missions'],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('missions')
-                .select('id, title')
-                .eq('is_active', true);
-            if (error) throw error;
-            return data;
-        },
-        enabled: canManageEvents,
-    });
+
 
     const { data: tiersData = [] } = useQuery({
         queryKey: ['tier-settings'],
@@ -115,8 +102,7 @@ export default function AdminEvents() {
                 event_type: formData.event_type,
                 allowed_member_types: formData.allowed_member_types.length > 0 ? formData.allowed_member_types : null,
                 allowed_sub_types: Object.keys(formData.allowed_sub_types).length > 0 ? formData.allowed_sub_types : null,
-                allowed_tiers: formData.allowed_tiers.length > 0 ? formData.allowed_tiers : null,
-                mission_id: formData.event_type === 'mission_event' ? formData.mission_id : null
+                allowed_tiers: formData.allowed_tiers.length > 0 ? formData.allowed_tiers : null
             };
 
             let eventId = editingEvent?.id;
@@ -208,7 +194,6 @@ export default function AdminEvents() {
                 allowed_member_types: event.allowed_member_types || [],
                 allowed_sub_types: (event.allowed_sub_types as Record<string, string[]>) || {},
                 allowed_tiers: event.allowed_tiers || [],
-                mission_id: event.mission_id || null,
                 rewards: event.event_rewards || []
             });
         } else {
@@ -224,7 +209,6 @@ export default function AdminEvents() {
                 allowed_member_types: [],
                 allowed_sub_types: {},
                 allowed_tiers: [],
-                mission_id: null,
                 rewards: []
             });
         }
@@ -240,11 +224,6 @@ export default function AdminEvents() {
 
         if (new Date(formData.start_date) >= new Date(formData.end_date)) {
             toast.error('วันสิ้นสุดต้องมากกว่าวันเริ่มต้น');
-            return;
-        }
-
-        if (formData.event_type === 'mission_event' && !formData.mission_id) {
-            toast.error('กรุณาเลือกภารกิจ (Mission) ที่เกี่ยวข้อง');
             return;
         }
 
@@ -310,7 +289,6 @@ export default function AdminEvents() {
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
                 isSaving={saveEventMutation.isPending}
-                missions={missions}
                 tierOptions={TIER_OPTIONS}
             />
         </div>

@@ -27,7 +27,6 @@ export interface AdminEvent {
     allowed_member_types: string[] | null;
     allowed_sub_types?: Record<string, string[]> | null;
     allowed_tiers: string[] | null;
-    mission_id: string | null;
     created_at?: string;
     updated_at?: string;
     event_rewards?: EventReward[];

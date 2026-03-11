@@ -47,6 +47,10 @@ export default function AdminMissions() {
   // Reward Overrides State
   const [rewardOverrides, setRewardOverrides] = useState<RewardOverride[]>([]);
 
+  // Linked Events State
+  const [linkedEvents, setLinkedEvents] = useState<string[]>([]);
+  const [activeEvents, setActiveEvents] = useState<{id: string, title: string}[]>([]);
+
   // Survey State
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
 
@@ -55,6 +59,13 @@ export default function AdminMissions() {
 
   useEffect(() => {
     fetchMissions();
+    
+    // Fetch active events for linkage
+    const fetchActiveEvents = async () => {
+      const { data } = await supabase.from('events').select('id, title').eq('is_active', true).order('start_date', { ascending: false });
+      if (data) setActiveEvents(data);
+    };
+    fetchActiveEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter]);
 
@@ -141,6 +152,7 @@ export default function AdminMissions() {
     setTargetSubTypes({});
     setTargetTiers([]);
     setRewardOverrides([]);
+    setLinkedEvents([]);
     setSurveyQuestions([]);
     setEditingMission(null);
   };
@@ -166,11 +178,13 @@ export default function AdminMissions() {
       setTargetSubTypes(mission.requirements.targeting?.sub_types || {});
       setTargetTiers(mission.requirements.targeting?.tiers || []);
       setRewardOverrides((mission.requirements.reward_overrides || []) as RewardOverride[]);
+      setLinkedEvents((mission.requirements as Record<string, any>).linked_events || []);
     } else {
       setTargetMemberTypes([]);
       setTargetSubTypes({});
       setTargetTiers([]);
       setRewardOverrides([]);
+      setLinkedEvents([]);
     }
 
     // Load survey questions if survey type
@@ -272,7 +286,7 @@ export default function AdminMissions() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requirements: any = {
+    const requirements: Record<string, any> = {
       targeting: {
         member_types: targetMemberTypes,
         sub_types: targetSubTypes,
@@ -280,6 +294,12 @@ export default function AdminMissions() {
       },
       reward_overrides: rewardOverrides
     };
+
+    if (formData.mission_type === 'location_visit' || formData.mission_type === 'special') {
+      if (linkedEvents.length > 0) {
+        requirements.linked_events = linkedEvents;
+      }
+    }
 
     try {
       // Handle survey content creation/update
@@ -605,6 +625,9 @@ export default function AdminMissions() {
           onRewardOverridesChange={setRewardOverrides}
           surveyQuestions={surveyQuestions}
           onSurveyQuestionsChange={setSurveyQuestions}
+          linkedEvents={linkedEvents}
+          onLinkedEventsChange={setLinkedEvents}
+          activeEvents={activeEvents}
         />
       </div>
 

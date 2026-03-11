@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Target, Users, QrCode, GripVertical, X, PlusCircle, ClipboardList } from 'lucide-react';
+import { Plus, Target, Users, QrCode, GripVertical, X, PlusCircle, ClipboardList, MapPin } from 'lucide-react';
 import { SurveyEditor, SurveyQuestion } from '@/components/admin/SurveyEditor';
 import { MEMBER_TYPE_OPTIONS as MEMBER_TYPES, MEMBER_SUB_TYPES } from '@/constants/memberTypes';
 
@@ -59,6 +59,10 @@ interface MissionFormDialogProps {
   // Survey
   surveyQuestions: SurveyQuestion[];
   onSurveyQuestionsChange: (questions: SurveyQuestion[]) => void;
+  // Linked Events
+  linkedEvents?: string[];
+  onLinkedEventsChange?: (events: string[]) => void;
+  activeEvents?: { id: string; title: string }[];
 }
 
 export function MissionFormDialog({
@@ -80,6 +84,9 @@ export function MissionFormDialog({
   onRewardOverridesChange,
   surveyQuestions,
   onSurveyQuestionsChange,
+  linkedEvents,
+  onLinkedEventsChange,
+  activeEvents,
 }: MissionFormDialogProps) {
 
   const toggleArrayItem = (item: string, currentItems: string[], setter: (items: string[]) => void) => {
@@ -170,6 +177,42 @@ export function MissionFormDialog({
                   <Input value={formData.location} onChange={e => setField('location', e.target.value)} placeholder="ชื่อหรือพิกัดสถานที่" />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Linked Events */}
+          {(formData.mission_type === 'location_visit' || formData.mission_type === 'special') && (
+            <div className="space-y-4 border p-4 rounded-lg bg-secondary/10">
+              <h3 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" /> กิจกรรมที่เชื่อมโยง</h3>
+              <div className="space-y-2">
+                <Label>เลือกกิจกรรม (สามารถเลือกได้หลายกิจกรรม)</Label>
+                <div className="h-[200px] overflow-y-auto border rounded-md p-4 space-y-3 bg-background">
+                  {activeEvents?.length === 0 ? (
+                    <div className="text-center text-sm text-muted-foreground py-4">
+                      ไม่พบกิจกรรมที่เปิดใช้งาน
+                    </div>
+                  ) : (
+                    activeEvents?.map((event) => (
+                      <div key={event.id} className="flex items-start space-x-3">
+                        <Checkbox
+                          id={`event-${event.id}`}
+                          checked={linkedEvents?.includes(event.id)}
+                          onCheckedChange={() => toggleArrayItem(event.id, linkedEvents || [], onLinkedEventsChange || (() => {}))}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                          <label
+                            htmlFor={`event-${event.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {event.title}
+                          </label>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">หากลงทะเบียนหรือสแกนเข้ากิจกรรมใดกิจกรรมหนึ่งที่เลือกไว้ ภารกิจนี้จะถือว่าสำเร็จ</p>
+              </div>
             </div>
           )}
 
