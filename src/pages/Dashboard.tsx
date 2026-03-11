@@ -120,7 +120,7 @@ export default function Dashboard() {
 
       <DashboardHeader profile={profile} />
 
-      <main className="container mx-auto px-4 py-4 space-y-4">
+      <main className="container max-w-2xl mx-auto px-4 py-4 space-y-5">
 
         {/* Approval Status Banner */}
         {!isApproved && (

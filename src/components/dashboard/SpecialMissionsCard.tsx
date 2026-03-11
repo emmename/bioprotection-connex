@@ -2,9 +2,14 @@ import { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, ChevronRight, Check, ScanLine, MapPin, Loader2, Star, QrCode, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { Calendar, ChevronRight, Check, Star, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSpecialMissions } from '@/hooks/useGamification';
+
+import surveyIcon from '@/assets/buttons/survey_mumu01_256.png';
+import locationIcon from '@/assets/buttons/scan_chick02_256.png';
+import qrIcon from '@/assets/buttons/scan_pig01_256.png';
+import specialIcon from '@/assets/buttons/mission_pig02_256.png';
 
 export function SpecialMissionsCard() {
     const navigate = useNavigate();
@@ -49,18 +54,22 @@ export function SpecialMissionsCard() {
 
                         // Icon mapping
                         const getIcon = () => {
-                            const iconClass = `w-5 h-5 ${isCompleted ? 'text-slate-500' : 'text-amber-600'}`;
+                            let iconSrc = specialIcon;
                             switch (mission.mission_type) {
                                 case 'qr_scan':
                                 case 'scan_qr':
-                                    return <QrCode className={iconClass} />;
+                                    iconSrc = qrIcon;
+                                    break;
                                 case 'location_visit':
-                                    return <MapPin className={iconClass} />;
+                                    iconSrc = locationIcon;
+                                    break;
                                 case 'survey':
-                                    return <ClipboardList className={iconClass} />;
+                                    iconSrc = surveyIcon;
+                                    break;
                                 default:
-                                    return <Star className={iconClass} />;
+                                    iconSrc = specialIcon;
                             }
+                            return <img src={iconSrc} alt="" className="w-10 h-10 object-contain" />;
                         };
 
                         // Determine action based on mission type
@@ -95,7 +104,7 @@ export function SpecialMissionsCard() {
                                     }`}
                             >
                                 <div className="flex justify-between items-start mb-2">
-                                    <div className={`p-2 rounded-lg ${isCompleted ? 'bg-slate-100' : 'bg-amber-100'}`}>
+                                    <div className="flex-shrink-0">
                                         {getIcon()}
                                     </div>
                                     <div className="flex gap-1.5 flex-col items-end">
@@ -134,15 +143,14 @@ export function SpecialMissionsCard() {
                                         หมดเขต {new Date(mission.end_date).toLocaleDateString('th-TH')}
                                     </div>
                                 )}
-
                                 {isCompleted ? (
-                                    <Button size="sm" variant="outline" className="w-full gap-2 cursor-default bg-slate-50 text-green-600 border-green-200 hover:bg-slate-50 hover:text-green-600">
+                                    <Button size="sm" variant="outline" className="w-full gap-2 cursor-default bg-slate-50 text-green-600 border-green-200 hover:bg-slate-50 hover:text-green-600 transition-all duration-300">
                                         <Check className="w-4 h-4" /> ทำสำเร็จแล้ว
                                     </Button>
                                 ) : (
                                     <Button
                                         size="sm"
-                                        className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                                        className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow-md active:scale-95 transition-all duration-300"
                                         onClick={handleAction}
                                     >
                                         เริ่มทำภารกิจ

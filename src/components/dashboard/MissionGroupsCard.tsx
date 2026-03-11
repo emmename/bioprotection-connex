@@ -1,9 +1,10 @@
 import { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, MapPin, Check, Gift, Lock } from 'lucide-react';
+import { ChevronRight, MapPin, Check, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionGroups } from '@/hooks/useGamification';
+import missionChickIcon from '@/assets/buttons/mission_chick02_256.png';
 
 export function MissionGroupsCard() {
     const navigate = useNavigate();
@@ -55,7 +56,7 @@ export function MissionGroupsCard() {
                                 <div className="relative min-w-[280px]">
                                     {/* Progress Line Background */}
                                     <div
-                                        className="absolute h-[6px] bg-slate-200 rounded-full z-0"
+                                        className="absolute h-[6px] bg-secondary rounded-full z-0 pointer-events-none"
                                         style={{
                                             top: '2.4rem',
                                             left: `calc(100% / (${totalSteps} * 2))`,
@@ -65,7 +66,7 @@ export function MissionGroupsCard() {
 
                                     {/* Active Progress Line */}
                                     <div
-                                        className="absolute h-[6px] bg-blue-500 rounded-full z-0 transition-all duration-500"
+                                        className="absolute h-[6px] bg-blue-500 rounded-full z-0 transition-all duration-700 ease-out pointer-events-none"
                                         style={{
                                             top: '2.4rem',
                                             left: `calc(100% / (${totalSteps} * 2))`,
@@ -94,9 +95,10 @@ export function MissionGroupsCard() {
 
                                                     <div
                                                         className={`
-                                                          w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 z-10 transition-all shadow-sm bg-white cursor-pointer
-                                                          ${status === 'completed' ? 'border-green-500 text-green-500 shadow-green-200' : ''}
-                                                          ${status === 'current' ? 'border-primary text-primary ring-4 ring-primary/10 scale-110' : ''}
+                                                          w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center z-10 transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95
+                                                          ${(isLastStep && status !== 'upcoming') ? '' : 'border-2 bg-white shadow-sm'}
+                                                          ${status === 'completed' && !isLastStep ? 'border-green-500 text-green-500 shadow-green-200' : ''}
+                                                          ${status === 'current' ? (isLastStep ? 'ring-4 ring-primary/10 scale-110' : 'border-primary text-primary ring-4 ring-primary/10 scale-110') : ''}
                                                           ${status === 'upcoming' ? 'border-slate-200 text-slate-300' : ''}
                                                         `}
                                                         onClick={(e) => {
@@ -105,11 +107,11 @@ export function MissionGroupsCard() {
                                                         }}
                                                     >
                                                         {status === 'completed' ? (
-                                                            <Check className="w-5 h-5" />
+                                                            isLastStep ? <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" /> : <Check className="w-5 h-5" />
                                                         ) : status === 'upcoming' ? (
                                                             <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
                                                         ) : isLastStep ? (
-                                                            <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+                                                            <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" />
                                                         ) : (
                                                             <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                                                         )}
@@ -139,8 +141,8 @@ export function MissionGroupsCard() {
                             {(group.grand_bonus_points > 0 || group.grand_bonus_coins > 0) && (
                                 <div className="mt-4 flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-                                            <Gift className="w-5 h-5 text-white" />
+                                        <div className="w-10 h-10 flex items-center justify-center">
+                                            <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" />
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-sm font-bold text-amber-900">รางวัลใหญ่เมื่อผ่านทุกด่าน</span>
@@ -152,7 +154,7 @@ export function MissionGroupsCard() {
                                     </div>
                                     <Button
                                         size="sm"
-                                        className={isGroupCompleted ? "bg-green-500 hover:bg-green-600 text-white" : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"}
+                                        className={isGroupCompleted ? "bg-green-500 hover:bg-green-600 text-white transition-all duration-300" : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-95 transition-all duration-300"}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigate(`/mission-groups/${group.id}`)

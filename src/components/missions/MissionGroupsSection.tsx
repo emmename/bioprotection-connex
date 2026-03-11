@@ -1,9 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, QrCode, Star, Check, Clock, ClipboardList, CheckCircle2, Lock, Gift } from 'lucide-react';
+import { MapPin, Star, Check, Clock, CheckCircle2, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import missionChickIcon from '@/assets/buttons/mission_chick02_256.png';
+import surveyIcon from '@/assets/buttons/survey_mumu01_256.png';
+import locationIcon from '@/assets/buttons/scan_chick02_256.png';
+import qrIcon from '@/assets/buttons/scan_pig01_256.png';
+import specialIcon from '@/assets/buttons/mission_pig02_256.png';
 
 interface Mission {
     id: string;
@@ -43,10 +48,10 @@ interface MissionGroupsSectionProps {
 
 function getMissionIcon(type: string) {
     switch (type) {
-        case 'qr_scan': return QrCode;
-        case 'location_visit': return MapPin;
-        case 'survey': return ClipboardList;
-        default: return Star;
+        case 'qr_scan': return qrIcon;
+        case 'location_visit': return locationIcon;
+        case 'survey': return surveyIcon;
+        default: return specialIcon;
     }
 }
 
@@ -131,12 +136,13 @@ export function MissionGroupsSection({ groups, isLoading }: MissionGroupsSection
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                        ${isCompleted ? 'bg-green-100' : isLocked ? 'bg-muted' : 'bg-primary/10'}`}>
+                                            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                                                 {isLocked ? (
-                                                    <Lock className="w-5 h-5 text-muted-foreground" />
+                                                    <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
+                                                        <Lock className="w-5 h-5 text-muted-foreground" />
+                                                    </div>
                                                 ) : (
-                                                    <Icon className={`w-5 h-5 ${isCompleted ? 'text-green-600' : 'text-primary'}`} />
+                                                    <img src={getMissionIcon(mission.mission_type)} alt="" className="w-full h-full object-contain" />
                                                 )}
                                             </div>
 
@@ -182,8 +188,8 @@ export function MissionGroupsSection({ groups, isLoading }: MissionGroupsSection
 
                     <CardFooter className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-t">
                         <div className="flex items-center gap-3 w-full cursor-pointer" onClick={() => navigate(`/mission-groups/${group.id}`)}>
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm text-white">
-                                <Gift className="w-5 h-5" />
+                            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 mb-1">
+                                <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" />
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm font-bold text-amber-900">รางวัลใหญ่เมื่อทำครบทุกด่าน</p>

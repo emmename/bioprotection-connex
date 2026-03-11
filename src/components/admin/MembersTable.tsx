@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
-import { CheckCircle, XCircle, Eye, ArrowUpDown, ArrowUp, ArrowDown, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, ArrowUpDown, ArrowUp, ArrowDown, Shield, User } from 'lucide-react';
 import { ColumnConfig } from './MemberColumnsSelector';
 import { TierSettings } from '@/types/gamification';
 
@@ -309,8 +309,14 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
         </TableHeader>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-muted-foreground">
-              ไม่พบข้อมูลสมาชิก
+            <TableCell colSpan={visibleColumns.length + 2} className="text-center py-16">
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center">
+                  <User className="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <p className="text-base font-medium text-foreground">ไม่พบข้อมูลสมาชิก</p>
+                <p className="text-sm text-muted-foreground w-64 text-center">ยังไม่มีข้อมูลสมาชิกที่ตรงกับเงื่อนไขการค้นหาในระบบ</p>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -365,10 +371,11 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
                 </TableCell>
               ))}
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors active:scale-95"
                     onClick={() => navigate(`/admin/members/${member.id}`)}
                     title="ดูรายละเอียด"
                   >
@@ -380,20 +387,20 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-success hover:text-success"
+                        className="h-9 w-9 text-success hover:text-success hover:bg-success/10 transition-colors active:scale-95"
                         onClick={() => onUpdateStatus(member.id, 'approved')}
                         title="อนุมัติ"
                       >
-                        <CheckCircle className="h-4 w-4" />
+                        <CheckCircle className="h-4.5 w-4.5" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
+                        className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-95"
                         onClick={() => onUpdateStatus(member.id, 'rejected')}
                         title="ไม่อนุมัติ"
                       >
-                        <XCircle className="h-4 w-4" />
+                        <XCircle className="h-4.5 w-4.5" />
                       </Button>
                     </>
                   )}

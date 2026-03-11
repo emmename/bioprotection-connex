@@ -38,20 +38,20 @@ interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 function StatCard({ iconSrc, value, label, iconBgColor = 'bg-primary/10', className = '', gradientFrom = 'from-primary', ...props }: StatCardProps) {
   return (
-    <Card className={`p-3 flex flex-col items-center justify-center text-center gap-2 h-full border-l-4 ${className} shadow-sm overflow-hidden relative transition-all duration-200`} {...props}>
-      <div className={`w-10 h-10 ${iconBgColor} rounded-full flex items-center justify-center shrink-0 z-10`}>
+    <Card className={`p-4 flex flex-col items-center justify-center text-center gap-2.5 h-full border-l-[3px] sm:border-l-4 ${className} shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 overflow-hidden relative group cursor-default`} {...props}>
+      <div className={`w-11 h-11 ${iconBgColor} rounded-full flex items-center justify-center shrink-0 z-10 transition-transform duration-300 group-hover:scale-110`}>
         <img src={iconSrc} alt={label as string} className="w-6 h-6 object-contain" />
       </div>
       <div className="w-full overflow-hidden z-10 flex flex-col items-center min-w-0">
-        <p className={`font-bold tracking-tight w-full text-center ${typeof value === 'string' && value.length > 8 ? 'text-xs sm:text-sm truncate px-1' : 'text-lg sm:text-xl truncate'}`}>
+        <p className={`font-bold tracking-tight w-full text-center ${typeof value === 'string' && value.length > 8 ? 'text-sm truncate px-1' : 'text-xl truncate'}`}>
           {typeof value === 'number' ? value.toLocaleString() : value}
         </p>
-        <div className="text-[10px] text-muted-foreground leading-tight font-medium text-center">
+        <div className="text-xs text-muted-foreground leading-tight font-medium text-center">
           {label}
         </div>
       </div>
       {/* Subtle decorative gradient background */}
-      <div className={`absolute inset-0 opacity-[0.03] bg-gradient-to-br ${gradientFrom} to-transparent pointer-events-none`} />
+      <div className={`absolute inset-0 opacity-[0.03] bg-gradient-to-br ${gradientFrom} to-transparent pointer-events-none transition-opacity duration-300 group-hover:opacity-[0.05]`} />
     </Card>
   );
 }

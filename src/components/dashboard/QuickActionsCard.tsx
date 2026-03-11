@@ -74,16 +74,16 @@ export function QuickActionsCard() {
             <Link
               key={action.label}
               to={action.href}
-              className="group flex flex-col items-center"
+              className="group flex flex-col items-center active:scale-95 transition-transform duration-200"
             >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-2 group-hover:scale-110 transition-transform overflow-hidden rounded-2xl flex-shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-2 group-hover:-translate-y-1 transition-transform duration-300 overflow-hidden rounded-2xl flex-shrink-0 drop-shadow-sm group-hover:drop-shadow-md">
                 <img
                   src={action.imageSrc}
                   alt={action.label}
                   className={`w-full h-full object-cover ${action.label === 'แบบทดสอบ' ? 'scale-90' : ''}`}
                 />
               </div>
-              <span className="text-xs font-medium text-center leading-tight line-clamp-2 min-h-[2.5em] flex items-start justify-center">
+              <span className="text-xs font-medium text-center leading-tight line-clamp-2 min-h-[2.5em] flex items-start justify-center group-hover:text-primary transition-colors">
                 {action.label}
               </span>
             </Link>

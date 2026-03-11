@@ -46,11 +46,11 @@ export function DailyCheckinCard() {
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-5 pb-6">
           <div className="relative">
             {/* Progress Line Background */}
             <div
-              className="absolute h-[6px] bg-slate-200 rounded-full z-0"
+              className="absolute h-[6px] bg-secondary rounded-full z-0 pointer-events-none"
               style={{
                 top: '2.4rem',
                 left: `calc(100% / 14)`, // 7 columns, so middle is 1/14
@@ -60,11 +60,11 @@ export function DailyCheckinCard() {
 
             {/* Active Progress Line (calculated width based on streak) */}
             <div
-              className="absolute h-[6px] bg-green-200 rounded-full z-0 transition-all duration-500"
+              className="absolute h-[6px] bg-green-500 rounded-full z-0 transition-all duration-700 ease-out pointer-events-none"
               style={{
                 top: '2.4rem',
                 left: `calc(100% / 14)`,
-                width: `calc(100% * ${Math.max(0, (streak % 7 || 7) - 1)} / 7)`
+                width: `calc(100% * ${Math.max(0, (streak > 0 ? (streak % 7 === 0 ? 7 : streak % 7) : 0) - 1)} / 7)`
               }}
             />
 

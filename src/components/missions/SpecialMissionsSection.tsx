@@ -1,8 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, QrCode, Star, Check, Clock, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { Check, Clock, CheckCircle2, Star, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import surveyIcon from '@/assets/buttons/survey_mumu01_256.png';
+import locationIcon from '@/assets/buttons/scan_chick02_256.png';
+import qrIcon from '@/assets/buttons/scan_pig01_256.png';
+import specialIcon from '@/assets/buttons/mission_pig02_256.png';
 
 interface Mission {
   id: string;
@@ -29,10 +34,10 @@ interface SpecialMissionsSectionProps {
 
 function getMissionIcon(type: string) {
   switch (type) {
-    case 'qr_scan': return QrCode;
-    case 'location_visit': return MapPin;
-    case 'survey': return ClipboardList;
-    default: return Star;
+    case 'qr_scan': return qrIcon;
+    case 'location_visit': return locationIcon;
+    case 'survey': return surveyIcon;
+    default: return specialIcon;
   }
 }
 
@@ -118,9 +123,8 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
               }}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${isCompleted ? 'bg-green-100' : 'bg-primary/10'
-                  }`}>
-                  <Icon className={`w-6 h-6 ${isCompleted ? 'text-green-600' : 'text-primary'}`} />
+                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <img src={getMissionIcon(mission.mission_type)} alt="" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

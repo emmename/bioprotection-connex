@@ -139,11 +139,58 @@
   html {
     font-family: 'Prompt', sans-serif;
     overscroll-behavior-y: none;
+    /* Custom Scrollbar - Mac OS style feeling */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)/0.3) transparent;
+  }
+
+  /* Webkit custom scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground)/0.3);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground)/0.5);
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     overscroll-behavior-y: none;
+  }
+
+  /* Global Accessibility Focus */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Global cursor improvement */
+  button, 
+  a, 
+  [role="button"], 
+  .cursor-pointer {
+    cursor: pointer;
+    /* Eliminate highlight flashing on iOS */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Disabled state standard */
+  :disabled, 
+  [disabled], 
+  .disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
   }
 }
 

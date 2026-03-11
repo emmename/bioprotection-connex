@@ -86,12 +86,12 @@ export function DailyMissionsCard({ todayCheckin, onCheckin, isLoading, receiptU
         {missions.map((mission) => {
           const content = (
             <div
-              className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${mission.isCompleted
-                ? 'bg-green-50 border border-green-200'
-                : 'bg-slate-100 hover:bg-slate-200'
+              className={`flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 active:scale-[0.98] ${mission.isCompleted
+                ? 'bg-green-50/70 border border-green-200 shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 hover:shadow-sm border border-slate-100'
                 }`}
             >
-              <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${mission.isCompleted ? 'bg-green-100' : 'bg-white'
+              <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center overflow-hidden transition-transform duration-300 ${mission.isCompleted ? 'bg-green-100' : 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] group-hover:scale-105'
                 }`}>
                 <img src={mission.icon} alt={mission.title} className="w-full h-full object-cover" />
               </div>
@@ -131,7 +131,7 @@ export function DailyMissionsCard({ todayCheckin, onCheckin, isLoading, receiptU
 
           if (mission.href && !mission.isCompleted) {
             return (
-              <Link key={mission.id} to={mission.href} className="block">
+              <Link key={mission.id} to={mission.href} className="block group">
                 {content}
               </Link>
             );

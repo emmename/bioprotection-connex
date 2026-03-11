@@ -22,11 +22,6 @@ const menuItems = [{
   path: '/admin/roles',
   requiredPermission: 'manage_roles'
 }, {
-  icon: Calendar,
-  label: 'จัดการกิจกรรม',
-  path: '/admin/events',
-  requiredPermission: 'manage_events'
-}, {
   icon: Receipt,
   label: 'อนุมัติใบเสร็จ',
   path: '/admin/receipts'
@@ -46,6 +41,11 @@ const menuItems = [{
   icon: ShoppingBag,
   label: 'รายการแลกของรางวัล',
   path: '/admin/redemptions'
+}, {
+  icon: Calendar,
+  label: 'จัดการกิจกรรม',
+  path: '/admin/events',
+  requiredPermission: 'manage_events'
 }, {
   icon: Target,
   label: 'จัดการภารกิจ',

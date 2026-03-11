@@ -61,27 +61,27 @@ export function LevelProgressCard({ currentTier, nextTier, currentPoints, member
   const isMaxTier = !nextTier;
 
   return (
-    <Card className="overflow-visible mt-1">
-      <div className="gradient-primary p-5 text-white relative rounded-xl">
+    <Card className="overflow-visible border-none shadow-none bg-transparent">
+      <div className="gradient-primary p-6 text-white relative rounded-2xl shadow-lg transition-transform duration-300 hover:-translate-y-1">
         {/* Mascot */}
-        <div className="absolute -top-7 right-2 w-28 h-28 opacity-100 filter drop-shadow-lg pointer-events-none z-10">
+        <div className="absolute -top-8 right-2 w-32 h-32 opacity-100 filter drop-shadow-xl pointer-events-none z-10 transition-transform duration-500 hover:scale-105">
           <img src={mascotChicken} alt="Mascot" className="w-full h-full object-contain" />
         </div>
 
         {/* Badge & Tier Name */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-4 mb-5">
           <Link
             to="/profile"
-            className={`w-[58px] h-[58px] ${!currentTier?.color ? tierColor : ''} rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/30`}
+            className={`w-16 h-16 ${!currentTier?.color ? tierColor : ''} rounded-full flex items-center justify-center shadow-md overflow-hidden border-[3px] border-white/40 active:scale-95 transition-all duration-300 hover:shadow-lg`}
             style={currentTier?.color ? { backgroundColor: currentTier.color } : {}}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <User className="w-7 h-7 text-white" />
+              <User className="w-8 h-8 text-white" />
             )}
           </Link>
-          <div>
+          <div className="space-y-0.5">
             <Badge
               variant="secondary"
               className={`text-white hover:opacity-90 mb-1 ${!currentTier?.color ? tierColor : ''}`}

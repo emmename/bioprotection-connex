@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, MapPin, Check, Lock, Star, ChevronRight, Play } from 'lucide-react';
+import { ArrowLeft, MapPin, Check, Lock, Star, ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { useMissionGroups } from '@/hooks/useGamification';
 import { DashboardSkeleton } from '@/components/ui/LoadingSkeleton';
+import missionChickIcon from '@/assets/buttons/mission_chick02_256.png';
 
 export default function MissionGroupDetail() {
     const { id } = useParams();
@@ -60,8 +61,8 @@ export default function MissionGroupDetail() {
                 {/* Header section with Grand Bonus */}
                 <div className="rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white overflow-hidden shadow-sm">
                     <div className="p-5 flex flex-col items-center text-center pb-6">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white mb-4 shadow-md shadow-amber-200 rotation-pulse">
-                            <Gift className="w-8 h-8" />
+                        <div className="w-20 h-20 mb-2 rotation-pulse">
+                            <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" />
                         </div>
                         <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none px-3 py-1 text-xs font-semibold mb-2">
                             รางวัลใหญ่ (Grand Bonus)
