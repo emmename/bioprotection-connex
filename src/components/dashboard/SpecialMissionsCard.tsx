@@ -90,9 +90,7 @@ export function SpecialMissionsCard() {
                                     return;
                                 }
                             }
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const missionAny = mission as Record<string, any>;
-                            if (missionAny.events && missionAny.events.length > 0) {
+                            if (mission.mission_type === 'location_visit' || (mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission as Record<string, any>).events?.length > 0) {
                                 navigate('/events');
                                 return;
                             }

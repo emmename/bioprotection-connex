@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDailyCheckin, useDailyMissions, useSpecialMissions, useMissionGroups } from '@/hooks/useGamification';
+import { useDailyCheckin, useDailyMissions, useSpecialMissions } from '@/hooks/useGamification';
 import { DashboardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { DailyMissionsSection } from '@/components/missions/DailyMissionsSection';
 import { SpecialMissionsSection } from '@/components/missions/SpecialMissionsSection';
+import { MissionGroupsCard } from '@/components/dashboard/MissionGroupsCard';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -63,6 +64,8 @@ export default function Missions() {
           videoWatchedToday={missionStatus.video}
           quizCompletedToday={missionStatus.quiz}
         />
+
+        <MissionGroupsCard />
 
         <SpecialMissionsSection
           missions={specialMissions.filter(m => !m.group_id)}

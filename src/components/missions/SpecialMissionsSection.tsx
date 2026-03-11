@@ -111,14 +111,14 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                 : isExpired
                   ? 'bg-muted/30 border-border opacity-60'
                   : 'bg-card border-border hover:border-primary/30'
-                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || mission.mission_type === 'special' || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
+                } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || mission.mission_type === 'special' || mission.mission_type === 'location_visit' || (mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (!isCompleted && !isExpired) {
                   if (mission.mission_type === 'qr_scan') {
                     navigate('/missions/scanner');
                   } else if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
                     navigate(`/content/${mission.requirements.content_id}`);
-                  } else if (mission.events && mission.events.length > 0) {
+                  } else if (mission.mission_type === 'location_visit' || (mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission.events && mission.events.length > 0)) {
                     navigate(`/events`);
                   }
                 }
@@ -182,7 +182,7 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                       {isExpired && <Badge variant="outline" className="text-[10px] ml-1">หมดเขต</Badge>}
                     </div>
                   )}
-                  {mission.events && mission.events.length > 0 && !isCompleted && !isExpired && (
+                  {(!isCompleted && !isExpired && ((mission.requirements as Record<string, any>)?.linked_events?.length > 0 || (mission.events && mission.events.length > 0))) && (
                     <div className="mt-2 text-xs font-medium text-primary flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       เข้าร่วมกิจกรรมเพื่อทำภารกิจนี้
