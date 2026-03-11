@@ -1754,6 +1754,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_qr_scan: {
+        Args: {
+          p_qr_text: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       process_event_checkin: {
         Args: { p_registration_id: string }
         Returns: undefined

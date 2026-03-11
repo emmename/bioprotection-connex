@@ -74,6 +74,10 @@ export function SpecialMissionsCard() {
 
                         // Determine action based on mission type
                         const handleAction = () => {
+                            if (mission.mission_type === 'qr_scan' || mission.mission_type === 'scan_qr') {
+                                navigate('/missions/scanner');
+                                return;
+                            }
                             if (mission.mission_type === 'survey' || mission.mission_type === 'special') {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const req = mission.requirements as Record<string, any>;

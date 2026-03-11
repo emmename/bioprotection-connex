@@ -87,7 +87,7 @@ BEGIN
       SELECT id, points_reward, coins_reward
       FROM missions 
       WHERE is_active = true 
-        AND mission_type = 'check_in' 
+        AND (mission_type = 'location_visit' OR mission_type = 'special')
         AND requirements @> jsonb_build_object('linked_events', jsonb_build_array(v_event_id::text))
     LOOP
       -- Check if not already completed

@@ -589,3 +589,35 @@ export function useMissionGroups() {
   return { missionGroups, isLoading };
 }
 
+export function useQRScan() {
+  const { profile, refreshProfile } = useAuth();
+  const [isScanning, setIsScanning] = useState(false);
+
+  const scanQR = async (qrText: string) => {
+    if (!profile) return { success: false, message: 'กรุณาเข้าสู่ระบบก่อน' };
+    
+    setIsScanning(true);
+    try {
+      const { data, error } = await supabase.rpc('process_qr_scan', {
+        p_qr_text: qrText,
+        p_user_id: profile.id
+      });
+      
+      if (error) throw error;
+      
+      const result = data as { success: boolean, message?: string, points_awarded?: number, coins_awarded?: number };
+      if (result?.success) {
+        await refreshProfile();
+      }
+      
+      return result;
+    } catch (error: any) {
+      console.error('QR Scan error:', error);
+      return { success: false, message: error.message || 'เกิดข้อผิดพลาดในการตรวจสอบ QR Code' };
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  return { scanQR, isScanning };
+}

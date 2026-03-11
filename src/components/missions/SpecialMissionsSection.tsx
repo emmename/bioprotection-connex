@@ -114,7 +114,9 @@ export function SpecialMissionsSection({ missions, completedMissionIds, isLoadin
                 } ${(!isCompleted && !isExpired && (mission.mission_type === 'survey' || mission.mission_type === 'special' || (mission.events && mission.events.length > 0))) ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (!isCompleted && !isExpired) {
-                  if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
+                  if (mission.mission_type === 'qr_scan') {
+                    navigate('/missions/scanner');
+                  } else if ((mission.mission_type === 'survey' || mission.mission_type === 'special') && mission.requirements?.content_id) {
                     navigate(`/content/${mission.requirements.content_id}`);
                   } else if (mission.events && mission.events.length > 0) {
                     navigate(`/events`);
