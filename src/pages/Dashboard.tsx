@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDailyCheckin, usePoints, useCoins, useTierSettings, useDailyMissions } from '@/hooks/useGamification';
+import { useDailyCheckin, usePoints, useCoins, useTierSettings } from '@/hooks/useGamification';
 import { supabase } from '@/integrations/supabase/client';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useMemberSubType } from '@/hooks/useMemberSubType';
@@ -11,9 +11,6 @@ import { LevelProgressCard } from '@/components/dashboard/LevelProgressCard';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
 import { DailyCheckinCard } from '@/components/dashboard/DailyCheckinCard';
-import { DailyMissionsCard } from '@/components/dashboard/DailyMissionsCard';
-import { SpecialMissionsCard } from '@/components/dashboard/SpecialMissionsCard';
-import { MissionGroupsCard } from '@/components/dashboard/MissionGroupsCard';
 
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { TierUpCelebration } from '@/components/dashboard/TierUpCelebration';
@@ -26,7 +23,6 @@ export default function Dashboard() {
   const { coins, refreshProfile: refreshCoins } = useCoins(); // transactions not used here
   const { todayCheckin, streak, isLoading: checkinLoading, checkin } = useDailyCheckin();
   const { tiers, isLoading: tiersLoading, refetch: refetchTiers } = useTierSettings();
-  const { missionStatus, isLoading: missionsLoading } = useDailyMissions();
   const { subTypeLabel } = useMemberSubType(profile);
 
   const [showCelebration, setShowCelebration] = useState(false);
@@ -92,7 +88,7 @@ export default function Dashboard() {
     onRefresh: handleRefresh,
   });
 
-  if (authLoading || checkinLoading || tiersLoading || missionsLoading) {
+  if (authLoading || checkinLoading || tiersLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -155,23 +151,6 @@ export default function Dashboard() {
 
         {/* Daily Check-in */}
         <DailyCheckinCard />
-
-        {/* Daily Missions */}
-        <DailyMissionsCard
-          todayCheckin={!!todayCheckin}
-          onCheckin={checkin}
-          isLoading={checkinLoading}
-          receiptUploadedToday={missionStatus.receipt}
-          articleReadToday={missionStatus.article}
-          videoWatchedToday={missionStatus.video}
-          quizCompletedToday={missionStatus.quiz}
-        />
-
-        {/* Special Missions */}
-        <SpecialMissionsCard />
-
-        {/* Mission Groups */}
-        <MissionGroupsCard />
 
 
       </main>
