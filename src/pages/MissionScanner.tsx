@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { useQRScan } from '@/hooks/useGamification';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,19 +40,23 @@ export default function MissionScanner() {
         }
     };
 
+    const isScanningRef = useRef(isScanning);
+    const scanStatusRef = useRef(scanResult.status);
+
     useEffect(() => {
-        const scanner = new Html5QrcodeScanner(
-            "mission-reader",
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                videoConstraints: { facingMode: "environment" }
-            },
-            false
-        );
+        isScanningRef.current = isScanning;
+    }, [isScanning]);
+
+    useEffect(() => {
+        scanStatusRef.current = scanResult.status;
+    }, [scanResult.status]);
+
+    useEffect(() => {
+        let active = true;
+        const html5QrCode = new Html5Qrcode("mission-reader");
 
         const onScanSuccess = async (decodedText: string) => {
-            if (!isScanning && scanResult.status === 'idle') {
+            if (!isScanningRef.current && scanStatusRef.current === 'idle') {
                 try {
                     const result = await scanQR(decodedText);
                     
@@ -60,7 +64,7 @@ export default function MissionScanner() {
                         setScanResult({
                             status: 'success',
                             message: result.message,
-                            pointsObj: { points: result.points_awarded || 0, coins: result.coins_awarded || 0 }
+                            pointsObj: { points: (result as any).points_awarded || 0, coins: (result as any).coins_awarded || 0 }
                         });
                         playBeep(800);
                         toast.success('ทำภารกิจสำเร็จ!');
@@ -88,9 +92,11 @@ export default function MissionScanner() {
                 }
 
                 // Auto reset status after 5 seconds to scan more things if they want
-                setTimeout(() => {
-                    setScanResult({ status: 'idle' });
-                }, 5000);
+                if (active) {
+                    setTimeout(() => {
+                        if (active) setScanResult({ status: 'idle' });
+                    }, 5000);
+                }
             }
         };
 
@@ -98,15 +104,38 @@ export default function MissionScanner() {
             // Ignored to prevent spamming
         };
 
-        scanner.render(onScanSuccess, onScanFailure);
+        const startScanner = async () => {
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+            } catch (err) {
+                console.error("Camera startup error:", err);
+            }
+        };
+
+        startScanner();
 
         return () => {
-            scanner.clear().catch(error => {
-                console.error("Failed to clear scanner. ", error);
-            });
+            active = false;
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(error => {
+                    console.error("Failed to clear scanner. ", error);
+                });
+            } else {
+                html5QrCode.clear();
+            }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isScanning, scanResult.status]);
+    }, []);
 
     return (
         <div className="min-h-screen bg-background pb-24">
