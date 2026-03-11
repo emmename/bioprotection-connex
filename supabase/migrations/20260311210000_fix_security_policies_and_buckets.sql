@@ -9,17 +9,10 @@ DROP POLICY IF EXISTS "Admins can update categories" ON library_categories;
 DROP POLICY IF EXISTS "Admins can delete categories" ON library_categories;
 
 -- Create secure policies to ensure only admins can manage categories
-CREATE POLICY "Admins can insert categories"
-  ON library_categories FOR INSERT TO authenticated
+CREATE POLICY "Admins can manage categories"
+  ON library_categories FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can update categories"
-  ON library_categories FOR UPDATE TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can delete categories"
-  ON library_categories FOR DELETE TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
 
 
 -- 2. Fix library_items policies
@@ -29,17 +22,10 @@ DROP POLICY IF EXISTS "Admins can update items" ON library_items;
 DROP POLICY IF EXISTS "Admins can delete items" ON library_items;
 
 -- Create secure policies to ensure only admins can manage items
-CREATE POLICY "Admins can insert items"
-  ON library_items FOR INSERT TO authenticated
+CREATE POLICY "Admins can manage items"
+  ON library_items FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can update items"
-  ON library_items FOR UPDATE TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can delete items"
-  ON library_items FOR DELETE TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
 
 
 -- 3. Fix library storage bucket (Limits and Policies)
@@ -55,23 +41,13 @@ DROP POLICY IF EXISTS "Authenticated users can update library files" ON storage.
 DROP POLICY IF EXISTS "Authenticated users can delete library files" ON storage.objects;
 
 -- Create secure bucket policies for admins
-CREATE POLICY "Admins can upload library files"
-  ON storage.objects FOR INSERT TO authenticated
+CREATE POLICY "Admins can manage library files"
+  ON storage.objects FOR ALL TO authenticated
+  USING (
+    bucket_id = 'library'
+    AND public.has_role(auth.uid(), 'admin')
+  )
   WITH CHECK (
-    bucket_id = 'library'
-    AND public.has_role(auth.uid(), 'admin')
-  );
-
-CREATE POLICY "Admins can update library files"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'library'
-    AND public.has_role(auth.uid(), 'admin')
-  );
-
-CREATE POLICY "Admins can delete library files"
-  ON storage.objects FOR DELETE TO authenticated
-  USING (
     bucket_id = 'library'
     AND public.has_role(auth.uid(), 'admin')
   );
@@ -90,23 +66,13 @@ DROP POLICY IF EXISTS "Authenticated Users Update" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated Users Delete" ON storage.objects;
 
 -- Create secure bucket policies for thumbnails
-CREATE POLICY "Admins can upload content thumbnails"
-  ON storage.objects FOR INSERT TO authenticated
+CREATE POLICY "Admins can manage content thumbnails"
+  ON storage.objects FOR ALL TO authenticated
+  USING (
+    bucket_id = 'content-thumbnails'
+    AND public.has_role(auth.uid(), 'admin')
+  )
   WITH CHECK (
-    bucket_id = 'content-thumbnails'
-    AND public.has_role(auth.uid(), 'admin')
-  );
-
-CREATE POLICY "Admins can update content thumbnails"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'content-thumbnails'
-    AND public.has_role(auth.uid(), 'admin')
-  );
-
-CREATE POLICY "Admins can delete content thumbnails"
-  ON storage.objects FOR DELETE TO authenticated
-  USING (
     bucket_id = 'content-thumbnails'
     AND public.has_role(auth.uid(), 'admin')
   );

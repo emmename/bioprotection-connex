@@ -5,12 +5,12 @@ VALUES (
     'survey_responses', 
     true, 
     5242880,
-    '{image/jpeg,image/png,image/gif,image/webp}'::text[]
+    ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']::text[]
 )
 ON CONFLICT (id) DO UPDATE
 SET 
-    file_size_limit = 5242880,
-    allowed_mime_types = '{image/jpeg,image/png,image/gif,image/webp}'::text[];
+    file_size_limit = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- Drop existing policies to recreate them securely
 DROP POLICY IF EXISTS "Public can upload survey responses" ON storage.objects;
@@ -32,6 +32,10 @@ USING (bucket_id = 'survey_responses');
 CREATE POLICY "Admins can manage survey responses"
 ON storage.objects FOR ALL TO authenticated
 USING (
+    bucket_id = 'survey_responses'
+    AND public.has_role(auth.uid(), 'admin')
+)
+WITH CHECK (
     bucket_id = 'survey_responses'
     AND public.has_role(auth.uid(), 'admin')
 );
