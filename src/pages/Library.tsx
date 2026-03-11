@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { PageHeader } from '@/components/ui/PageHeader';
-import poultryIcon from '@/assets/New folder/poultry_library_364 x 180 px.png';
-import cattleIcon from '@/assets/New folder/cattle_library_364 x 180 px.png';
-import pigIcon from '@/assets/New folder/pig_library_364 x 180 px.png';
+import poultryIcon from '@/assets/library-icons/poultry_library_364 x 180 px.png';
+import cattleIcon from '@/assets/library-icons/cattle_library_364 x 180 px.png';
+import pigIcon from '@/assets/library-icons/pig_library_364 x 180 px.png';
 
 interface LibraryCategory {
     id: string;
@@ -74,7 +74,7 @@ export default function Library() {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: catData } = await (supabase as any).from('library_categories')
+        const { data: catData } = await supabase.from('library_categories')
             .select('*')
             .eq('is_active', true)
             .order('sort_order', { ascending: true });
@@ -82,12 +82,12 @@ export default function Library() {
         if (catData) setCategories(catData);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: itemData } = await (supabase as any).from('library_items')
+        const { data: itemData } = await supabase.from('library_items')
             .select('*')
             .eq('is_published', true)
             .order('sort_order', { ascending: true });
 
-        if (itemData) setItems(itemData);
+        if (itemData) setItems(itemData as LibraryItem[]);
         setIsLoading(false);
     }, []);
 

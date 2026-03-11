@@ -56,14 +56,14 @@ export function usePullToRefresh({ onRefresh, threshold = 80 }: UsePullToRefresh
     // if the container is not taking up the full viewport height.
     const listeningElement = container || document.body;
 
-    listeningElement.addEventListener('touchstart', handleTouchStart as any, { passive: true });
-    listeningElement.addEventListener('touchmove', handleTouchMove as any, { passive: false });
-    listeningElement.addEventListener('touchend', handleTouchEnd as any, { passive: true });
+    listeningElement.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
+    listeningElement.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false });
+    listeningElement.addEventListener('touchend', handleTouchEnd as EventListener, { passive: true });
 
     return () => {
-      listeningElement.removeEventListener('touchstart', handleTouchStart as any);
-      listeningElement.removeEventListener('touchmove', handleTouchMove as any);
-      listeningElement.removeEventListener('touchend', handleTouchEnd as any);
+      listeningElement.removeEventListener('touchstart', handleTouchStart as EventListener);
+      listeningElement.removeEventListener('touchmove', handleTouchMove as EventListener);
+      listeningElement.removeEventListener('touchend', handleTouchEnd as EventListener);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 

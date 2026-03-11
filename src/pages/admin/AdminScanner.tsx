@@ -132,7 +132,7 @@ export default function AdminScanner() {
 
     const playBeep = (freq: number) => {
         try {
-            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const audioCtx = new (window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
 
@@ -148,7 +148,7 @@ export default function AdminScanner() {
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.5);
         } catch (e) {
-            console.log('Audio context not supported');
+            // Audio context not supported — silently ignore
         }
     };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { type Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ export function AdminMatchGameSettings() {
     const fetchConfig = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await (supabase as any)
+            const { data, error } = await supabase
                 .from('match_configs')
                 .select('*')
                 .eq('is_active', true)
@@ -46,11 +47,14 @@ export function AdminMatchGameSettings() {
             if (error) throw error;
 
             if (data) {
-                // Ensure default levels if empty
-                if (!data.levels_config || data.levels_config.length === 0) {
-                    data.levels_config = [{ grid: [2, 3], time: 30 }];
+                let parsedLevels = data.levels_config as unknown as MatchLevel[];
+                if (!parsedLevels || !Array.isArray(parsedLevels) || parsedLevels.length === 0) {
+                    parsedLevels = [{ grid: [2, 3], time: 30 }];
                 }
-                setConfig(data);
+                setConfig({
+                    ...data,
+                    levels_config: parsedLevels
+                } as MatchConfig);
             }
         } catch (e) {
             console.error("Error fetching match config:", e);
@@ -63,7 +67,7 @@ export function AdminMatchGameSettings() {
         if (!config) return;
         setIsSaving(true);
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_configs')
                 .update({
                     config_name: config.config_name,
@@ -71,7 +75,7 @@ export function AdminMatchGameSettings() {
                     free_plays_per_day: config.free_plays_per_day,
                     reward_type: config.reward_type,
                     reward_value: config.reward_value,
-                    levels_config: config.levels_config
+                    levels_config: config.levels_config as unknown as Json
                 })
                 .eq('id', config.id);
 

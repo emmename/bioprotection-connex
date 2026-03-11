@@ -27,7 +27,7 @@ const EXTRA_SPINS = 5;
 let sharedAudioCtx: AudioContext | null = null;
 const getAudioCtx = () => {
     if (!sharedAudioCtx) {
-        sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        sharedAudioCtx = new (window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
     return sharedAudioCtx;
 };
@@ -158,7 +158,7 @@ export const WheelGame = () => {
                     const startOfDay = new Date();
                     startOfDay.setHours(0, 0, 0, 0);
 
-                    const { count } = await (supabase as any)
+                    const { count } = await supabase
                         .from('game_sessions')
                         .select('*', { count: 'exact', head: true })
                         .eq('profile_id', profile.id)
@@ -169,7 +169,7 @@ export const WheelGame = () => {
                 }
 
                 // 1. Get Active Config
-                const { data: configData, error: configError } = await (supabase as any)
+                const { data: configData, error: configError } = await supabase
                     .from('wheel_configs')
                     .select('id, slot_count, coins_cost, free_spins_per_day')
                     .eq('is_active', true)
@@ -183,7 +183,7 @@ export const WheelGame = () => {
                 setConfig(configData);
 
                 // 2. Get Rewards for this config
-                const { data: rewardsData, error: rewardsError } = await (supabase as any)
+                const { data: rewardsData, error: rewardsError } = await supabase
                     .from('wheel_rewards')
                     .select('*')
                     .eq('wheel_id', configData.id)
@@ -192,7 +192,7 @@ export const WheelGame = () => {
                 if (rewardsError) {
                     console.error('Error fetching rewards', rewardsError);
                 } else if (rewardsData && rewardsData.length > 0) {
-                    const mappedRewards = (rewardsData as any[]).map(r => ({
+                    const mappedRewards = (rewardsData as Record<string, any>[]).map(r => ({
                         id: r.id,
                         label: r.reward_label,
                         color: r.reward_color,
@@ -328,7 +328,7 @@ export const WheelGame = () => {
             // Deduct coins if not free spin
             if (!isFreeSpin && cost > 0) {
                 // Use secure RPC to spend coins and record transaction
-                const { error: txError } = await (supabase as any).rpc('spend_coins_for_game', {
+                const { error: txError } = await supabase.rpc('spend_coins_for_game', {
                     p_profile_id: userProfile.id,
                     p_amount: cost,
                     p_game_type: 'wheel',
@@ -345,7 +345,7 @@ export const WheelGame = () => {
 
             // Record game session
             const wonRewardData = rewards[winningIndex];
-            const { error: sessionError } = await (supabase as any).from('game_sessions').insert({
+            const { error: sessionError } = await supabase.from('game_sessions').insert({
                 profile_id: userProfile.id,
                 game_type: 'wheel',
                 coins_spent: (!isFreeSpin && cost > 0) ? cost : 0,
@@ -359,7 +359,7 @@ export const WheelGame = () => {
 
             // Add won reward to transactions securely via RPC
             if (wonRewardData.type !== 'none' && wonRewardData.value > 0) {
-                const { error: rewardError } = await (supabase as any).rpc('earn_reward_from_game', {
+                const { error: rewardError } = await supabase.rpc('earn_reward_from_game', {
                     p_profile_id: userProfile.id,
                     p_reward_type: wonRewardData.type,
                     p_amount: wonRewardData.value,

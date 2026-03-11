@@ -155,7 +155,6 @@ export default function Auth() {
     } else {
       // Check if email confirmation is required
       // When email confirmation is ON, data.session will be null
-      console.log('[Auth] signUp result - session:', data?.session ? 'exists' : 'null', 'user:', data?.user?.id);
       if (data?.session) {
         // Auto-confirmed: session exists, navigate to registration form
         toast.success('สมัครสมาชิกสำเร็จ! กำลังไปหน้าลงทะเบียน...');

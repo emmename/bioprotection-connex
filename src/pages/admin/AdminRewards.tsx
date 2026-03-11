@@ -19,6 +19,7 @@ import { RewardImageLightbox } from "@/components/rewards/RewardImageLightbox";
 import { RewardCategoryManager } from "@/components/admin/RewardCategoryManager";
 import { useTierSettings } from "@/hooks/useGamification";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { MEMBER_TYPE_OPTIONS, MEMBER_SUB_TYPES, type MemberType } from '@/constants/memberTypes';
 type TierLevel = Database["public"]["Enums"]["tier_level"];
 interface TierPointsCost {
   bronze: number;
@@ -55,34 +56,7 @@ const defaultTierPointsCost: TierPointsCost = {
   platinum: 0
 };
 
-type MemberType = Database["public"]["Enums"]["member_type"];
 
-const MEMBER_TYPE_OPTIONS: { value: MemberType; label: string }[] = [
-  { value: 'farm', label: 'ฟาร์มเลี้ยงสัตว์' },
-  { value: 'company_employee', label: 'พนักงานบริษัท' },
-  { value: 'veterinarian', label: 'สัตวแพทย์' },
-  { value: 'livestock_shop', label: 'ร้านค้าสินค้าปศุสัตว์' },
-];
-
-const MEMBER_SUB_TYPES: Record<string, { value: string; label: string }[]> = {
-  farm: [
-    { value: 'owner', label: 'เจ้าของกิจการ' },
-    { value: 'farm_manager', label: 'ผู้จัดการฟาร์ม' },
-    { value: 'animal_husbandry', label: 'สัตวบาล' },
-    { value: 'admin', label: 'ธุรการ' },
-    { value: 'other', label: 'อื่นๆ' },
-  ],
-  company_employee: [
-    { value: 'animal_production', label: 'ผลิตสัตว์/ส่งออกหรือแปรรูปเนื้อสัตว์' },
-    { value: 'animal_feed', label: 'ผลิตอาหารสัตว์' },
-    { value: 'veterinary_distribution', label: 'จัดจำหน่ายเวชภัณฑ์สัตว์' },
-    { value: 'elanco', label: 'พนักงานอีแลนโค (Elanco)' },
-    { value: 'other', label: 'อื่นๆ' },
-  ],
-  veterinarian: [
-    { value: 'livestock', label: 'สัตวแพทย์ประจำปศุสัตว์' },
-  ],
-};
 export default function AdminRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -191,7 +165,7 @@ export default function AdminRewards() {
       category: reward.category || "general"
     });
 
-    const parsedRequirements = reward.requirements as any;
+    const parsedRequirements = reward.requirements as Record<string, any>;
     if (parsedRequirements?.targeting?.sub_types) {
       setTargetSubTypes(parsedRequirements.targeting.sub_types);
     } else {
@@ -633,7 +607,7 @@ export default function AdminRewards() {
                       {reward.target_member_types && reward.target_member_types.length > 0 ? (
                         <div className="flex flex-col gap-1.5 w-full">
                           {reward.target_member_types.map((type) => {
-                            const parsedReqs = reward.requirements as any;
+                            const parsedReqs = reward.requirements as Record<string, any>;
                             const subTypes = parsedReqs?.targeting?.sub_types?.[type] || [];
 
                             return (

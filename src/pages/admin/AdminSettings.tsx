@@ -72,7 +72,6 @@ const AdminSettings = () => {
       const [tierRes, checkinRes, systemRes] = await Promise.all([
         supabase.from("tier_settings").select("*").order("min_points", { ascending: true }),
         supabase.from("checkin_rewards").select("*").order("day_number", { ascending: true }),
-        // @ts-expect-error system_settings table not in generated types
         supabase.from("system_settings").select("*"),
       ]);
 
@@ -80,7 +79,6 @@ const AdminSettings = () => {
       if (checkinRes.data) setCheckinRewards(checkinRes.data);
 
       if (systemRes.data) {
-        // @ts-expect-error system_settings table not in generated types
         const settings = systemRes.data as { key: string, value: string }[];
         const rate = settings.find(s => s.key === 'coins_per_point' || s.key === 'coins_to_points_ratio');
         const active = settings.find(s => s.key === 'exchange_is_active');
@@ -400,10 +398,8 @@ const AdminSettings = () => {
                     ];
 
                     const { error } = await supabase
-                      // @ts-expect-error system_settings table not in generated types
                       .from("system_settings")
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      .upsert(updates as any);
+                      .upsert(updates);
 
                     if (error) throw error;
                     toast.success("บันทึกการตั้งค่าระบบสำเร็จ");

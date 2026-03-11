@@ -209,7 +209,7 @@ export default function AdminMemberDetail() {
         .single();
 
       if (profileError) throw profileError;
-      setProfile(profileData as any);
+      setProfile(profileData as unknown as MemberProfile);
 
       const occupationDetails: OccupationDetails = {};
 

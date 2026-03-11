@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { MEMBER_TYPE_LABELS, TIER_CONFIG } from '@/constants/memberTypes';
 
 /* ─── Types ─── */
 interface DashboardStats {
@@ -27,24 +28,7 @@ interface DashboardStats {
   };
 }
 
-/* ─── Constants ─── */
-const MEMBER_TYPE_LABELS: Record<string, string> = {
-  farm: 'ฟาร์ม (ลูกค้า)',
-  company_employee: 'พนักงานบริษัท',
-  veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านขายยาสัตว์',
-  government: 'หน่วยงานรัฐ',
-  other: 'อื่นๆ',
-  unspecified: 'ไม่ระบุ',
-};
 
-const TIER_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  platinum: { label: 'Platinum', color: 'text-violet-700', bg: 'bg-violet-100' },
-  gold: { label: 'Gold', color: 'text-amber-700', bg: 'bg-amber-100' },
-  silver: { label: 'Silver', color: 'text-slate-600', bg: 'bg-slate-200' },
-  bronze: { label: 'Bronze', color: 'text-orange-700', bg: 'bg-orange-100' },
-  unassigned: { label: 'ยังไม่มีระดับ', color: 'text-slate-500', bg: 'bg-slate-100' },
-};
 
 const REDEMPTION_STATUS: Record<string, { label: string; icon: typeof Clock; color: string; bg: string }> = {
   pending: { label: 'รอดำเนินการ', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },

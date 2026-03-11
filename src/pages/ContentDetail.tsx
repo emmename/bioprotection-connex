@@ -640,7 +640,7 @@ export default function ContentDetail() {
               <Button onClick={() => {
                 setShowSuccessModal(false);
                 const isMissionSurvey = content.content_type === 'survey' &&
-                  (content.requirements as any)?.is_mission_survey === true;
+                  (content.requirements as Record<string, any>)?.is_mission_survey === true;
                 if (isMissionSurvey) {
                   navigate(-1);
                 }

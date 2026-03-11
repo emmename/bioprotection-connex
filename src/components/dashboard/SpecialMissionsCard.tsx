@@ -67,7 +67,7 @@ export function SpecialMissionsCard() {
                         const handleAction = () => {
                             if (mission.mission_type === 'survey') {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const req = mission.requirements as any;
+                                const req = mission.requirements as Record<string, any>;
                                 if (req && req.content_id) {
                                     navigate(`/content/${req.content_id}`);
                                     return;
@@ -78,7 +78,7 @@ export function SpecialMissionsCard() {
                                 }
                             }
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const missionAny = mission as any;
+                            const missionAny = mission as Record<string, any>;
                             if (missionAny.events && missionAny.events.length > 0) {
                                 navigate('/events');
                                 return;

@@ -152,7 +152,7 @@ export default function Rewards() {
       }
 
       // If user's member type is allowed, check sub-types
-      const requirements = reward.requirements as any;
+      const requirements = reward.requirements as Record<string, any>;
       const targetSubTypes = requirements?.targeting?.sub_types?.[userMemberType];
 
       // If no specific sub-types specified for this member type, allow

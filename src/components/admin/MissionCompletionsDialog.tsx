@@ -62,7 +62,7 @@ export function MissionCompletionsDialog({ mission, open, onOpenChange }: Missio
           completed_at: d.completed_at || new Date().toISOString(),
           proof_image_url: null,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          profile: (d.profile as any) || null
+          profile: (d.profile as Record<string, any>) || null
         }));
         setCompletions(formattedData as Completion[]);
       } else {

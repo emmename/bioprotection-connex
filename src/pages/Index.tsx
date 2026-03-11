@@ -5,7 +5,6 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Index page loaded, redirecting...");
     navigate("/dashboard", { replace: true });
   }, [navigate]);
 

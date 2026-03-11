@@ -383,7 +383,7 @@ export function useSpecialMissions() {
       if (missionsData) {
         const surveyMissions = (missionsData as Mission[]).filter(m => m.mission_type === 'survey');
         if (surveyMissions.length > 0) {
-          const contentIds = surveyMissions.map(m => (m.requirements as any)?.content_id).filter(Boolean);
+          const contentIds = surveyMissions.map(m => (m.requirements as Record<string, any>)?.content_id).filter(Boolean) as string[];
           if (contentIds.length > 0) {
             const { data: contentCompletions } = await supabase
               .from('content_progress')
@@ -395,7 +395,7 @@ export function useSpecialMissions() {
             if (contentCompletions) {
               const completedContentIds = contentCompletions.map(c => c.content_id);
               surveyMissions.forEach(m => {
-                const cId = (m.requirements as any)?.content_id;
+                const cId = (m.requirements as Record<string, any>)?.content_id as string;
                 if (cId && completedContentIds.includes(cId)) {
                   if (!completedIds.includes(m.id)) {
                     completedIds.push(m.id);

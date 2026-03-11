@@ -63,7 +63,7 @@ export const MemoryMatchGame = () => {
     const playSound = (freq: number, dur: number, type: OscillatorType = 'sine') => {
         try {
             if (!audioCtxRef.current) {
-                audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioCtxRef.current = new (window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
             }
             const ctx = audioCtxRef.current;
             if (ctx.state === 'suspended') {
@@ -91,7 +91,7 @@ export const MemoryMatchGame = () => {
             setIsLoading(true);
             try {
                 // Fetch config
-                const { data: configData, error: configError } = await (supabase as any)
+                const { data: configData, error: configError } = await supabase
                     .from('match_configs')
                     .select('*')
                     .eq('is_active', true)
@@ -102,18 +102,22 @@ export const MemoryMatchGame = () => {
                 if (configError) throw configError;
 
                 // Fetch images
-                const { data: imgData, error: imgError } = await (supabase as any)
+                const { data: imgData, error: imgError } = await supabase
                     .from('match_images')
                     .select('id, image_url')
                     .eq('is_active', true);
 
                 if (imgError) throw imgError;
 
-                if (configData && (!configData.levels_config || configData.levels_config.length === 0)) {
-                    configData.levels_config = [{ grid: [2, 3], time: 30 }];
+                let parsedLevels = configData.levels_config as unknown as MatchLevel[];
+                if (!parsedLevels || !Array.isArray(parsedLevels) || parsedLevels.length === 0) {
+                    parsedLevels = [{ grid: [2, 3], time: 30 }];
                 }
 
-                setConfig(configData);
+                setConfig({
+                    ...configData,
+                    levels_config: parsedLevels
+                } as MatchConfig);
                 setImages(imgData || []);
 
                 // Fetch user coins & play count
@@ -127,7 +131,7 @@ export const MemoryMatchGame = () => {
                         setUserCoins(profile.total_coins || 0);
                         const startOfDay = new Date();
                         startOfDay.setHours(0, 0, 0, 0);
-                        const { count } = await (supabase as any)
+                        const { count } = await supabase
                             .from('game_sessions')
                             .select('*', { count: 'exact', head: true })
                             .eq('profile_id', profile.id)
@@ -236,7 +240,6 @@ export const MemoryMatchGame = () => {
         setIsStarting(true);
         try {
             // Step 1: Get user profile
-            console.log("[MatchGame] Step 1: Fetching profile...");
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -248,16 +251,14 @@ export const MemoryMatchGame = () => {
                 throw profileError;
             }
             if (!profile) throw new Error("Profile not found");
-            console.log("[MatchGame] Profile found:", profile.id);
 
             // Step 2: Count plays today (non-fatal if fails — default to free play)
-            console.log("[MatchGame] Step 2: Counting today's plays...");
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
 
             let playedToday = 0;
             try {
-                const { count, error: countError } = await (supabase as any)
+                const { count, error: countError } = await supabase
                     .from('game_sessions')
                     .select('*', { count: 'exact', head: true })
                     .eq('profile_id', profile.id)
@@ -275,7 +276,7 @@ export const MemoryMatchGame = () => {
 
             const isFreePlay = playedToday < (config.free_plays_per_day || 0);
             const cost = config.coins_cost || 0;
-            console.log("[MatchGame] playedToday:", playedToday, "isFreePlay:", isFreePlay, "cost:", cost);
+
 
             if (!isFreePlay && profile.total_coins < cost) {
                 toast.error(`เหรียญไม่เพียงพอ (ต้องการ ${cost} เหรียญ)`);
@@ -284,8 +285,8 @@ export const MemoryMatchGame = () => {
 
             // Step 3: Deduct coins if not free play (uses player-safe RPC)
             if (!isFreePlay && cost > 0) {
-                console.log("[MatchGame] Step 3: Deducting coins...");
-                const { error: deductError } = await (supabase as any).rpc('spend_coins_for_game', {
+
+                const { error: deductError } = await supabase.rpc('spend_coins_for_game', {
                     p_profile_id: profile.id,
                     p_amount: cost,
                     p_game_type: 'memory_match',
@@ -299,7 +300,7 @@ export const MemoryMatchGame = () => {
             }
             setPlayedToday(prev => prev + 1);
 
-            console.log("[MatchGame] All checks passed, starting game!");
+
             setCurrentLevelIdx(0);
             generateLevel(0);
         } catch (error) {
@@ -330,7 +331,7 @@ export const MemoryMatchGame = () => {
             if (!profile) return;
 
             // Match WheelGame pattern: use status and reward_id columns
-            await (supabase as any).from('game_sessions').insert({
+            await supabase.from('game_sessions').insert({
                 profile_id: profile.id,
                 game_type: 'memory_match',
                 status: status,

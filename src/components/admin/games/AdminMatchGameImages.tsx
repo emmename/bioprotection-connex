@@ -31,7 +31,7 @@ export function AdminMatchGameImages() {
     const fetchImages = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await (supabase as any)
+            const { data, error } = await supabase
                 .from('match_images')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -59,7 +59,7 @@ export function AdminMatchGameImages() {
         setIsUploading(true);
         try {
             const rows = newImageUrls.map(url => ({ image_url: url, is_active: true }));
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_images')
                 .insert(rows);
 
@@ -80,7 +80,7 @@ export function AdminMatchGameImages() {
 
     const toggleImageActive = async (id: string, currentStatus: boolean) => {
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_images')
                 .update({ is_active: !currentStatus })
                 .eq('id', id);
@@ -98,7 +98,7 @@ export function AdminMatchGameImages() {
         if (!confirm("คุณต้องการลบรูปภาพนี้ใช่หรือไม่?")) return;
 
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_images')
                 .delete()
                 .eq('id', id);
@@ -127,7 +127,7 @@ export function AdminMatchGameImages() {
     const bulkToggleActive = async (activate: boolean) => {
         const ids = Array.from(selectedIds);
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_images')
                 .update({ is_active: activate })
                 .in('id', ids);
@@ -145,7 +145,7 @@ export function AdminMatchGameImages() {
         const ids = Array.from(selectedIds);
         if (!confirm(`คุณต้องการลบรูปภาพ ${ids.length} รูปใช่หรือไม่?`)) return;
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('match_images')
                 .delete()
                 .in('id', ids);

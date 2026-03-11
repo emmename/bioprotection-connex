@@ -114,7 +114,7 @@ export default function Content() {
 
         // Hide surveys that are linked to missions (is_mission_survey flag)
         const isMissionSurvey = content.content_type === 'survey' &&
-          (content.requirements as any)?.is_mission_survey === true;
+          (content.requirements as Record<string, any>)?.is_mission_survey === true;
         if (isMissionSurvey) return false;
 
         return tierAllowed && memberTypeAllowed && subTypeAllowed;

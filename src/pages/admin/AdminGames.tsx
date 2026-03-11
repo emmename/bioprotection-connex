@@ -54,7 +54,7 @@ export default function AdminGames() {
         setIsLoading(true);
         try {
             // 1. Fetch active configs
-            const { data: configData, error: configError } = await (supabase as any)
+            const { data: configData, error: configError } = await supabase
                 .from('wheel_configs')
                 .select('*')
                 .eq('is_active', true)
@@ -79,7 +79,7 @@ export default function AdminGames() {
                 });
 
                 // 2. Fetch rewards for active config
-                const { data: rewardsData, error: rewardsError } = await (supabase as any)
+                const { data: rewardsData, error: rewardsError } = await supabase
                     .from('wheel_rewards')
                     .select('*')
                     .eq('wheel_id', configData.id)
@@ -108,7 +108,7 @@ export default function AdminGames() {
 
     const handleRewardSave = async (id: string, updates: Partial<WheelReward>) => {
         try {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('wheel_rewards')
                 .update(updates)
                 .eq('id', id);
@@ -177,18 +177,18 @@ export default function AdminGames() {
                             weight: 10
                         });
                     }
-                    await (supabase as any).from('wheel_rewards').insert(newRewards);
+                    await supabase.from('wheel_rewards').insert(newRewards);
                 } else {
                     const toDelete = rewards.slice(configFormData.slot_count).map(r => r.id);
                     if (toDelete.length > 0) {
-                        await (supabase as any).from('wheel_rewards')
+                        await supabase.from('wheel_rewards')
                             .delete()
                             .in('id', toDelete);
                     }
                 }
             }
 
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('wheel_configs')
                 .update({
                     slot_count: configFormData.slot_count,

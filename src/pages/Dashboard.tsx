@@ -45,14 +45,12 @@ export default function Dashboard() {
 
     // Tier changed
     if (prevTierRef.current !== profile.tier) {
-      console.log('Tier upgrade detected:', prevTierRef.current, '->', profile.tier);
       setCelebrationTier(profile.tier);
       setShowCelebration(true);
 
       // Record notification
       const recordNotification = async () => {
         try {
-          console.log('Attempting to record level up notification...');
           const { error } = await supabase.from('notifications').insert({
             profile_id: profile.id,
             title: 'ยินดีด้วย! คุณได้เลื่อนระดับ',
@@ -65,7 +63,7 @@ export default function Dashboard() {
             console.error('Supabase error recording notification:', error);
             throw error;
           }
-          console.log('Notification recorded successfully');
+
         } catch (error) {
           console.error('Error recording notification:', error);
           // Optional: Show toast for debug (can remove later if annoying)
