@@ -58,7 +58,7 @@ export default function MissionScanner() {
         const onScanSuccess = async (decodedText: string) => {
             if (!isScanningRef.current && scanStatusRef.current === 'idle') {
                 try {
-                    const result = await scanQR(decodedText);
+                    const result = await scanQR(decodedText.trim());
                     
                     if (result?.success) {
                         setScanResult({
