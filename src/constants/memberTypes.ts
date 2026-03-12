@@ -48,11 +48,11 @@ export const MEMBER_SUB_TYPES: Record<string, SubTypeOption[]> = {
 // ─── Member Type Labels ───
 // Used in dashboard for display purposes (includes extra types like government/other)
 export const MEMBER_TYPE_LABELS: Record<string, string> = {
-  farm: 'ฟาร์ม (ลูกค้า)',
+  farm: 'ฟาร์มเลี้ยงสัตว์',
   company_employee: 'พนักงานบริษัท',
   veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านขายยาสัตว์',
-  government: 'หน่วยงานรัฐ',
+  livestock_shop: 'ร้านค้าสินค้าปศุสัตว์',
+  government: 'รับราชการ',
   other: 'อื่นๆ',
   unspecified: 'ไม่ระบุ',
 };

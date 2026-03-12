@@ -33,14 +33,9 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-const memberTypeLabels: Record<string, string> = {
-  farm: 'ฟาร์มเลี้ยงสัตว์',
-  company_employee: 'พนักงานบริษัท',
-  veterinarian: 'สัตวแพทย์',
-  livestock_shop: 'ร้านค้าสินค้าปศุสัตว์',
-  government: 'รับราชการ',
-  other: 'อื่นๆ',
-};
+import { MEMBER_TYPE_LABELS } from '@/constants/memberTypes';
+
+const memberTypeLabels = MEMBER_TYPE_LABELS;
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   pending: { label: 'รอการอนุมัติ', variant: 'secondary' },

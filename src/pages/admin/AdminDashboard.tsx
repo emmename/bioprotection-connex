@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MEMBER_TYPE_LABELS, TIER_CONFIG } from '@/constants/memberTypes';
+import { TierSettings } from '@/types/gamification';
 
 /* ─── Types ─── */
 interface DashboardStats {
@@ -25,7 +26,9 @@ interface DashboardStats {
   memberBreakdown: {
     types: Record<string, number>;
     tiers: Record<string, number>;
+    totalApproved: number;
   };
+  tierSettings: TierSettings[];
 }
 
 
@@ -54,7 +57,8 @@ export default function AdminDashboard() {
     rejectedReceipts: 0,
     totalReceipts: 0,
     redemptionBreakdown: {},
-    memberBreakdown: { types: {}, tiers: {} },
+    memberBreakdown: { types: {}, tiers: {}, totalApproved: 0 },
+    tierSettings: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,6 +78,7 @@ export default function AdminDashboard() {
         { count: rejectedReceipts },
         { data: allRedemptionsData },
         { data: allProfilesData },
+        { data: allTierSettings },
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending'),
@@ -83,7 +88,8 @@ export default function AdminDashboard() {
         supabase.from('receipts').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
         supabase.from('receipts').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
         supabase.from('reward_redemptions').select('status'),
-        supabase.from('profiles').select('member_type, tier'),
+        supabase.from('profiles').select('member_type, tier').eq('approval_status', 'approved'),
+        supabase.from('tier_settings').select('*'),
       ]);
 
       const redemptionBreakdown: Record<string, number> = {};
@@ -93,11 +99,13 @@ export default function AdminDashboard() {
 
       const types: Record<string, number> = {};
       const tiers: Record<string, number> = {};
+      let totalApproved = 0;
       allProfilesData?.forEach((p) => {
         const type = p.member_type || 'unspecified';
         const tier = p.tier || 'unassigned';
         types[type] = (types[type] || 0) + 1;
         tiers[tier] = (tiers[tier] || 0) + 1;
+        totalApproved++;
       });
 
       setStats({
@@ -110,7 +118,8 @@ export default function AdminDashboard() {
         rejectedReceipts: rejectedReceipts || 0,
         totalReceipts: (pendingReceipts || 0) + (approvedReceipts || 0) + (rejectedReceipts || 0),
         redemptionBreakdown,
-        memberBreakdown: { types, tiers },
+        memberBreakdown: { types, tiers, totalApproved },
+        tierSettings: (allTierSettings as any) || [],
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -282,12 +291,12 @@ export default function AdminDashboard() {
                   <div key={type} className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors">
                     <span className="text-sm font-medium text-foreground">{MEMBER_TYPE_LABELS[type] || type}</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-foreground">{count.toLocaleString()}</span>
-                      <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
-                        {pct(count, stats.totalMembers)}%
-                      </Badge>
+                        <span className="text-sm font-bold text-foreground">{count.toLocaleString()}</span>
+                        <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
+                          {pct(count, stats.memberBreakdown.totalApproved)}%
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
                 ))}
             </div>
           </CardContent>
@@ -307,16 +316,17 @@ export default function AdminDashboard() {
                 .sort((a, b) => b[1] - a[1])
                 .map(([tier, count]) => {
                   const cfg = TIER_CONFIG[tier] || TIER_CONFIG.unassigned;
+                  const tierDisplayName = stats.tierSettings.find(t => t.tier === tier)?.display_name || cfg.label;
                   return (
                     <div key={tier} className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors">
                       <div className="flex items-center gap-2.5">
                         <span className={`inline-block w-2.5 h-2.5 rounded-full ${cfg.bg}`} />
-                        <span className={`text-sm font-semibold capitalize ${cfg.color}`}>{cfg.label}</span>
+                        <span className={`text-sm font-semibold capitalize ${cfg.color}`}>{tierDisplayName}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-foreground">{count.toLocaleString()}</span>
                         <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
-                          {pct(count, stats.totalMembers)}%
+                          {pct(count, stats.memberBreakdown.totalApproved)}%
                         </Badge>
                       </div>
                     </div>
