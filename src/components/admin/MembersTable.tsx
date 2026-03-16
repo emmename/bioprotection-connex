@@ -126,10 +126,13 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
           aValue = `${a.first_name} ${a.last_name}`;
           bValue = `${b.first_name} ${b.last_name}`;
           break;
-        case 'member_type':
-          aValue = memberTypeLabels[a.member_type] || a.member_type;
-          bValue = memberTypeLabels[b.member_type] || b.member_type;
+        case 'member_type': {
+          const aType = a.member_type?.toLowerCase() || '';
+          const bType = b.member_type?.toLowerCase() || '';
+          aValue = memberTypeLabels[aType] || a.member_type;
+          bValue = memberTypeLabels[bType] || b.member_type;
           break;
+        }
         case 'approval_status':
           aValue = statusLabels[a.approval_status]?.label || a.approval_status;
           bValue = statusLabels[b.approval_status]?.label || b.approval_status;
@@ -234,12 +237,28 @@ export function MembersTable({ members, isLoading, columns, onUpdateStatus, sele
             )}
           </div>
         );
-      case 'member_type':
+      case 'member_type': {
+        const typeKey = member.member_type?.toLowerCase() || '';
+        const label = memberTypeLabels[typeKey] || member.member_type;
+        
+        const typeColors: Record<string, string> = {
+          farm: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+          company_employee: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          veterinarian: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100',
+          livestock_shop: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          government: 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100',
+          other: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+          unspecified: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+        };
+        
+        const colorClass = typeColors[typeKey] || typeColors.other;
+
         return (
-          <Badge variant="outline">
-            {memberTypeLabels[member.member_type] || member.member_type}
+          <Badge variant="outline" className={colorClass}>
+            {label}
           </Badge>
         );
+      }
       case 'approval_status':
         return (
           <Badge variant={statusLabels[member.approval_status]?.variant || 'secondary'}>

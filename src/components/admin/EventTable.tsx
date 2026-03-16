@@ -24,6 +24,7 @@ export interface AdminEvent {
     start_date: string;
     end_date: string;
     is_active: boolean;
+    is_visible: boolean;
     event_type: string | null;
     allowed_member_types: string[] | null;
     allowed_sub_types?: Record<string, string[]> | null;
@@ -67,7 +68,14 @@ export function EventTable({ events, tiersData, onView, onEdit, onDelete, onTogg
                 {events.map((event) => (
                     <TableRow key={event.id}>
                         <TableCell>
-                            <div className="font-medium">{event.title}</div>
+                            <div className="font-medium flex items-center gap-1.5">
+                                {event.title}
+                                {!event.is_visible && (
+                                    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-amber-50 text-amber-700 border-amber-200">
+                                        🔒 ซ่อน
+                                    </Badge>
+                                )}
+                            </div>
                             {event.location && (
                                 <div className="text-sm text-muted-foreground flex items-center mt-1">
                                     <MapPin className="w-3 h-3 mr-1" />

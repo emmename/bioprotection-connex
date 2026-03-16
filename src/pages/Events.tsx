@@ -50,6 +50,7 @@ export default function Events() {
                 .from('events')
                 .select('*')
                 .eq('is_active', true)
+                .eq('is_visible', true)
                 .gte('end_date', now)
                 .order('start_date', { ascending: true });
 

@@ -87,13 +87,13 @@ export default function Missions() {
           quizCompletedToday={missionStatus.quiz}
         />
 
-        <MissionGroupsCard />
-
         <SpecialMissionsSection
           missions={specialMissions.filter(m => !m.group_id)}
           completedMissionIds={completedMissionIds}
           isLoading={specialMissionsLoading}
         />
+
+        <MissionGroupsCard />
       </main>
 
 

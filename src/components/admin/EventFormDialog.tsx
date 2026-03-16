@@ -20,6 +20,7 @@ interface EventFormDialogProps {
         start_date: string;
         end_date: string;
         is_active: boolean;
+        is_visible: boolean;
         event_type: string;
         allowed_member_types: string[];
         allowed_sub_types: Record<string, string[]>;
@@ -192,6 +193,22 @@ export function EventFormDialog({
                                         <SelectItem value="inactive">ปิดใช้งาน</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-3 border rounded-md bg-amber-50 border-amber-200">
+                            <Checkbox
+                                id="is_visible"
+                                checked={formData.is_visible}
+                                onCheckedChange={(checked) => setFormData({ ...formData, is_visible: !!checked })}
+                            />
+                            <div>
+                                <label htmlFor="is_visible" className="text-sm font-medium cursor-pointer">
+                                    แสดงแก่สมาชิก
+                                </label>
+                                <p className="text-xs text-muted-foreground">
+                                    หากปิด สมาชิกจะไม่เห็นกิจกรรมนี้และต้องใช้ "QR ของฉัน" ในการเช็คอินแทน
+                                </p>
                             </div>
                         </div>
                     </div>

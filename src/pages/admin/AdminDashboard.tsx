@@ -9,8 +9,35 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Button } from '@/components/ui/button';
 import { MEMBER_TYPE_LABELS, TIER_CONFIG } from '@/constants/memberTypes';
 import { TierSettings } from '@/types/gamification';
+
+const CHART_COLORS = [
+  '#0ea5e9', // Sky 500
+  '#10b981', // Emerald 500
+  '#f59e0b', // Amber 500
+  '#8b5cf6', // Violet 500
+  '#ec4899', // Pink 500
+  '#f43f5e', // Rose 500
+];
+
+const sharedChartConfig = {
+  value: { label: "จำนวน" }
+};
+
+const getTypeColor = (type: string | undefined | null) => {
+  switch (type?.toLowerCase()) {
+    case 'farm': return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+    case 'company_employee': return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
+    case 'veterinarian': return 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100';
+    case 'livestock_shop': return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
+    case 'government': return 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100';
+    default: return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+  }
+};
 
 /* ─── Types ─── */
 interface DashboardStats {
@@ -29,6 +56,7 @@ interface DashboardStats {
     totalApproved: number;
   };
   tierSettings: TierSettings[];
+  recentMembers: any[];
 }
 
 
@@ -59,6 +87,7 @@ export default function AdminDashboard() {
     redemptionBreakdown: {},
     memberBreakdown: { types: {}, tiers: {}, totalApproved: 0 },
     tierSettings: [],
+    recentMembers: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,6 +108,7 @@ export default function AdminDashboard() {
         { data: allRedemptionsData },
         { data: allProfilesData },
         { data: allTierSettings },
+        { data: recentMembersData },
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending'),
@@ -90,6 +120,7 @@ export default function AdminDashboard() {
         supabase.from('reward_redemptions').select('status'),
         supabase.from('profiles').select('member_type, tier').eq('approval_status', 'approved'),
         supabase.from('tier_settings').select('*'),
+        supabase.from('profiles').select('*').eq('approval_status', 'approved').order('created_at', { ascending: false }).limit(5),
       ]);
 
       const redemptionBreakdown: Record<string, number> = {};
@@ -120,6 +151,7 @@ export default function AdminDashboard() {
         redemptionBreakdown,
         memberBreakdown: { types, tiers, totalApproved },
         tierSettings: (allTierSettings as any) || [],
+        recentMembers: recentMembersData || [],
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -149,6 +181,33 @@ export default function AdminDashboard() {
 
   const totalRedemptions = Object.values(stats.redemptionBreakdown).reduce((a, b) => a + b, 0);
   const pendingActions = stats.pendingMembers + stats.pendingReceipts + (stats.redemptionBreakdown['pending'] || 0);
+
+  const receiptChartData = [
+    { name: 'อนุมัติแล้ว', value: stats.approvedReceipts, fill: '#10b981' },
+    { name: 'รอตรวจสอบ', value: stats.pendingReceipts, fill: '#fbbf24' },
+    { name: 'ปฏิเสธ', value: stats.rejectedReceipts, fill: '#f87171' },
+  ].filter(d => d.value > 0);
+
+  const memberTypesData = Object.entries(stats.memberBreakdown.types)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count], index) => ({
+      name: MEMBER_TYPE_LABELS[type?.toLowerCase()] || type,
+      value: count,
+      fill: CHART_COLORS[index % CHART_COLORS.length]
+    }));
+
+  const memberTiersData = Object.entries(stats.memberBreakdown.tiers)
+    .sort((a, b) => b[1] - a[1])
+    .map(([tier, count], index) => {
+      const cfg = TIER_CONFIG[tier] || TIER_CONFIG.unassigned;
+      const tierDisplayName = stats.tierSettings.find(t => t.tier === tier)?.display_name || cfg.label;
+      const fill = tier === 'premium' ? '#8b5cf6' : tier === 'gold' ? '#f59e0b' : tier === 'silver' ? '#94a3b8' : tier === 'bronze' ? '#d97706' : CHART_COLORS[index % CHART_COLORS.length];
+      return {
+        name: tierDisplayName,
+        value: count,
+        fill: fill
+      };
+    });
 
   /* ─── Render ─── */
   return (
@@ -186,10 +245,232 @@ export default function AdminDashboard() {
       </div>
 
       {/* ══════════════════════════════════════════════
-          SECTION 3 : Action Required (Alerts)
+          MAIN CONTENT GRID
+         ══════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        {/* LEFT COLUMN: CHARTS (Spans 2 cols on XL) */}
+        <div className="xl:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ── Member Types ── */}
+            <Card className="shadow-sm overflow-hidden flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-500" />
+                  ประเภทสมาชิก
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-6 p-6 pt-0 flex-1 justify-center">
+                {memberTypesData.length > 0 && (
+                  <div className="w-[140px] h-[140px] shrink-0">
+                    <ChartContainer config={sharedChartConfig} className="w-full h-full">
+                      <PieChart>
+                        <Pie
+                          data={memberTypesData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={45}
+                          outerRadius={65}
+                          strokeWidth={2}
+                          paddingAngle={2}
+                        >
+                          {memberTypesData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      </PieChart>
+                    </ChartContainer>
+                  </div>
+                )}
+                <div className="w-full divide-y border-y mt-auto">
+                  {memberTypesData.map((entry) => (
+                    <div key={entry.name} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
+                        <span className="text-sm font-medium text-foreground">{entry.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-foreground">{entry.value.toLocaleString()}</span>
+                        <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
+                          {pct(entry.value, stats.memberBreakdown.totalApproved)}%
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ── Member Tiers ── */}
+            <Card className="shadow-sm overflow-hidden flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-500" />
+                  ระดับสมาชิก
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-6 p-6 pt-0 flex-1 justify-center">
+                {memberTiersData.length > 0 && (
+                  <div className="w-[140px] h-[140px] shrink-0">
+                    <ChartContainer config={sharedChartConfig} className="w-full h-full">
+                      <PieChart>
+                        <Pie
+                          data={memberTiersData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={45}
+                          outerRadius={65}
+                          strokeWidth={2}
+                          paddingAngle={2}
+                        >
+                          {memberTiersData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      </PieChart>
+                    </ChartContainer>
+                  </div>
+                )}
+                <div className="w-full divide-y border-y mt-auto">
+                  {memberTiersData.map((entry) => (
+                    <div key={entry.name} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.fill }} />
+                        <span className="text-sm font-semibold capitalize text-foreground">{entry.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-foreground">{entry.value.toLocaleString()}</span>
+                        <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
+                          {pct(entry.value, stats.memberBreakdown.totalApproved)}%
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ── Receipt Overview ── */}
+            <Card className="shadow-sm flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <WalletCards className="w-5 h-5 text-indigo-500" />
+                  ภาพรวมใบเสร็จ
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-6 p-6 pt-0 flex-1 justify-center">
+                {stats.totalReceipts > 0 && (
+                  <div className="w-[140px] h-[140px] shrink-0">
+                    <ChartContainer config={sharedChartConfig} className="w-full h-full">
+                      <PieChart>
+                        <Pie
+                          data={receiptChartData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={45}
+                          outerRadius={65}
+                          strokeWidth={2}
+                          paddingAngle={2}
+                        >
+                          {receiptChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                      </PieChart>
+                    </ChartContainer>
+                  </div>
+                )}
+                <div className="w-full space-y-4 mt-auto">
+                  <ProgressRow label="อนุมัติแล้ว" value={stats.approvedReceipts} total={stats.totalReceipts} barColor="bg-emerald-500" textColor="text-emerald-600" />
+                  <ProgressRow label="รอตรวจสอบ" value={stats.pendingReceipts} total={stats.totalReceipts} barColor="bg-amber-400" textColor="text-amber-600" />
+                  <ProgressRow label="ปฏิเสธ" value={stats.rejectedReceipts} total={stats.totalReceipts} barColor="bg-red-400" textColor="text-red-500" />
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t text-sm font-semibold text-muted-foreground">
+                    รวม <span className="text-lg font-black text-foreground">{stats.totalReceipts.toLocaleString()}</span> รายการ
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ── Redemption Status ── */}
+            <Card className="shadow-sm flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-emerald-500" />
+                  สถานะการแลกของรางวัล
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 pt-0 flex flex-col justify-center flex-1">
+                <div className="space-y-2 mt-auto">
+                  {Object.entries(REDEMPTION_STATUS).map(([key, cfg]) => {
+                    const count = stats.redemptionBreakdown[key] || 0;
+                    const Icon = cfg.icon;
+                    return (
+                      <div key={key} className={`flex items-center justify-between rounded-xl px-4 py-3 ${cfg.bg} transition-colors`}>
+                        <div className="flex items-center gap-3">
+                          <Icon className={`w-4 h-4 ${cfg.color}`} />
+                          <span className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</span>
+                        </div>
+                        <span className={`text-lg font-black ${cfg.color}`}>{count.toLocaleString()}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t text-sm font-semibold text-muted-foreground">
+                  รวม <span className="text-lg font-black text-foreground">{totalRedemptions.toLocaleString()}</span> รายการ
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: RECENT MEMBERS */}
+        <div className="xl:col-span-1">
+          <Card className="shadow-sm h-full flex flex-col min-h-[400px]">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base font-bold flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-500" />
+                  สมาชิกล่าสุด
+                </div>
+                <Badge variant="secondary" className="font-normal text-xs">อนุมัติแล้วเท่านั้น</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 flex flex-col flex-1">
+              {stats.recentMembers.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground flex-1 flex items-center justify-center">ไม่มีข้อมูลสมาชิกล่าสุด</div>
+              ) : (
+                <div className="divide-y flex-1">
+                  {stats.recentMembers.map((member) => (
+                    <div key={member.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">{member.first_name || '-'} {member.last_name || ''}</p>
+                        <p className="text-xs text-muted-foreground">{member.email || 'ไม่มีข้อมูลติดต่อ'}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] capitalize ${getTypeColor(member.member_type)}`}>
+                        {MEMBER_TYPE_LABELS[member.member_type?.toLowerCase()] || member.member_type || 'unassigned'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+            <div className="p-3 border-t bg-muted/10 text-center mt-auto">
+              <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-foreground" onClick={() => navigate('/admin/members')}>
+                ดูสมาชิกทั้งหมด <ChevronRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          SECTION : Action Required (Alerts) NOW MOVED TO BOTTOM
          ══════════════════════════════════════════════ */}
       {pendingActions > 0 && (
-        <Card className="border-l-4 border-l-amber-500 bg-amber-50/40">
+        <Card className="border-l-4 border-l-amber-500 bg-amber-50/40 mt-6 shadow-sm">
           <CardContent className="py-4 px-5">
             <div className="flex items-center gap-3 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
@@ -200,7 +481,7 @@ export default function AdminDashboard() {
                 </Badge>
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {stats.pendingMembers > 0 && (
                 <ActionChip icon={Clock} label="สมาชิกรออนุมัติ" count={stats.pendingMembers} color="amber" onClick={() => navigate('/admin/members')} />
               )}
@@ -214,128 +495,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       )}
-
-      {/* ══════════════════════════════════════════════
-          SECTION 4 : Two-column detail panels
-         ══════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* ── 4A : Receipts Overview ── */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <WalletCards className="w-5 h-5 text-indigo-500" />
-              ภาพรวมใบเสร็จ
-            </CardTitle>
-            <CardDescription className="text-xs">อัตราการอนุมัติ / รอตรวจสอบ / ปฏิเสธ</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ProgressRow label="อนุมัติแล้ว" value={stats.approvedReceipts} total={stats.totalReceipts} barColor="bg-emerald-500" textColor="text-emerald-600" />
-            <ProgressRow label="รอตรวจสอบ" value={stats.pendingReceipts} total={stats.totalReceipts} barColor="bg-amber-400" textColor="text-amber-600" />
-            <ProgressRow label="ปฏิเสธ" value={stats.rejectedReceipts} total={stats.totalReceipts} barColor="bg-red-400" textColor="text-red-500" />
-            <div className="flex items-center justify-center gap-2 pt-2 border-t text-sm font-semibold text-muted-foreground">
-              รวม <span className="text-lg font-black text-foreground">{stats.totalReceipts.toLocaleString()}</span> รายการ
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── 4B : Redemption Status ── */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-500" />
-              สถานะการแลกของรางวัล
-            </CardTitle>
-            <CardDescription className="text-xs">สรุปสถานะรายการแลกรางวัลทั้งหมดในระบบ</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(REDEMPTION_STATUS).map(([key, cfg]) => {
-                const count = stats.redemptionBreakdown[key] || 0;
-                const Icon = cfg.icon;
-                return (
-                  <div key={key} className={`flex items-center justify-between rounded-xl px-4 py-3 ${cfg.bg} transition-colors`}>
-                    <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${cfg.color}`} />
-                      <span className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</span>
-                    </div>
-                    <span className={`text-lg font-black ${cfg.color}`}>{count.toLocaleString()}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t text-sm font-semibold text-muted-foreground">
-              รวม <span className="text-lg font-black text-foreground">{totalRedemptions.toLocaleString()}</span> รายการ
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ══════════════════════════════════════════════
-          SECTION 5 : Member Breakdowns (two-column)
-         ══════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ── Member Types ── */}
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Shield className="w-5 h-5 text-blue-500" />
-              ประเภทสมาชิก
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {Object.entries(stats.memberBreakdown.types)
-                .sort((a, b) => b[1] - a[1])
-                .map(([type, count]) => (
-                  <div key={type} className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors">
-                    <span className="text-sm font-medium text-foreground">{MEMBER_TYPE_LABELS[type] || type}</span>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-foreground">{count.toLocaleString()}</span>
-                        <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
-                          {pct(count, stats.memberBreakdown.totalApproved)}%
-                        </Badge>
-                      </div>
-                    </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Member Tiers ── */}
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-500" />
-              ระดับสมาชิก
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {Object.entries(stats.memberBreakdown.tiers)
-                .sort((a, b) => b[1] - a[1])
-                .map(([tier, count]) => {
-                  const cfg = TIER_CONFIG[tier] || TIER_CONFIG.unassigned;
-                  const tierDisplayName = stats.tierSettings.find(t => t.tier === tier)?.display_name || cfg.label;
-                  return (
-                    <div key={tier} className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${cfg.bg}`} />
-                        <span className={`text-sm font-semibold capitalize ${cfg.color}`}>{tierDisplayName}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-foreground">{count.toLocaleString()}</span>
-                        <Badge variant="secondary" className="text-[10px] min-w-[3rem] justify-center font-semibold">
-                          {pct(count, stats.memberBreakdown.totalApproved)}%
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

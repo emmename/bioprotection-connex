@@ -30,28 +30,32 @@ export function MissionGroupsCard() {
     }
 
     return (
-        <div className="space-y-4 mt-4">
-            {missionGroups.map((group) => {
-                const isGroupCompleted = group.is_completed;
-                const currentStep = group.current_step;
+        <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <span>🗺️</span> ภารกิจต่อเนื่อง
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">ทำภารกิจย่อยให้ครบทุกด่านเพื่อรับรางวัลใหญ่</p>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+                {missionGroups.map((group) => {
+                    const isGroupCompleted = group.is_completed;
+                    const currentStep = group.current_step;
 
-                const missions = group.missions || [];
-                const totalSteps = group.total_steps || missions.length;
+                    const missions = group.missions || [];
+                    const totalSteps = group.total_steps || missions.length;
 
-                return (
-                    <Card key={group.id} className="card-hover shadow-md border-primary/20">
-                        <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg flex flex-col gap-1">
-                                <div className="flex items-center gap-2 text-primary">
-                                    <span className="text-xl">🗺️</span> {group.title}
+                    return (
+                        <div key={group.id} className="rounded-xl border bg-card p-4 transition-all hover:border-primary/30">
+                            <div className="flex flex-col gap-1 pb-3 mb-4 border-b border-border/50">
+                                <div className="flex items-center gap-2 text-primary font-semibold text-base">
+                                    {group.title}
                                 </div>
-                                <span className="text-xs font-normal text-muted-foreground mt-1">
+                                <span className="text-xs font-normal text-muted-foreground">
                                     {group.description || 'ทำภารกิจให้ครบเพื่อรับรางวัลใหญ่'}
                                 </span>
-                            </CardTitle>
-                        </CardHeader>
+                            </div>
 
-                        <CardContent className="pt-6">
                             <div className="relative w-full overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2">
                                 <div className="relative min-w-[280px]">
                                     {/* Progress Line Background */}
@@ -139,14 +143,14 @@ export function MissionGroupsCard() {
 
                             {/* Grand Bonus Section */}
                             {(group.grand_bonus_points > 0 || group.grand_bonus_coins > 0) && (
-                                <div className="mt-4 flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 flex items-center justify-center">
+                                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100 gap-3">
+                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                        <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                                             <img src={missionChickIcon} alt="Grand Bonus" className="w-full h-full object-contain" />
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-sm font-bold text-amber-900">รางวัลใหญ่เมื่อผ่านทุกด่าน</span>
-                                            <div className="flex gap-2.5 mt-0.5">
+                                            <div className="flex flex-wrap gap-2.5 mt-0.5">
                                                 {group.grand_bonus_points > 0 && <span className="text-xs font-bold text-amber-700">+{group.grand_bonus_points} ⭐</span>}
                                                 {group.grand_bonus_coins > 0 && <span className="text-xs font-bold text-orange-700">+{group.grand_bonus_coins} 🪙</span>}
                                             </div>
@@ -154,7 +158,7 @@ export function MissionGroupsCard() {
                                     </div>
                                     <Button
                                         size="sm"
-                                        className={isGroupCompleted ? "bg-green-500 hover:bg-green-600 text-white transition-all duration-300" : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-95 transition-all duration-300"}
+                                        className={`w-full sm:w-auto ${isGroupCompleted ? "bg-green-500 hover:bg-green-600 text-white transition-all duration-300" : "bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-95 transition-all duration-300"}`}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigate(`/mission-groups/${group.id}`)
@@ -165,10 +169,10 @@ export function MissionGroupsCard() {
                                 </div>
                             )}
 
-                        </CardContent>
-                    </Card>
-                );
-            })}
-        </div>
+                        </div>
+                    );
+                })}
+            </CardContent>
+        </Card>
     );
 }

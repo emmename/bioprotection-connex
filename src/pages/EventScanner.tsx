@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 interface Event {
     id: string;
     title: string;
+    is_visible: boolean;
 }
 
 export default function EventScanner() {
@@ -34,11 +35,11 @@ export default function EventScanner() {
     const { data: activeEvents = [], isLoading: eventsLoading } = useQuery({
         queryKey: ['active_events_for_scanner'],
         queryFn: async () => {
-            // Get events that are active and not ended yet
+            // Get events that are active and not ended yet (include hidden events for staff)
             const now = new Date().toISOString();
             const { data, error } = await supabase
                 .from('events')
-                .select('id, title')
+                .select('id, title, is_visible')
                 .eq('is_active', true)
                 .gte('end_date', now)
                 .order('start_date', { ascending: true });
@@ -49,33 +50,38 @@ export default function EventScanner() {
         enabled: canScanEvents
     });
 
+    // Get the selected event's visibility
+    const selectedEvent = activeEvents.find(e => e.id === selectedEventId);
+    const isHiddenEvent = selectedEvent ? !selectedEvent.is_visible : false;
+
+    // --- Registration-based check-in (for visible events with ticket QR) ---
     const checkInMutation = useMutation({
         mutationFn: async ({ registrationId, eventId }: { registrationId: string, eventId: string }) => {
             let actualRegistrationId = registrationId;
 
-            // Try to parse the QR code as JSON (the new Dynamic QR format)
+            // Try to parse the QR code as JSON (the Dynamic QR format)
             try {
                 const parsed = JSON.parse(registrationId);
                 if (parsed && typeof parsed === 'object' && parsed.r && parsed.t) {
                     actualRegistrationId = parsed.r;
 
-                    // Validate timestamp (e.g., must be within the last 60 seconds)
+                    // Validate timestamp (must be within the last 120 seconds)
                     const qrTime = new Date(parsed.t).getTime();
                     const now = Date.now();
                     const diffSeconds = (now - qrTime) / 1000;
 
-                    if (diffSeconds > 60 || diffSeconds < -60) {
+                    if (diffSeconds > 120 || diffSeconds < -120) {
                         throw new Error('QR Code หมดอายุ กรุณาเปิดหน้าจอใหม่บนมือถือของคุณเพื่ออัปเดต QR Code');
                     }
                 }
             } catch (e) {
                 if (e instanceof Error && e.message.includes('หมดอายุ')) {
-                    throw e; // rethrow the expiration error
+                    throw e;
                 }
-                // If it's not JSON, we assume it's the old raw uuid format
+                // If it's not JSON, assume old raw uuid format
             }
 
-            // First verify the registration belongs to the selected event
+            // Verify the registration exists and belongs to the selected event
             const { data: regData, error: regError } = await supabase
                 .from('event_registrations')
                 .select(`
@@ -104,7 +110,7 @@ export default function EventScanner() {
                 throw new Error('การลงทะเบียนนี้ถูกยกเลิกไปแล้ว');
             }
 
-            // Perform check in and reward distribution via RPC
+            // Perform check in via RPC
             const { error: rpcError } = await supabase
                 .rpc('process_event_checkin', {
                     p_registration_id: actualRegistrationId,
@@ -123,35 +129,73 @@ export default function EventScanner() {
                 userName
             });
             playBeep(800);
-
-            // Auto reset after 3 seconds
-            setTimeout(() => {
-                setScanResult({ status: 'idle' });
-            }, 3000);
+            setTimeout(() => { setScanResult({ status: 'idle' }); }, 3000);
         },
         onError: (error: any) => {
             const errorMessage = error.message || 'เกิดข้อผิดพลาด';
-
             if (errorMessage.startsWith('already_checked_in:')) {
                 const name = errorMessage.split(':')[1];
-                setScanResult({
-                    status: 'already_checked_in',
-                    message: 'เช็คอินไปแล้ว',
-                    userName: name
-                });
+                setScanResult({ status: 'already_checked_in', message: 'เช็คอินไปแล้ว', userName: name });
             } else {
-                setScanResult({
-                    status: 'error',
-                    message: errorMessage
-                });
+                setScanResult({ status: 'error', message: errorMessage });
+            }
+            playBeep(300);
+            setTimeout(() => { setScanResult({ status: 'idle' }); }, 4000);
+        }
+    });
+
+    // --- Member-based check-in (for hidden events with member QR) ---
+    const memberCheckInMutation = useMutation({
+        mutationFn: async ({ profileId, eventId }: { profileId: string, eventId: string }) => {
+            // First get the member name for display
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', profileId)
+                .single();
+
+            if (profileError) {
+                throw new Error('ไม่พบข้อมูลสมาชิก QR Code ไม่ถูกต้อง');
             }
 
-            playBeep(300); // lower pitch for error
+            const name = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'ผู้ใช้งาน';
 
-            // Auto reset after 4 seconds
-            setTimeout(() => {
-                setScanResult({ status: 'idle' });
-            }, 4000);
+            // Call the member event check-in RPC
+            const { error: rpcError } = await supabase
+                .rpc('process_member_event_checkin', {
+                    p_profile_id: profileId,
+                    p_event_id: eventId,
+                    p_scanned_by: currentUserProfile?.id
+                });
+
+            if (rpcError) {
+                if (rpcError.message.includes('Already checked in')) {
+                    throw new Error(`already_checked_in:${name}`);
+                }
+                throw rpcError;
+            }
+
+            return name;
+        },
+        onSuccess: (userName) => {
+            setScanResult({
+                status: 'success',
+                message: 'เช็คอินสำเร็จ',
+                userName
+            });
+            playBeep(800);
+            setTimeout(() => { setScanResult({ status: 'idle' }); }, 3000);
+        },
+        onError: (error: any) => {
+            const errorMessage = error.message || 'เกิดข้อผิดพลาด';
+            if (errorMessage.startsWith('already_checked_in:')) {
+                const name = errorMessage.split(':')[1];
+                setScanResult({ status: 'already_checked_in', message: 'เช็คอินไปแล้ว', userName: name });
+            } else {
+                setScanResult({ status: 'error', message: errorMessage });
+            }
+            playBeep(300);
+            setTimeout(() => { setScanResult({ status: 'idle' }); }, 4000);
         }
     });
 
@@ -191,16 +235,56 @@ export default function EventScanner() {
         );
 
         const onScanSuccess = (decodedText: string) => {
-            if (!checkInMutation.isPending && scanResult.status === 'idle') {
-                checkInMutation.mutate({
-                    registrationId: decodedText,
-                    eventId: selectedEventId
-                });
+            if (checkInMutation.isPending || memberCheckInMutation.isPending || scanResult.status !== 'idle') return;
+
+            // Detect QR type
+            try {
+                const parsed = JSON.parse(decodedText);
+                if (parsed && typeof parsed === 'object') {
+                    // Validate timestamp first
+                    if (parsed.t) {
+                        const qrTime = new Date(parsed.t).getTime();
+                        const now = Date.now();
+                        const diffSeconds = (now - qrTime) / 1000;
+                        if (diffSeconds > 120 || diffSeconds < -120) {
+                            setScanResult({ status: 'error', message: 'QR Code หมดอายุ กรุณาเปิดหน้าจอใหม่เพื่ออัปเดต QR Code' });
+                            playBeep(300);
+                            setTimeout(() => { setScanResult({ status: 'idle' }); }, 4000);
+                            return;
+                        }
+                    }
+
+                    if (parsed.p) {
+                        // Member QR: { p: profile_id, t: timestamp }
+                        memberCheckInMutation.mutate({
+                            profileId: parsed.p,
+                            eventId: selectedEventId
+                        });
+                        return;
+                    }
+
+                    if (parsed.r) {
+                        // Ticket QR: { r: registration_id, t: timestamp }
+                        checkInMutation.mutate({
+                            registrationId: decodedText,
+                            eventId: selectedEventId
+                        });
+                        return;
+                    }
+                }
+            } catch (e) {
+                // Not JSON — treat as raw registration ID (legacy)
             }
+
+            // Fallback: treat as raw registration id
+            checkInMutation.mutate({
+                registrationId: decodedText,
+                eventId: selectedEventId
+            });
         };
 
         const onScanFailure = (error: any) => {
-            // Ignored - it spams the console otherwise
+            // Ignored
         };
 
         scanner.render(onScanSuccess, onScanFailure);
@@ -257,7 +341,7 @@ export default function EventScanner() {
                                 <SelectContent>
                                     {activeEvents.map(event => (
                                         <SelectItem key={event.id} value={event.id}>
-                                            {event.title}
+                                            {event.title} {!event.is_visible && '🔒'}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -265,6 +349,16 @@ export default function EventScanner() {
                         )}
                     </CardContent>
                 </Card>
+
+                {selectedEventId && isHiddenEvent && (
+                    <Alert className="border-amber-300 bg-amber-50">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <AlertTitle className="text-amber-800">กิจกรรมซ่อน</AlertTitle>
+                        <AlertDescription className="text-amber-700">
+                            กิจกรรมนี้ไม่แสดงแก่สมาชิก ให้สแกน <strong>"QR ของฉัน"</strong> ของสมาชิกแทน QR ตั๋ว
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 {selectedEventId && (
                     <Card>

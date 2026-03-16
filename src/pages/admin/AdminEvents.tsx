@@ -38,6 +38,7 @@ export default function AdminEvents() {
         start_date: string;
         end_date: string;
         is_active: boolean;
+        is_visible: boolean;
         event_type: string;
         allowed_member_types: string[];
         allowed_sub_types: Record<string, string[]>;
@@ -50,6 +51,7 @@ export default function AdminEvents() {
         start_date: '',
         end_date: '',
         is_active: true,
+        is_visible: true,
         event_type: 'general_event',
         allowed_member_types: [],
         allowed_sub_types: {},
@@ -99,6 +101,7 @@ export default function AdminEvents() {
                 start_date: new Date(formData.start_date).toISOString(),
                 end_date: new Date(formData.end_date).toISOString(),
                 is_active: formData.is_active,
+                is_visible: formData.is_visible,
                 event_type: formData.event_type,
                 allowed_member_types: formData.allowed_member_types.length > 0 ? formData.allowed_member_types : null,
                 allowed_sub_types: Object.keys(formData.allowed_sub_types).length > 0 ? formData.allowed_sub_types : null,
@@ -208,6 +211,7 @@ export default function AdminEvents() {
                 start_date: formatForInput(event.start_date),
                 end_date: formatForInput(event.end_date),
                 is_active: event.is_active,
+                is_visible: event.is_visible ?? true,
                 event_type: event.event_type || 'general_event',
                 allowed_member_types: event.allowed_member_types || [],
                 allowed_sub_types: (event.allowed_sub_types as Record<string, string[]>) || {},
@@ -223,6 +227,7 @@ export default function AdminEvents() {
                 start_date: '',
                 end_date: '',
                 is_active: true,
+                is_visible: true,
                 event_type: 'general_event',
                 allowed_member_types: [],
                 allowed_sub_types: {},

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Save, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, Loader2, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -324,6 +324,15 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground">
                   {profile?.member_id || 'รหัสสมาชิก: รอการอนุมัติ'}
                 </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => navigate('/my-qr')}
+                >
+                  <QrCode className="w-4 h-4 mr-1.5" />
+                  QR ของฉัน
+                </Button>
               </div>
             </div>
           </CardContent>

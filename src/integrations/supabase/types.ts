@@ -363,6 +363,7 @@ export type Database = {
           event_type: string | null
           id: string
           is_active: boolean
+          is_visible: boolean
           location: string | null
 
           start_date: string
@@ -379,6 +380,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           is_active?: boolean
+          is_visible?: boolean
           location?: string | null
 
           start_date: string
@@ -395,6 +397,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           is_active?: boolean
+          is_visible?: boolean
           location?: string | null
 
           start_date?: string
@@ -1763,6 +1766,14 @@ export type Database = {
       }
       process_event_checkin: {
         Args: { p_registration_id: string }
+        Returns: undefined
+      }
+      process_member_event_checkin: {
+        Args: {
+          p_profile_id: string
+          p_event_id: string
+          p_scanned_by?: string
+        }
         Returns: undefined
       }
       redeem_reward:

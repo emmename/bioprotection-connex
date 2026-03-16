@@ -26,6 +26,7 @@ import Events from "./pages/Events";
 import EventTicket from "./pages/EventTicket";
 import EventScanner from "./pages/EventScanner";
 import MissionScanner from '@/pages/MissionScanner';
+import MyQR from './pages/MyQR';
 import MissionGroupDetail from "./pages/MissionGroupDetail";
 import AdminLayout from "./components/admin/AdminLayout";
 import History from "./pages/History";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/events" element={<ProtectedRoute><AppLayout><Events /></AppLayout></ProtectedRoute>} />
             <Route path="/events/:id/ticket" element={<ProtectedRoute><AppLayout><EventTicket /></AppLayout></ProtectedRoute>} />
             <Route path="/events/scanner" element={<ProtectedRoute><AppLayout><EventScanner /></AppLayout></ProtectedRoute>} />
+            <Route path="/my-qr" element={<ProtectedRoute><AppLayout><MyQR /></AppLayout></ProtectedRoute>} />
             <Route path="/missions/scanner" element={<ProtectedRoute><AppLayout><MissionScanner /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
