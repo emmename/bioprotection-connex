@@ -16,6 +16,7 @@ interface Profile {
   total_points: number;
   total_coins: number;
   avatar_url: string | null;
+  created_at: string;
 }
 
 interface AuthContextType {
