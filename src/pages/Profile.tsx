@@ -307,18 +307,18 @@ export default function Profile() {
           {/* Dark overlay for readability */}
           <div className="absolute inset-0" />
           
-          <CardContent className="relative text-white px-5 pt-2 pb-3 sm:px-6 sm:pt-3 sm:pb-4 flex flex-col gap-2">
+          <CardContent className="relative text-white px-5 pt-3 pb-3 sm:px-5 sm:pt-3 sm:pb-4 flex flex-col gap-2">
             {/* Row 1: Top metadata badges */}
             <div className="flex items-start justify-between gap-2">
               {/* Member ID */}
               {profile?.member_id ? (
-                <div className="bg-black/5 backdrop-blur-sm px-3 py-1.5 rounded-xl">
+                <div className="bg-blue-500/60 backdrop-blur-sm px-3 py-1.5 rounded-xl">
                   <p className="text-[9px] font-semibold uppercase tracking-widest text-white/90 leading-none mb-0.5">รหัสสมาชิก</p>
                   <p className="text-xs font-bold text-white/100 leading-tight">{profile.member_id}</p>
                 </div>
               ) : <div />}
               {/* Member Since */}
-              <div className="bg-black/5 backdrop-blur-sm px-3 py-1.5 rounded-xl text-right">
+              <div className="bg-blue-500/60 backdrop-blur-sm px-3 py-1.5 rounded-xl text-right">
                 <p className="text-[9px] font-semibold uppercase tracking-widest text-white/90 leading-none mb-0.5">สมาชิกตั้งแต่</p>
                 <p className="text-xs font-bold text-white/100 leading-tight">
                   {profile?.created_at ? format(new Date(profile.created_at), 'dd MMM yyyy', { locale: th }) : '-'}
@@ -327,7 +327,7 @@ export default function Profile() {
             </div>
 
             {/* Row 2: Avatar + Identity (responsive: column on mobile, row on landscape) */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
               {/* Avatar */}
               <div className="relative shrink-0 group/avatar">
                 <Avatar className="w-20 h-20 sm:w-[90px] sm:h-[90px] ring-[3px] ring-white/80 shadow-lg">
@@ -359,7 +359,7 @@ export default function Profile() {
               </div>
 
               {/* Name + Type + QR */}
-              <div className="flex flex-col items-center sm:items-start gap-2 min-w-0 flex-1">
+              <div className="flex flex-col items-center sm:items-start gap-2 min-w-0 flex-1 sm:mt-2">
                 <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0)] leading-tight truncate max-w-full">
                   {data.first_name} {data.last_name}
                 </h2>
