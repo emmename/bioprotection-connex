@@ -240,83 +240,113 @@ const AdminSettings = () => {
 
         {/* Tier Settings */}
         <TabsContent value="tiers" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>ตั้งค่า Tier</CardTitle>
-              <Button onClick={saveTierSettings} disabled={isSaving}>
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                บันทึก
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                {tierSettings.map((tier) => (
-                  <div key={tier.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex items-center justify-between">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">ตั้งค่า Tier</h2>
+              <p className="text-sm text-muted-foreground">กำหนดระดับสมาชิก คะแนน และสิทธิประโยชน์</p>
+            </div>
+            <Button onClick={saveTierSettings} disabled={isSaving} size="sm">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              บันทึก
+            </Button>
+          </div>
+
+          {/* Tier Cards */}
+          <div className="grid gap-4">
+            {tierSettings.map((tier, index) => {
+              const accentColor = tier.color || '#3b82f6';
+              return (
+                <Card
+                  key={tier.id}
+                  className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow"
+                  style={{ borderLeftWidth: '4px', borderLeftColor: accentColor }}
+                >
+                  <CardContent className="p-5">
+                    {/* Tier Header */}
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-4 h-4 rounded-full ${!tier.color ? tierColors[tier.tier] : ''}`}
-                          style={tier.color ? { backgroundColor: tier.color } : {}}
-                        />
-                        <h3 className="font-semibold text-lg">{tier.display_name || tierLabels[tier.tier]}</h3>
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+                          style={{ backgroundColor: accentColor }}
+                        >
+                          {index + 1}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-base text-foreground">
+                            {tier.display_name || tierLabels[tier.tier]}
+                          </h3>
+                          <p className="text-xs text-muted-foreground capitalize">{tier.tier}</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Label>สี (Color)</Label>
+                        <Label className="text-xs text-muted-foreground">สี</Label>
                         <Input
                           type="color"
                           value={tier.color || "#000000"}
                           onChange={(e) => handleTierChange(tier.id, "color", e.target.value)}
-                          className="w-12 h-8 p-1 cursor-pointer"
+                          className="w-9 h-9 p-0.5 cursor-pointer rounded-lg border-2"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>ชื่อที่แสดง (Display Name)</Label>
+                    {/* Fields Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">ชื่อที่แสดง</Label>
                         <Input
                           value={tier.display_name || tierLabels[tier.tier]}
                           onChange={(e) => handleTierChange(tier.id, "display_name", e.target.value)}
                           placeholder={tierLabels[tier.tier]}
+                          className="h-9"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>คะแนนขั้นต่ำ</Label>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">คะแนนขั้นต่ำ</Label>
                         <Input
                           type="number"
                           value={tier.min_points}
                           onChange={(e) => handleTierChange(tier.id, "min_points", parseInt(e.target.value) || 0)}
+                          className="h-9"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>คะแนนสูงสุด {tier.tier === "platinum" && "(ไม่จำกัด = ว่าง)"}</Label>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          คะแนนสูงสุด {tier.tier === "platinum" && <span className="text-[10px]">(ว่าง = ไม่จำกัด)</span>}
+                        </Label>
                         <Input
                           type="number"
                           value={tier.max_points ?? ""}
                           placeholder={tier.tier === "platinum" ? "ไม่จำกัด" : ""}
                           onChange={(e) => handleTierChange(tier.id, "max_points", e.target.value ? parseInt(e.target.value) : null)}
+                          className="h-9"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>สิทธิประโยชน์ (แยกด้วย Enter)</Label>
+                    {/* Benefits */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">สิทธิประโยชน์ (แยกด้วย Enter)</Label>
                       <textarea
-                        className="w-full min-h-[100px] p-3 border rounded-md bg-background text-foreground"
+                        className="w-full min-h-[72px] p-2.5 text-sm border rounded-md bg-background text-foreground resize-y focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                         value={(tier.benefits || []).join("\n")}
                         onChange={(e) => handleTierChange(tier.id, "benefits", e.target.value.split("\n").filter(Boolean))}
                         placeholder="เพิ่มสิทธิประโยชน์..."
                       />
                     </div>
-                  </div>
-                ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
 
-                {tierSettings.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">ยังไม่มีข้อมูล Tier Settings</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            {tierSettings.length === 0 && (
+              <Card>
+                <CardContent className="py-12">
+                  <p className="text-center text-muted-foreground">ยังไม่มีข้อมูล Tier Settings</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
         {/* Game Settings */}
