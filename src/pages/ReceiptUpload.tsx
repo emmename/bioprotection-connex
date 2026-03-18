@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Camera, Image, Loader2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
+import { useDropZone } from '@/hooks/useDropZone';
 import pendingImage from '@/assets/14.png';
 
 
@@ -25,6 +26,33 @@ export default function ReceiptUpload() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const processReceiptFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'ไฟล์ไม่ถูกต้อง',
+        description: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'ไฟล์ใหญ่เกินไป',
+        description: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }, [toast]);
+
+  const { isDragging: isDragOver, dropZoneProps: receiptDropProps } = useDropZone({
+    accept: 'image/*',
+    disabled: isUploading,
+    onDrop: (files) => processReceiptFile(files[0]),
+  });
 
 
 
@@ -54,32 +82,10 @@ export default function ReceiptUpload() {
     enabled: !!profile?.id,
   });
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'ไฟล์ไม่ถูกต้อง',
-        description: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'ไฟล์ใหญ่เกินไป',
-        description: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    processReceiptFile(file);
   };
 
   const handleUpload = async () => {
@@ -216,7 +222,7 @@ export default function ReceiptUpload() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleFileSelect}
+              onChange={handleFileChange}
             />
 
             {previewUrl ? (
@@ -259,15 +265,20 @@ export default function ReceiptUpload() {
               </div>
             ) : (
               <div
-                className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                  isDragOver
+                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                    : 'border-muted-foreground/25 hover:border-primary/50'
+                }`}
                 onClick={() => fileInputRef.current?.click()}
+                {...receiptDropProps}
               >
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <Camera className="w-8 h-8 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">คลิกเพื่อเลือกรูปใบเสร็จ/ใบส่งสินค้า</p>
+                    <p className="font-medium">{isDragOver ? 'วางรูปใบเสร็จที่นี่' : 'คลิกหรือลากรูปใบเสร็จ/ใบส่งสินค้ามาวาง'}</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB
                     </p>

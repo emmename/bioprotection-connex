@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useDropZone } from '@/hooks/useDropZone';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -16,10 +17,7 @@ export function ImageUploader({ images, onImagesChange, bucket, maxImages = 10 }
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const processFiles = useCallback(async (files: File[]) => {
     if (images.length + files.length > maxImages) {
       toast.error(`สามารถอัปโหลดได้สูงสุด ${maxImages} รูป`);
       return;
@@ -28,14 +26,11 @@ export function ImageUploader({ images, onImagesChange, bucket, maxImages = 10 }
     setIsUploading(true);
     const newImages: string[] = [];
 
-    for (const file of Array.from(files)) {
-      // Validate file type
+    for (const file of files) {
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name} ไม่ใช่ไฟล์รูปภาพ`);
         continue;
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} ขนาดเกิน 5MB`);
         continue;
@@ -71,6 +66,19 @@ export function ImageUploader({ images, onImagesChange, bucket, maxImages = 10 }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  }, [images, maxImages, bucket, onImagesChange]);
+
+  const { isDragging, dropZoneProps } = useDropZone({
+    accept: 'image/*',
+    multiple: true,
+    disabled: isUploading || images.length >= maxImages,
+    onDrop: processFiles,
+  });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    processFiles(Array.from(files));
   };
 
   const handleRemoveImage = (index: number) => {
@@ -78,7 +86,7 @@ export function ImageUploader({ images, onImagesChange, bucket, maxImages = 10 }
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" {...dropZoneProps}>
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -134,10 +142,23 @@ export function ImageUploader({ images, onImagesChange, bucket, maxImages = 10 }
       )}
 
       {images.length === 0 && (
-        <div className="border-2 border-dashed rounded-lg p-6 text-center text-muted-foreground">
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 text-center text-muted-foreground cursor-pointer transition-colors ${
+            isDragging
+              ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+              : 'hover:bg-muted/50'
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+        >
           <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">คลิกปุ่มอัปโหลดเพื่อเพิ่มรูปภาพ</p>
+          <p className="text-sm">{isDragging ? 'วางรูปภาพที่นี่' : 'คลิกหรือลากรูปมาวางเพื่อเพิ่มรูปภาพ'}</p>
           <p className="text-xs mt-1">รองรับ JPG, PNG, GIF สูงสุด 5MB</p>
+        </div>
+      )}
+
+      {isDragging && images.length > 0 && (
+        <div className="border-2 border-dashed border-primary rounded-lg p-4 text-center bg-primary/10 text-primary text-sm font-medium">
+          วางรูปภาพที่นี่เพื่อเพิ่ม
         </div>
       )}
     </div>

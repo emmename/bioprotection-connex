@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, FileSpreadsheet, Download, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { parseCSV, generateCSVTemplate, validateMemberData, type MemberImportData } from '@/lib/csv-utils';
+import { useDropZone } from '@/hooks/useDropZone';
 
 interface MemberImportDialogProps {
   open: boolean;
@@ -38,6 +39,43 @@ export function MemberImportDialog({ open, onOpenChange, onImportComplete }: Mem
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState<ImportResults | null>(null);
   const [step, setStep] = useState<'upload' | 'preview' | 'results'>('upload');
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  const processCSVFile = useCallback(async (file: File) => {
+    if (!file.name.endsWith('.csv')) {
+      toast.error('กรุณาเลือกไฟล์ CSV เท่านั้น');
+      return;
+    }
+    setImportFile(file);
+    try {
+      const text = await file.text();
+      const members = parseCSV(text);
+      const errors = new Map<number, string[]>();
+      members.forEach((member, index) => {
+        const validation = validateMemberData(member);
+        if (!validation.valid) {
+          errors.set(index, validation.errors);
+        }
+      });
+      setImportPreview(members);
+      setValidationErrors(errors);
+      setStep('preview');
+      if (errors.size > 0) {
+        toast.warning(`พบ ${errors.size} รายการที่มีข้อผิดพลาด`);
+      } else {
+        toast.success(`พบ ${members.length} รายการ พร้อมนำเข้า`);
+      }
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถอ่านไฟล์ CSV ได้');
+    }
+  }, []);
+
+  const { isDragging: isCsvDragging, dropZoneProps: csvDropProps } = useDropZone({
+    accept: '.csv',
+    disabled: isImporting,
+    onDrop: (files) => processCSVFile(files[0]),
+  });
 
   const resetDialog = useCallback(() => {
     setImportFile(null);
@@ -51,41 +89,8 @@ export function MemberImportDialog({ open, onOpenChange, onImportComplete }: Mem
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.name.endsWith('.csv')) {
-      toast.error('กรุณาเลือกไฟล์ CSV เท่านั้น');
-      return;
-    }
-
-    setImportFile(file);
-
-    try {
-      const text = await file.text();
-      const members = parseCSV(text);
-
-      // Validate each member
-      const errors = new Map<number, string[]>();
-      members.forEach((member, index) => {
-        const validation = validateMemberData(member);
-        if (!validation.valid) {
-          errors.set(index, validation.errors);
-        }
-      });
-
-      setImportPreview(members);
-      setValidationErrors(errors);
-      setStep('preview');
-
-      if (errors.size > 0) {
-        toast.warning(`พบ ${errors.size} รายการที่มีข้อผิดพลาด`);
-      } else {
-        toast.success(`อ่านข้อมูลสำเร็จ ${members.length} รายการ`);
-      }
-    } catch (error) {
-      console.error('Error parsing CSV:', error);
-      toast.error(error instanceof Error ? error.message : 'ไม่สามารถอ่านไฟล์ CSV ได้');
-    }
-  }, []);
+    processCSVFile(file);
+  }, [processCSVFile]);
 
   const handleDownloadTemplate = useCallback(() => {
     const template = generateCSVTemplate();
@@ -169,12 +174,21 @@ export function MemberImportDialog({ open, onOpenChange, onImportComplete }: Mem
 
         {step === 'upload' && (
           <div className="space-y-6 py-4">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                isCsvDragging
+                  ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                  : 'border-muted-foreground/25 hover:border-primary/50'
+              }`}
+              onClick={() => csvInputRef.current?.click()}
+              {...csvDropProps}
+            >
               <FileSpreadsheet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">
-                เลือกไฟล์ CSV ที่มีข้อมูลสมาชิก (รองรับ 38 คอลัมน์)
+                {isCsvDragging ? 'วางไฟล์ CSV ที่นี่' : 'คลิกหรือลากไฟล์ CSV มาวาง (รองรับ 38 คอลัมน์)'}
               </p>
               <Input
+                ref={csvInputRef}
                 type="file"
                 accept=".csv"
                 onChange={handleFileSelect}

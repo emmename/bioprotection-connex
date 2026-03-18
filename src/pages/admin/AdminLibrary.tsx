@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { LibraryPreviewDialog } from '@/components/admin/LibraryPreviewDialog';
 import { LibraryBulkActions } from '@/components/admin/LibraryBulkActions';
 import { useTierSettings } from '@/hooks/useGamification';
 import { MEMBER_TYPE_OPTIONS, type MemberType, type TierLevel } from '@/constants/memberTypes';
+import { useDropZone } from '@/hooks/useDropZone';
 
 const ITEM_TYPES = [
   { value: 'article', label: 'บทความ', icon: BookOpen },
@@ -53,6 +54,8 @@ export default function AdminLibrary() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const categoryFileInputRef = useRef<HTMLInputElement>(null);
+  const itemFileInputRef = useRef<HTMLInputElement>(null);
 
   // ===== Bulk Actions State =====
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -70,6 +73,34 @@ export default function AdminLibrary() {
     category_id: '', title: '', description: '', item_type: 'article',
     content_body: '', file_url: '', thumbnail_url: '', is_published: true,
     target_tiers: [], target_member_types: [],
+  });
+
+  // ===== Category Icon Upload (extracted for drag-and-drop) =====
+  const handleCategoryIconUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { toast.error('ขนาดรูปต้องไม่เกิน 5MB'); return; }
+    setIsCategoryImageUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `category-icons/${crypto.randomUUID()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('library').upload(fileName, file, { contentType: file.type, upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('library').getPublicUrl(fileName);
+      setCategoryForm(prev => ({ ...prev, icon_url: publicUrl }));
+      toast.success('อัปโหลดรูปสำเร็จ');
+    } catch (error) { console.error('Upload error:', error); toast.error('ไม่สามารถอัปโหลดรูปได้'); }
+    finally { setIsCategoryImageUploading(false); }
+  };
+
+  const { isDragging: isCatIconDragging, dropZoneProps: catIconDropProps } = useDropZone({
+    accept: 'image/*',
+    disabled: isCategoryImageUploading,
+    onDrop: (files) => handleCategoryIconUpload(files[0]),
+  });
+
+  const { isDragging: isItemFileDragging, dropZoneProps: itemFileDropProps } = useDropZone({
+    accept: '*',
+    disabled: isUploading,
+    onDrop: (files) => handleFileUpload(files[0], 'file'),
   });
 
   // ===== Data Fetching =====
@@ -443,27 +474,23 @@ export default function AdminLibrary() {
                   <Button type="button" size="sm" variant="destructive" className="absolute top-2 right-2" onClick={() => setCategoryForm(prev => ({ ...prev, icon_url: '' }))}><X className="w-4 h-4" /></Button>
                 </div>
               ) : (
-                <label className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors block">
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                    isCatIconDragging
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-muted-foreground/25 hover:bg-muted/50'
+                  }`}
+                  onClick={() => categoryFileInputRef.current?.click()}
+                  {...catIconDropProps}
+                >
+                  <input ref={categoryFileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                     const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 5 * 1024 * 1024) { toast.error('ขนาดรูปต้องไม่เกิน 5MB'); return; }
-                    setIsCategoryImageUploading(true);
-                    try {
-                      const fileExt = file.name.split('.').pop();
-                      const fileName = `category-icons/${crypto.randomUUID()}.${fileExt}`;
-                      const { error: uploadError } = await supabase.storage.from('library').upload(fileName, file, { contentType: file.type, upsert: true });
-                      if (uploadError) throw uploadError;
-                      const { data: { publicUrl } } = supabase.storage.from('library').getPublicUrl(fileName);
-                      setCategoryForm(prev => ({ ...prev, icon_url: publicUrl }));
-                      toast.success('อัปโหลดรูปสำเร็จ');
-                    } catch (error) { console.error('Upload error:', error); toast.error('ไม่สามารถอัปโหลดรูปได้'); }
-                    finally { setIsCategoryImageUploading(false); }
+                    if (file) handleCategoryIconUpload(file);
                   }} disabled={isCategoryImageUploading} />
                   {isCategoryImageUploading ? <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" /> : <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />}
-                  <p className="text-sm text-muted-foreground">{isCategoryImageUploading ? 'กำลังอัปโหลด...' : 'คลิกเพื่ออัปโหลดรูปภาพ'}</p>
+                  <p className="text-sm text-muted-foreground">{isCategoryImageUploading ? 'กำลังอัปโหลด...' : isCatIconDragging ? 'วางรูปที่นี่' : 'คลิกหรือลากรูปมาวาง'}</p>
                   <p className="text-xs text-muted-foreground mt-1">แนะนำขนาด 364 x 180 px (สูงสุด 5MB)</p>
-                </label>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -532,12 +559,20 @@ export default function AdminLibrary() {
                       <Button type="button" size="sm" variant="destructive" className="absolute top-2 right-2" onClick={() => setItemForm(prev => ({ ...prev, file_url: '' }))}><X className="w-4 h-4" /></Button>
                     </div>
                   ) : (
-                    <label className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors block">
-                      <input type="file" accept={getFileAcceptType()} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileUpload(file, 'file'); }} disabled={isUploading} />
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                        isItemFileDragging
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                          : 'border-muted-foreground/25 hover:bg-muted/50'
+                      }`}
+                      onClick={() => itemFileInputRef.current?.click()}
+                      {...itemFileDropProps}
+                    >
+                      <input ref={itemFileInputRef} type="file" accept={getFileAcceptType()} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileUpload(file, 'file'); }} disabled={isUploading} />
                       {isUploading ? <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" /> : <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />}
-                      <p className="text-sm text-muted-foreground">{isUploading ? 'กำลังอัปโหลด...' : `คลิกเพื่ออัปโหลด ${getItemTypeLabel(itemForm.item_type)}`}</p>
+                      <p className="text-sm text-muted-foreground">{isUploading ? 'กำลังอัปโหลด...' : isItemFileDragging ? 'วางไฟล์ที่นี่' : `คลิกหรือลากไฟล์มาวาง ${getItemTypeLabel(itemForm.item_type)}`}</p>
                       <p className="text-xs text-muted-foreground mt-1">สูงสุด 50MB</p>
-                    </label>
+                    </div>
                   )}
                 </div>
               )}

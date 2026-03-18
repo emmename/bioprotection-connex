@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useDropZone } from '@/hooks/useDropZone';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -43,6 +44,32 @@ export function ThumbnailUploader({ value, onChange, bucket }: ThumbnailUploader
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const processFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('ขนาดไฟล์ต้องไม่เกิน 5MB');
+      return;
+    }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      setImageSrc(reader.result?.toString() || null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setIsCropDialogOpen(true);
+    });
+    reader.readAsDataURL(file);
+  }, []);
+
+  const { isDragging, dropZoneProps } = useDropZone({
+    accept: 'image/*',
+    disabled: isUploading,
+    onDrop: (files) => processFile(files[0]),
+  });
+
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
@@ -50,28 +77,7 @@ export function ThumbnailUploader({ value, onChange, bucket }: ThumbnailUploader
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('ขนาดไฟล์ต้องไม่เกิน 5MB');
-      return;
-    }
-
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      setImageSrc(reader.result?.toString() || null);
-      setCrop({ x: 0, y: 0 }); // Reset crop position
-      setZoom(1); // Reset zoom
-      setIsCropDialogOpen(true);
-    });
-    reader.readAsDataURL(file);
+    processFile(file);
   };
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -245,8 +251,13 @@ export function ThumbnailUploader({ value, onChange, bucket }: ThumbnailUploader
         </div>
       ) : (
         <div
-          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+            isDragging
+              ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+              : 'hover:bg-muted/50'
+          }`}
           onClick={() => fileInputRef.current?.click()}
+          {...dropZoneProps}
         >
           {isUploading ? (
             <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" />
@@ -254,7 +265,7 @@ export function ThumbnailUploader({ value, onChange, bucket }: ThumbnailUploader
             <ImageIcon className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
           )}
           <p className="text-sm text-muted-foreground">
-            {isUploading ? 'กำลังอัปโหลด...' : 'คลิกเพื่ออัปโหลด Thumbnail'}
+            {isDragging ? 'วางรูปภาพที่นี่' : isUploading ? 'กำลังอัปโหลด...' : 'คลิกหรือลากรูปมาวางเพื่ออัปโหลด Thumbnail'}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             แนะนำขนาด 16:9 (เช่น 1280x720) / สูงสุด 5MB

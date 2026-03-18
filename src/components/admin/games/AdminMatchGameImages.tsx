@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Image as ImageIcon, Trash2, UploadCloud, Loader2, Plus, CheckSquare, Square, ToggleLeft, ToggleRight } from "lucide-react";
+import { Image as ImageIcon, Trash2, UploadCloud, Loader2, Plus, CheckSquare, Square, ToggleLeft, ToggleRight, Upload } from "lucide-react";
+import { useDropZone } from '@/hooks/useDropZone';
 
 interface MatchImage {
     id: string;
@@ -23,6 +24,7 @@ export function AdminMatchGameImages() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const isBulkMode = selectedIds.size > 0;
+    const matchFileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchImages();
@@ -163,10 +165,9 @@ export function AdminMatchGameImages() {
         setNewImageUrls(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Handle multi-file selection via file picker — uploads to Supabase Storage
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
+    // Handle multi-file selection — uploads to Supabase Storage
+    const handleFileUploadFromFiles = async (files: File[]) => {
+        if (files.length === 0) return;
 
         setIsUploading(true);
         const uploadedUrls: string[] = [];
@@ -208,6 +209,18 @@ export function AdminMatchGameImages() {
             setIsUploading(false);
         }
     };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        handleFileUploadFromFiles(Array.from(files));
+    };
+
+    const { isDragging: isMatchDragging, dropZoneProps: matchDropProps } = useDropZone({
+        accept: 'image/*',
+        disabled: isUploading,
+        onDrop: (files) => handleFileUploadFromFiles(files),
+    });
 
     // Parse multi-line or comma-separated URLs
     const handleAddUrlsFromText = () => {
@@ -252,7 +265,19 @@ export function AdminMatchGameImages() {
                         <div className="space-y-4 pt-4">
                             <div className="space-y-2">
                                 <Label>เลือกไฟล์จากเครื่อง (เลือกได้หลายไฟล์)</Label>
-                                <Input type="file" accept="image/*" multiple onChange={handleFileUpload} />
+                                <div
+                                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                                        isMatchDragging
+                                            ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                                            : 'border-muted-foreground/25 hover:bg-muted/50'
+                                    }`}
+                                    onClick={() => matchFileInputRef.current?.click()}
+                                    {...matchDropProps}
+                                >
+                                    <input ref={matchFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                                    {isUploading ? <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" /> : <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />}
+                                    <p className="text-sm text-muted-foreground">{isUploading ? 'กำลังอัปโหลด...' : isMatchDragging ? 'วางรูปที่นี่' : 'คลิกหรือลากรูปมาวาง (เลือกได้หลายไฟล์)'}</p>
+                                </div>
                             </div>
                             <div className="relative py-2">
                                 <div className="absolute inset-0 flex items-center">
