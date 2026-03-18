@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/contexts/AuthContext';
-import { Calendar as CalendarIcon, Plus, Pencil, Trash2, Eye, MapPin, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Pencil, Trash2, Eye, MapPin, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -253,6 +253,31 @@ export default function AdminEvents() {
         saveEventMutation.mutate();
     };
 
+    const handleDuplicate = (event: AdminEvent) => {
+        setEditingEvent(null); // null = creating new event
+        setFormData({
+            title: `${event.title} (สำเนา)`,
+            description: event.description || '',
+            location: event.location || '',
+            start_date: '',
+            end_date: '',
+            is_active: false,
+            is_visible: event.is_visible ?? true,
+            event_type: event.event_type || 'general_event',
+            allowed_member_types: event.allowed_member_types || [],
+            allowed_sub_types: (event.allowed_sub_types as Record<string, string[]>) || {},
+            allowed_tiers: event.allowed_tiers || [],
+            rewards: (event.event_rewards || []).map(r => ({
+                member_type: r.member_type,
+                tier_name: r.tier_name,
+                points_reward: r.points_reward,
+                coins_reward: r.coins_reward
+            }))
+        });
+        setIsDialogOpen(true);
+        toast.info('คัดลอกข้อมูลกิจกรรมแล้ว กรุณาตั้งวัน-เวลาใหม่');
+    };
+
 
 
     if (!canManageEvents) {
@@ -294,6 +319,7 @@ export default function AdminEvents() {
                                 tiersData={tiersData}
                                 onView={(id) => navigate(`/admin/events/${id}`)}
                                 onEdit={handleOpenDialog}
+                                onDuplicate={handleDuplicate}
                                 onDelete={(id, title) => {
                                     if (window.confirm(`คุณแน่ใจหรือไม่ที่จะลบกิจกรรม "${title}"? ข้อมูลการลงทะเบียนทั้งหมดที่ผูกกับกิจกรรมนี้อาจได้รับผลกระทบ`)) {
                                         deleteEventMutation.mutate(id);

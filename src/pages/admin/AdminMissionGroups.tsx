@@ -10,9 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Search, ListOrdered, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ListOrdered, X, Eye, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { MissionGroupParticipantsDialog } from '@/components/admin/MissionGroupParticipantsDialog';
 
 interface MissionGroup {
     id: string;
@@ -41,6 +42,7 @@ export default function AdminMissionGroups() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<MissionGroup | null>(null);
+    const [viewingParticipantsGroup, setViewingParticipantsGroup] = useState<MissionGroup | null>(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -198,6 +200,28 @@ export default function AdminMissionGroups() {
         } catch (error) {
             console.error('Error deleting mission group:', error);
             toast.error('ไม่สามารถลบกลุ่มภารกิจได้');
+        }
+    };
+
+    const handleDuplicate = async (group: MissionGroup) => {
+        try {
+            const payload = {
+                title: `${group.title} (สำเนา)`,
+                description: group.description,
+                grand_bonus_points: group.grand_bonus_points,
+                grand_bonus_coins: group.grand_bonus_coins,
+                is_active: false,
+                start_date: null as string | null,
+                end_date: null as string | null,
+            };
+
+            const { error } = await supabase.from('mission_groups').insert([payload]);
+            if (error) throw error;
+            toast.success('คัดลอกกลุ่มภารกิจเรียบร้อย');
+            fetchData();
+        } catch (error) {
+            console.error('Error duplicating mission group:', error);
+            toast.error('ไม่สามารถคัดลอกกลุ่มภารกิจได้');
         }
     };
 
@@ -425,13 +449,14 @@ export default function AdminMissionGroups() {
                                     <TableHead>จำนวนด่าน</TableHead>
                                     <TableHead className="whitespace-nowrap">โบนัส (คะแนน/เหรียญ)</TableHead>
                                     <TableHead>ระยะเวลา</TableHead>
+                                    <TableHead>ผู้เข้าร่วม</TableHead>
                                     <TableHead className="text-right">จัดการ</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8">
+                                        <TableCell colSpan={7} className="text-center py-8">
                                             <div className="flex justify-center">
                                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                                             </div>
@@ -439,7 +464,7 @@ export default function AdminMissionGroups() {
                                     </TableRow>
                                 ) : filteredGroups.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                             ไม่พบกลุ่มภารกิจ
                                         </TableCell>
                                     </TableRow>
@@ -481,10 +506,23 @@ export default function AdminMissionGroups() {
                                                     )}
                                                 </div>
                                             </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                                    onClick={() => setViewingParticipantsGroup(group)}
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(group)}>
                                                         <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDuplicate(group)} className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30">
+                                                        <Copy className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(group.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                                                         <Trash2 className="h-4 w-4" />
@@ -499,6 +537,17 @@ export default function AdminMissionGroups() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Participants Dialog */}
+            {viewingParticipantsGroup && (
+                <MissionGroupParticipantsDialog
+                    group={viewingParticipantsGroup}
+                    open={!!viewingParticipantsGroup}
+                    onOpenChange={(open) => {
+                        if (!open) setViewingParticipantsGroup(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

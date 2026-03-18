@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { Check, X, Clock } from 'lucide-react';
+import { Check, X, Clock, Download } from 'lucide-react';
 
 interface MissionCompletionsDialogProps {
   mission: {
@@ -114,11 +114,39 @@ export function MissionCompletionsDialog({ mission, open, onOpenChange }: Missio
     }
   };
 
+  const exportCsv = () => {
+    const headers = ['ชื่อ-นามสกุล', 'รหัสสมาชิก', 'วันที่ทำ', 'สถานะ', 'คะแนน', 'เหรียญ'];
+    const statusText = (s: string) => s === 'approved' ? 'อนุมัติ' : s === 'rejected' ? 'ปฏิเสธ' : 'รอตรวจสอบ';
+    const rows = completions.map(c => [
+      c.profile ? `${c.profile.first_name} ${c.profile.last_name}` : '-',
+      c.profile?.member_id || '-',
+      format(new Date(c.completed_at), 'd MMM yy HH:mm', { locale: th }),
+      statusText(c.status),
+      c.points_earned,
+      c.coins_earned,
+    ]);
+    const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ภารกิจ_${mission.title.replace(/[^a-zA-Z0-9ก-๙]/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>สถานะการทำภารกิจ: {mission.title}</DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle>สถานะการทำภารกิจ: {mission.title}</DialogTitle>
+            {completions.length > 0 && (
+              <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => exportCsv()}>
+                <Download className="h-4 w-4" />Export CSV
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {isLoading ? (

@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { MapPin, Eye, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Eye, Pencil, Trash2, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,10 +40,11 @@ interface EventTableProps {
     onView: (id: string) => void;
     onEdit: (event: AdminEvent) => void;
     onDelete: (id: string, title: string) => void;
+    onDuplicate?: (event: AdminEvent) => void;
     onToggleStatus?: (id: string, is_active: boolean) => void;
 }
 
-export function EventTable({ events, tiersData, onView, onEdit, onDelete, onToggleStatus }: EventTableProps) {
+export function EventTable({ events, tiersData, onView, onEdit, onDelete, onDuplicate, onToggleStatus }: EventTableProps) {
     if (events.length === 0) {
         return (
             <div className="text-center py-8 text-slate-500">
@@ -182,6 +183,16 @@ export function EventTable({ events, tiersData, onView, onEdit, onDelete, onTogg
                                 >
                                     <Pencil className="w-4 h-4 text-blue-500" />
                                 </Button>
+                                {onDuplicate && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => onDuplicate(event)}
+                                        title="คัดลอกกิจกรรม"
+                                    >
+                                        <Copy className="w-4 h-4 text-emerald-500" />
+                                    </Button>
+                                )}
                                 <Button
                                     variant="ghost"
                                     size="icon"
