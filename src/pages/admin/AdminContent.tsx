@@ -93,7 +93,13 @@ export default function AdminContent() {
         ...item,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         requirements: item.requirements as Record<string, any>
-      }));
+      })).filter(item => {
+        // Hide surveys created by missions — those are managed in the Missions page
+        if (item.content_type === 'survey' && item.requirements?.is_mission_survey === true) {
+          return false;
+        }
+        return true;
+      });
       setContents(mappedContents);
     } catch (error) {
       console.error('Error fetching contents:', error);
@@ -593,7 +599,6 @@ export default function AdminContent() {
                 <SelectItem value="article">บทความ</SelectItem>
                 <SelectItem value="video">วิดีโอ</SelectItem>
                 <SelectItem value="quiz">แบบทดสอบ</SelectItem>
-                <SelectItem value="survey">แบบสำรวจ</SelectItem>
               </SelectContent>
             </Select>
           </div>
