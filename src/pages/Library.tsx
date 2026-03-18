@@ -10,9 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/pull-to-refresh';
 import { PageHeader } from '@/components/ui/PageHeader';
-import poultryIcon from '@/assets/library-icons/poultry_library_364 x 180 px.png';
-import cattleIcon from '@/assets/library-icons/cattle_library_364 x 180 px.png';
-import pigIcon from '@/assets/library-icons/pig_library_364 x 180 px.png';
 
 interface LibraryCategory {
     id: string;
@@ -38,15 +35,6 @@ interface LibraryItem {
     target_member_types: string[] | null;
     created_at: string;
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-    'สัตว์ปีก': poultryIcon,
-    'โค': cattleIcon,
-    'สุกร': pigIcon,
-};
-
-const DEFAULT_CATEGORY_ICON = '';
-
 export default function Library() {
     const navigate = useNavigate();
     const { profile, isLoading: authLoading } = useAuth();
@@ -243,7 +231,6 @@ export default function Library() {
                         <div className="flex flex-col gap-4 py-2">
                             {categories.map(cat => {
                                 const itemCount = visibleItems.filter(i => i.category_id === cat.id).length;
-                                const iconSrc = CATEGORY_ICONS[cat.name] || DEFAULT_CATEGORY_ICON;
                                 return (
                                     <Card
                                         key={cat.id}
@@ -252,8 +239,8 @@ export default function Library() {
                                     >
                                         <CardContent className="h-full p-4 flex items-center justify-between relative z-10">
                                             <div className="group-hover:scale-110 transition-transform duration-500 h-full flex flex-1 items-center justify-center overflow-hidden">
-                                                {iconSrc ? (
-                                                    <img loading="lazy" src={iconSrc} alt={cat.name} className="h-full max-w-full object-contain" />
+                                                {cat.icon_url ? (
+                                                    <img loading="lazy" src={cat.icon_url} alt={cat.name} className="h-full max-w-full object-contain" />
                                                 ) : (
                                                     <FolderOpen className="w-20 h-20 text-muted-foreground/50" />
                                                 )}

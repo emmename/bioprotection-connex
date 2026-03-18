@@ -40,7 +40,8 @@ export default function AdminLibrary() {
   const [categories, setCategories] = useState<LibraryCategory[]>([]);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<LibraryCategory | null>(null);
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', is_active: true });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon_url: '', is_active: true });
+  const [isCategoryImageUploading, setIsCategoryImageUploading] = useState(false);
 
   // ===== Items State =====
   const [items, setItems] = useState<LibraryItem[]>([]);
@@ -93,11 +94,11 @@ export default function AdminLibrary() {
   };
 
   // ===== Category CRUD =====
-  const resetCategoryForm = () => { setCategoryForm({ name: '', description: '', is_active: true }); setEditingCategory(null); };
+  const resetCategoryForm = () => { setCategoryForm({ name: '', description: '', icon_url: '', is_active: true }); setEditingCategory(null); };
 
   const openEditCategory = (cat: LibraryCategory) => {
     setEditingCategory(cat);
-    setCategoryForm({ name: cat.name, description: cat.description || '', is_active: cat.is_active });
+    setCategoryForm({ name: cat.name, description: cat.description || '', icon_url: cat.icon_url || '', is_active: cat.is_active });
     setIsCategoryDialogOpen(true);
   };
 
@@ -108,14 +109,14 @@ export default function AdminLibrary() {
       if (editingCategory) {
          
         const { error } = await supabase.from('library_categories')
-          .update({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, is_active: categoryForm.is_active, updated_at: new Date().toISOString() })
+          .update({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, icon_url: categoryForm.icon_url || null, is_active: categoryForm.is_active, updated_at: new Date().toISOString() })
           .eq('id', editingCategory.id);
         if (error) throw error;
         toast.success('อัปเดตหมวดหมู่เรียบร้อย');
       } else {
          
         const { error } = await supabase.from('library_categories')
-          .insert({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, is_active: categoryForm.is_active, sort_order: categories.length });
+          .insert({ name: categoryForm.name.trim(), description: categoryForm.description.trim() || null, icon_url: categoryForm.icon_url || null, is_active: categoryForm.is_active, sort_order: categories.length });
         if (error) throw error;
         toast.success('สร้างหมวดหมู่เรียบร้อย');
       }
@@ -319,8 +320,8 @@ export default function AdminLibrary() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="categories" className="gap-2"><FolderOpen className="w-4 h-4" /> หมวดหมู่ ({categories.length})</TabsTrigger>
-          <TabsTrigger value="items" className="gap-2"><BookOpen className="w-4 h-4" /> เนื้อหา ({items.length})</TabsTrigger>
+          <TabsTrigger value="categories" className="gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0"><FolderOpen className="w-4 h-4" /> หมวดหมู่ ({categories.length})</TabsTrigger>
+          <TabsTrigger value="items" className="gap-2 data-[state=active]:gradient-primary data-[state=active]:text-white data-[state=active]:border-0"><BookOpen className="w-4 h-4" /> เนื้อหา ({items.length})</TabsTrigger>
         </TabsList>
 
         {/* ===== Items Tab ===== */}
@@ -380,6 +381,7 @@ export default function AdminLibrary() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>รูปภาพ</TableHead>
                   <TableHead>ชื่อหมวดหมู่</TableHead>
                   <TableHead>คำอธิบาย</TableHead>
                   <TableHead>จำนวนเนื้อหา</TableHead>
@@ -389,10 +391,17 @@ export default function AdminLibrary() {
               </TableHeader>
               <TableBody>
                 {categories.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">ยังไม่มีหมวดหมู่</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">ยังไม่มีหมวดหมู่</TableCell></TableRow>
                 ) : (
                   categories.map(cat => (
                     <TableRow key={cat.id}>
+                      <TableCell>
+                        {cat.icon_url ? (
+                          <img src={cat.icon_url} alt={cat.name} className="w-16 h-10 object-cover rounded border" />
+                        ) : (
+                          <div className="w-16 h-10 bg-muted rounded border flex items-center justify-center"><FolderOpen className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{cat.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{cat.description || '-'}</TableCell>
                       <TableCell><Badge variant="secondary">{items.filter(i => i.category_id === cat.id).length} รายการ</Badge></TableCell>
@@ -424,6 +433,38 @@ export default function AdminLibrary() {
             <div className="space-y-2">
               <Label>คำอธิบาย</Label>
               <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))} placeholder="คำอธิบายสั้นๆ" />
+            </div>
+            <div className="space-y-2">
+              <Label>รูปภาพหมวดหมู่</Label>
+              <p className="text-xs text-muted-foreground">รูปนี้จะแสดงเป็นปุ่มหมวดหมู่ในหน้าคลังความรู้ของผู้ใช้</p>
+              {categoryForm.icon_url ? (
+                <div className="relative group border rounded-lg overflow-hidden">
+                  <img src={categoryForm.icon_url} alt="" className="w-full max-h-[180px] object-contain bg-muted" />
+                  <Button type="button" size="sm" variant="destructive" className="absolute top-2 right-2" onClick={() => setCategoryForm(prev => ({ ...prev, icon_url: '' }))}><X className="w-4 h-4" /></Button>
+                </div>
+              ) : (
+                <label className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors block">
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) { toast.error('ขนาดรูปต้องไม่เกิน 5MB'); return; }
+                    setIsCategoryImageUploading(true);
+                    try {
+                      const fileExt = file.name.split('.').pop();
+                      const fileName = `category-icons/${crypto.randomUUID()}.${fileExt}`;
+                      const { error: uploadError } = await supabase.storage.from('library').upload(fileName, file, { contentType: file.type, upsert: true });
+                      if (uploadError) throw uploadError;
+                      const { data: { publicUrl } } = supabase.storage.from('library').getPublicUrl(fileName);
+                      setCategoryForm(prev => ({ ...prev, icon_url: publicUrl }));
+                      toast.success('อัปโหลดรูปสำเร็จ');
+                    } catch (error) { console.error('Upload error:', error); toast.error('ไม่สามารถอัปโหลดรูปได้'); }
+                    finally { setIsCategoryImageUploading(false); }
+                  }} disabled={isCategoryImageUploading} />
+                  {isCategoryImageUploading ? <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" /> : <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />}
+                  <p className="text-sm text-muted-foreground">{isCategoryImageUploading ? 'กำลังอัปโหลด...' : 'คลิกเพื่ออัปโหลดรูปภาพ'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">แนะนำขนาด 364 x 180 px (สูงสุด 5MB)</p>
+                </label>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={categoryForm.is_active} onCheckedChange={(checked) => setCategoryForm(prev => ({ ...prev, is_active: checked }))} />
